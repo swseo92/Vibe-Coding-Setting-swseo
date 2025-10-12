@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(env)",
+      "Bash(set)",
+      "Bash(cat:*)",
+      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"C:\\Users\\EST\\PycharmProjects\\my agents\\Vibe-Coding-Setting-swseo\\.claude\\scripts\\run-notify.cmd\" \"작업 완료\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"C:\\Users\\EST\\PycharmProjects\\my agents\\Vibe-Coding-Setting-swseo\\.claude\\scripts\\run-notify.cmd\" \"작업 완료\""
+          }
+        ]
+      }
+    ]
+  }
+}
