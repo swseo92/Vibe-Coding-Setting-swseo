@@ -2,6 +2,10 @@
 
 set -e
 
+# Ensure UTF-8 encoding for all operations
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 JSON_MODE=false
 ARGS=()
 for arg in "$@"; do
@@ -82,7 +86,13 @@ mkdir -p "$FEATURE_DIR"
 
 TEMPLATE="$REPO_ROOT/.specify/templates/spec-template.md"
 SPEC_FILE="$FEATURE_DIR/spec.md"
-if [ -f "$TEMPLATE" ]; then cp "$TEMPLATE" "$SPEC_FILE"; else touch "$SPEC_FILE"; fi
+# Copy template with UTF-8 encoding preservation
+if [ -f "$TEMPLATE" ]; then
+    # Use cat to ensure UTF-8 encoding is preserved
+    cat "$TEMPLATE" > "$SPEC_FILE"
+else
+    touch "$SPEC_FILE"
+fi
 
 # Set the SPECIFY_FEATURE environment variable for the current session
 export SPECIFY_FEATURE="$BRANCH_NAME"

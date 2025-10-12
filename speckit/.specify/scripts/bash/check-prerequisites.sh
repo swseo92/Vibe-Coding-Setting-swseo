@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Ensure UTF-8 encoding for all operations
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 # Consolidated prerequisite checking script
 #
 # This script provides unified prerequisite checking for Spec-Driven Development workflow.

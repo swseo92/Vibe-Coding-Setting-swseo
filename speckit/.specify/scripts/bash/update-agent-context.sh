@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Ensure UTF-8 encoding for all operations
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 # Update agent context files with information from plan.md
 #
 # This script maintains AI agent context files by parsing feature specifications 
@@ -281,7 +285,8 @@ create_new_agent_file() {
     
     log_info "Creating new agent context file from template..."
     
-    if ! cp "$TEMPLATE_FILE" "$temp_file"; then
+    # Use cat to ensure UTF-8 encoding is preserved
+    if ! cat "$TEMPLATE_FILE" > "$temp_file"; then
         log_error "Failed to copy template file"
         return 1
     fi
