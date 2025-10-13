@@ -1,26 +1,25 @@
 ---
-description: Delete a git worktree and its branch
+description: Delete a cloned directory
 argument-hint: [branch-name]
-allowed-tools: Bash(git:*), Bash(rm:*)
+allowed-tools: Bash(rm:*), Bash(ls:*)
 ---
 
-Delete the specified git worktree with the following steps:
+Delete the specified cloned directory with the following steps:
 
-1. Check if the worktree exists at `worktree/$1/`
-2. Remove the worktree using git worktree remove
-3. Delete the branch if it exists
-4. Remove the worktree directory if it still exists
-5. Display the result
+1. Check if the clone exists at `clone/$1/`
+2. Remove the entire cloned directory
+3. Display the result
 
-Branch/worktree to delete: $1
+Clone directory to delete: $1
 
 Execute the following commands:
-!git worktree list
-!git worktree remove worktree/$1 --force
-!git branch -D $1
-!git worktree list
+!ls -la clone/ 2>/dev/null || echo "clone directory not found"
+!rm -rf clone/$1
+!ls -la clone/ 2>/dev/null || echo "clone directory is now empty"
 
 Provide a summary of the deletion including:
-- Whether the worktree was successfully removed
-- Whether the branch was deleted
-- Current list of remaining worktrees
+- Whether the clone was successfully removed
+- Disk space freed
+- Current list of remaining clones
+
+Note: This deletes the entire cloned repository including all uncommitted changes. Make sure to push any important changes before deleting.

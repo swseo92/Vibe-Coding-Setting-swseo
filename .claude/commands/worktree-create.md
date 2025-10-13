@@ -1,28 +1,31 @@
 ---
-description: Create a new git worktree with uv virtual environment
+description: Create a new cloned directory with full working environment
 argument-hint: [branch-name]
-allowed-tools: Bash(git:*), Bash(mkdir:*), Bash(uv:*)
+allowed-tools: Bash(git:*), Bash(mkdir:*), Bash(uv:*), Bash(python:*)
 ---
 
-Create a new git worktree with the following steps:
+Create a new cloned directory with complete working environment:
 
-1. Check if worktree directory exists, if not create it
-2. Get the current branch name as the base branch
-3. Create a new worktree at `worktree/$1/` with a new branch `$1` based on the current branch
-4. Navigate to the new worktree directory
+1. Create clone directory if it doesn't exist
+2. Copy entire working directory to `clone/$1/` (including uncommitted changes, .claude, .specify, etc.)
+3. Exclude large/generated directories: node_modules, __pycache__, .venv, venv, dist, build, .pytest_cache, .mypy_cache
+4. Navigate to the cloned directory and create a new branch `$1`
 5. Create a new uv virtual environment
-6. If pyproject.toml exists in root, run `uv sync`, otherwise if requirements.txt exists, run `uv pip install -r ../../requirements.txt`
-7. Display the created worktree path and branch information
+6. Install dependencies with uv
+7. Display the created clone information
 
 Branch name to create: $1
 
 Execute the following commands:
-!mkdir -p worktree
-!git worktree add -b $1 worktree/$1
-!cd worktree/$1 && uv venv && (uv sync 2>/dev/null || uv pip install -r ../../requirements.txt 2>/dev/null || echo "No dependencies file found")
-!git worktree list
+!mkdir -p clone
+!python -c "import shutil; import os; shutil.copytree('.', 'clone/$1', ignore=shutil.ignore_patterns('node_modules', '__pycache__', '.venv', 'venv', 'dist', 'build', '.pytest_cache', '.mypy_cache', 'clone', '*.pyc', '*.pyo', '*.pyd', '.DS_Store'), dirs_exist_ok=False)"
+!cd clone/$1 && git checkout -b $1
+!cd clone/$1 && uv venv && (uv sync 2>/dev/null || uv pip install -r ../../requirements.txt 2>/dev/null || echo "No dependencies file found")
+!cd clone/$1 && git status --short && git branch -vv
 
-Provide a summary of the created worktree including:
+Provide a summary of the created clone including:
 - Branch name
-- Worktree path
+- Clone directory path
+- What was copied (including uncommitted changes)
 - Virtual environment status
+- Current git status

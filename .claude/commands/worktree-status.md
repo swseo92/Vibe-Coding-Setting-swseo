@@ -1,26 +1,26 @@
 ---
-description: Show detailed status of a specific worktree
+description: Show detailed status of a specific cloned directory
 argument-hint: [branch-name]
 allowed-tools: Bash(git:*)
 ---
 
-Display detailed status information for the specified worktree:
+Display detailed status information for the specified cloned directory:
 
-1. Verify the worktree exists at `worktree/$1/`
+1. Verify the clone exists at `clone/$1/`
 2. Show git status (staged, unstaged, untracked files)
 3. Show commit history relative to base branch
 4. Show branch tracking information
 
-Worktree to check: $1
+Clone to check: $1
 
 Execute the following commands:
-!cd worktree/$1 && git status
-!cd worktree/$1 && git log --oneline -10
-!cd worktree/$1 && git diff --stat
-!cd worktree/$1 && git branch -vv
+!cd clone/$1 && git status
+!cd clone/$1 && git log --oneline -10
+!cd clone/$1 && git diff --stat
+!cd clone/$1 && git branch -vv
 
 Provide a comprehensive summary including:
 - Current branch and tracking information
-- Number of commits ahead/behind base branch
+- Number of commits ahead/behind origin branch
 - Modified, staged, and untracked files
-- Overall worktree health status
+- Overall clone health status
