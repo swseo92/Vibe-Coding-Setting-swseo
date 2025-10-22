@@ -9,14 +9,16 @@ Create a pull request for the specified cloned directory branch:
 1. Navigate to the clone directory at `clone/$1/`
 2. Check the current git status and commits
 3. Get the commit history from the base branch
-4. Create a PR with auto-generated summary based on commits
-5. Return to the original directory
+4. Push the branch to remote origin
+5. Create a PR with auto-generated summary based on commits
+6. Return to the original directory
 
 Branch to create PR for: $1
 
 Execute the following commands in the clone directory:
 !cd clone/$1 && git status
 !cd clone/$1 && git log --oneline -10
+!cd clone/$1 && git push -u origin $1
 !cd clone/$1 && gh pr create --fill
 
 Provide a summary including:

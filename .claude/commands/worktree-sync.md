@@ -27,4 +27,4 @@ Provide a summary including:
 - Current status of the clone
 
 Note: If there are conflicts, you will need to resolve them manually in the clone directory.
-The clone's origin points to the original local repository, so this fetches changes from there.
+The clone's origin points to the remote repository (GitHub), so this fetches the latest changes from there and merges the base branch into your clone.
