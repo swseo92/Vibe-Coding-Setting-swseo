@@ -81,6 +81,26 @@ Vibe-Coding-Setting-swseo/
 - 불필요한 파일 정리 (speckit/, .git/ 등)
 - 의존성 설치 안내
 
+### `/merge`
+브랜치를 merge하고 conflict를 자동으로 해결합니다.
+
+```bash
+/merge <source-branch> --into <target-branch>
+/merge <source-branch>  # 현재 브랜치에 merge
+```
+
+**동작:**
+- Safety checks (working tree, 브랜치 존재 확인)
+- 자동 merge 시도
+- Conflict 발생 시 자동 해결 (또는 사용자 확인)
+- Post-merge 검증 (테스트, 린터 등)
+
+**주요 기능:**
+- ✅ 자동 conflict 해결 (단순 패턴)
+- ✅ 복잡한 conflict는 사용자 확인
+- ✅ 상세한 merge 요약 제공
+- ✅ Todo 기반 진행상황 추적
+
 ### 기타 커맨드
 - `/worktree-*` - Git worktree 관리
 - `/speckit.*` - 스펙 기반 개발 워크플로우
