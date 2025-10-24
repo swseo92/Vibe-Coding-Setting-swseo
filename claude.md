@@ -246,6 +246,40 @@ git pull
 
 ---
 
+## 테스트 환경 관리
+
+### tmp/ 폴더 사용
+
+**새로운 기능이나 설정을 테스트할 때는 반드시 `tmp/` 폴더를 사용하세요.**
+
+```bash
+# 템플릿 테스트
+mkdir -p tmp/test-python-template
+cp -r templates/python/* tmp/test-python-template/
+cd tmp/test-python-template
+uv sync
+# 테스트 진행...
+
+# 완료 후 정리
+cd ../..
+rm -rf tmp/test-python-template
+```
+
+**규칙**:
+- ✅ **모든 테스트는 `tmp/` 폴더 내부에서 수행**
+- ✅ `tmp/` 폴더는 `.gitignore`에 포함되어 git에 추적되지 않음
+- ✅ 테스트 완료 후 정리 권장 (선택사항)
+- ❌ 저장소 루트에 직접 테스트 파일/폴더 생성 금지
+
+**예시**:
+- ✅ `tmp/python-test/`
+- ✅ `tmp/init-workspace-test/`
+- ✅ `tmp/jupyter-test/`
+- ❌ `test-project/` (루트에 직접 생성 금지)
+- ❌ `example-project/` (루트에 직접 생성 금지)
+
+---
+
 ## 주의사항
 
 ### speckit/ 폴더
