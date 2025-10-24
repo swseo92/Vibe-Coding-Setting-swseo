@@ -25,10 +25,122 @@ model: sonnet
 - 테스트에 필요한 의존성 및 전제조건 고려
 
 ### Phase 2: 테스트 실행
-- 실제 사용 시나리오를 시뮬레이션하는 적절한 `claude --print` 명령어 구성
-- 격리를 보장하기 위해 독립적인 세션에서 테스트 실행
-- 오류나 경고를 포함한 전체 출력 캡처
-- 견고성을 보장하기 위해 필요시 여러 테스트 변형 실행
+
+**중요**: Python subprocess를 사용하여 완전히 독립된 Claude Code 세션을 실행합니다.
+
+**Python Subprocess 방식 (필수)**
+
+테스트 헬퍼 스크립트를 사용하세요:
+
+```python
+# ~/.claude/scripts/test-claude-command.py 사용
+python ~/.claude/scripts/test-claude-command.py
+```
+
+**또는 직접 Python 코드 작성:**
+
+```python
+import subprocess
+import tempfile
+from pathlib import Path
+import time
+import platform
+
+def test_claude_command(command: str, timeout: int = 3600):
+    """
+    Test Claude command in isolated subprocess
+
+    Args:
+        command: Claude command to test (e.g., '/init-workspace python')
+        timeout: Max seconds to wait (default: 3600 = 1 hour)
+    """
+    # Create test directory
+    test_dir = Path(tempfile.mkdtemp(prefix="claude-test-"))
+    test_dir.mkdir(parents=True, exist_ok=True)
+
+    # Prepare command
+    if platform.system() == "Windows":
+        cmd = ["claude.cmd", "--print", command]
+    else:
+        cmd = ["claude", "--print", command]
+
+    print(f"Testing: {command}")
+    print(f"Test directory: {test_dir}")
+    print(f"Timeout: {timeout}s")
+
+    start_time = time.time()
+
+    try:
+        # Run in completely isolated subprocess
+        result = subprocess.run(
+            cmd,
+            cwd=str(test_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            encoding='utf-8',
+            errors='replace'  # Handle encoding issues
+        )
+
+        elapsed = time.time() - start_time
+
+        # Save output
+        output_file = test_dir / "output.log"
+        output_file.write_text(
+            result.stdout + "\n\n=== STDERR ===\n\n" + result.stderr,
+            encoding='utf-8'
+        )
+
+        print(f"Completed in {elapsed:.1f}s")
+        print(f"Exit code: {result.returncode}")
+
+        return {
+            "success": result.returncode == 0,
+            "exit_code": result.returncode,
+            "duration": elapsed,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "test_dir": test_dir
+        }
+
+    except subprocess.TimeoutExpired:
+        elapsed = time.time() - start_time
+        print(f"Timeout after {elapsed:.1f}s")
+        return {
+            "success": False,
+            "exit_code": -1,
+            "duration": elapsed,
+            "error": "timeout",
+            "test_dir": test_dir
+        }
+    except Exception as e:
+        elapsed = time.time() - start_time
+        print(f"Error: {e}")
+        return {
+            "success": False,
+            "exit_code": -2,
+            "duration": elapsed,
+            "error": str(e),
+            "test_dir": test_dir
+        }
+
+# 사용 예시
+result = test_claude_command("/init-workspace python", timeout=3600)
+```
+
+**주요 특징:**
+- ✅ 완전한 프로세스 격리 (subprocess.run 사용)
+- ✅ 타임아웃 제어 (기본 1시간, 조정 가능)
+- ✅ 인코딩 문제 자동 처리 (errors='replace')
+- ✅ 출력 캡처 및 저장
+- ✅ 에러 핸들링 완벽
+- ✅ 실제 사용자 환경 시뮬레이션
+
+**테스트 단계:**
+1. Python으로 subprocess 실행
+2. 완료 대기 (최대 1시간)
+3. 결과 캡처 및 분석
+4. 테스트 디렉토리 보존 (검증용)
 
 ### Phase 3: 결과 분석
 - 실제 출력과 예상 동작 비교
@@ -44,7 +156,35 @@ model: sonnet
 
 ## 명령어 구성 가이드라인
 
-`claude --print` 사용 시:
+`claude --print` 사용 시 **반드시 백그라운드 프로세스로 실행**:
+
+```bash
+# ✅ 올바른 방법: 백그라운드 + 타임아웃
+(
+    cd /tmp/test-directory
+    timeout 60s claude --print '/command-to-test args' > output.log 2>&1
+    echo $? > exit_code.txt
+) &
+PID=$!
+
+# 완료 대기
+echo "Testing in progress (PID: $PID)..."
+while kill -0 $PID 2>/dev/null; do
+    sleep 2
+done
+
+# 결과 확인
+EXIT_CODE=$(cat /tmp/test-directory/exit_code.txt)
+cat /tmp/test-directory/output.log
+```
+
+**주의사항:**
+- ❌ 직접 `claude --print` 실행하지 마세요 (블로킹됨)
+- ✅ 항상 백그라운드 `(command) &` 사용
+- ✅ 타임아웃 설정 필수 (기본 60초)
+- ✅ 출력을 파일로 리다이렉트
+- ✅ exit code를 별도 파일로 저장
+
 - 명령어가 의도된 사용 사례를 정확하게 시뮬레이션하는지 확인
 - 필요한 모든 컨텍스트와 매개변수 포함
 - 실제 사용 패턴을 나타내는 현실적인 테스트 데이터 사용
