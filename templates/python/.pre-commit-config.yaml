@@ -45,6 +45,17 @@ repos:
         args: ["-c", "pyproject.toml"]
         additional_dependencies: ["bandit[toml]"]
 
+  # Run tests on push (not on commit)
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        pass_filenames: false
+        stages: [push]
+        always_run: true
+
 # Configuration for specific file types
 default_language_version:
   python: python3.12

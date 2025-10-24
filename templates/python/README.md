@@ -42,6 +42,7 @@ uv run pytest
 ├── .gitignore             # Git 제외 파일 목록
 ├── pytest.ini             # pytest 설정 (선택적)
 ├── README.md              # 이 문서
+├── claude.md              # Claude Code 프로젝트 설명 (templates/common/에서 복사)
 ├── src/
 │   └── myproject/         # 메인 소스 코드
 └── tests/                 # 테스트 코드
@@ -53,6 +54,8 @@ uv run pytest
     └── e2e/              # E2E 테스트
         └── conftest.py
 ```
+
+**참고**: `claude.md` 파일은 `templates/common/claude.md`에서 복사하여 프로젝트에 맞게 수정하세요.
 
 ## 개발 워크플로우
 
@@ -246,23 +249,33 @@ git push origin v0.1.0
 
 ### Pre-commit Hooks
 
-로컬 개발 환경에서 커밋 전 자동 검사:
+로컬 개발 환경에서 커밋/푸시 전 자동 검사:
 
 ```bash
-# Pre-commit 설치
+# Pre-commit hooks 설치 (commit 시 실행)
 uv run pre-commit install
+
+# Pre-push hooks 설치 (push 시 실행)
+uv run pre-commit install --hook-type pre-push
 
 # 모든 파일에 수동 실행
 uv run pre-commit run --all-files
+
+# Pre-push hooks 수동 실행
+uv run pre-commit run --hook-stage push --all-files
 ```
 
-**포함된 훅:**
+**Commit 시 실행되는 훅:**
 - Ruff 린팅 및 포맷팅
 - Mypy 타입 체킹
 - Trailing whitespace 제거
 - 큰 파일 체크
 - Private key 감지
 - Bandit 보안 스캔
+
+**Push 시 실행되는 훅:**
+- 위의 모든 commit 훅
+- **Pytest 전체 테스트** (push 시에만 실행되어 commit 속도 유지)
 
 ### CI/CD 워크플로우 활성화
 
