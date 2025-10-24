@@ -48,6 +48,11 @@ def test_command(command: str, test_dir: Path, timeout: int = 3600):
 
     try:
         # Run as completely separate process
+        # Set environment to force UTF-8 encoding
+        import os
+        env = os.environ.copy()
+        env['PYTHONIOENCODING'] = 'utf-8'
+
         result = subprocess.run(
             cmd,
             cwd=str(test_dir),
@@ -55,7 +60,8 @@ def test_command(command: str, test_dir: Path, timeout: int = 3600):
             text=True,
             timeout=timeout,
             encoding='utf-8',
-            errors='replace'  # Handle Windows encoding issues
+            errors='replace',  # Handle Windows encoding issues
+            env=env
         )
 
         elapsed = time.time() - start_time
@@ -63,11 +69,12 @@ def test_command(command: str, test_dir: Path, timeout: int = 3600):
         # Save output
         output_file.write_text(
             result.stdout + "\n\n=== STDERR ===\n\n" + result.stderr,
-            encoding='utf-8'
+            encoding='utf-8',
+            errors='replace'
         )
-        exit_code_file.write_text(str(result.returncode))
+        exit_code_file.write_text(str(result.returncode), encoding='utf-8')
 
-        print(f"✓ Completed in {elapsed:.1f}s")
+        print(f"[OK] Completed in {elapsed:.1f}s")
         print(f"Exit code: {result.returncode}")
         print()
 
@@ -83,7 +90,7 @@ def test_command(command: str, test_dir: Path, timeout: int = 3600):
 
     except subprocess.TimeoutExpired:
         elapsed = time.time() - start_time
-        print(f"X Timeout after {elapsed:.1f}s")
+        print(f"[TIMEOUT] After {elapsed:.1f}s")
         return {
             "success": False,
             "exit_code": -1,
@@ -93,7 +100,7 @@ def test_command(command: str, test_dir: Path, timeout: int = 3600):
         }
     except Exception as e:
         elapsed = time.time() - start_time
-        print(f"X Error: {e}")
+        print(f"[ERROR] {e}")
         return {
             "success": False,
             "exit_code": -2,
@@ -130,7 +137,7 @@ def analyze_results(test_dir: Path):
     for key_file in key_files:
         path = test_dir / key_file
         exists = path.exists()
-        symbol = "OK" if exists else "X "
+        symbol = "[OK]" if exists else "[--]"
         print(f"  {symbol} {key_file}")
 
     print()
@@ -140,9 +147,13 @@ def analyze_results(test_dir: Path):
     if output_file.exists():
         print("Output (last 20 lines):")
         print("-" * 60)
-        lines = output_file.read_text().splitlines()
+        lines = output_file.read_text(encoding='utf-8', errors='replace').splitlines()
         for line in lines[-20:]:
-            print(line)
+            # Safe print for Windows console
+            try:
+                print(line)
+            except UnicodeEncodeError:
+                print(line.encode('ascii', errors='replace').decode('ascii'))
         print("-" * 60)
 
     return file_count
