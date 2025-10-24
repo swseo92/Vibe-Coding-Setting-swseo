@@ -58,21 +58,50 @@ ls -la
 
 ### 3. 플랫폼 감지 및 스크립트 실행
 
+스크립트를 로컬 또는 전역 위치에서 찾아 실행합니다.
+
+**스크립트 검색 순서:**
+1. 로컬 프로젝트: `.claude/scripts/init-workspace.*`
+2. 전역 설정: `~/.claude/scripts/init-workspace.*`
+
 ```bash
 # 플랫폼 감지
 PLATFORM=$(uname -s 2>/dev/null || echo "Windows")
 
+# 스크립트 위치 찾기
+if [ -f ".claude/scripts/init-workspace.sh" ]; then
+    SCRIPT_PATH=".claude/scripts/init-workspace.sh"
+elif [ -f "$HOME/.claude/scripts/init-workspace.sh" ]; then
+    SCRIPT_PATH="$HOME/.claude/scripts/init-workspace.sh"
+elif [ -f ".claude/scripts/init-workspace.ps1" ]; then
+    SCRIPT_PATH=".claude/scripts/init-workspace.ps1"
+elif [ -f "$HOME/.claude/scripts/init-workspace.ps1" ]; then
+    SCRIPT_PATH="$HOME/.claude/scripts/init-workspace.ps1"
+else
+    echo "Error: init-workspace script not found"
+    echo "Please run /apply-settings to install scripts globally"
+    exit 1
+fi
+
 # Windows인 경우
 if [[ "$PLATFORM" == "Windows" ]] || [[ "$PLATFORM" == *"MINGW"* ]] || [[ "$PLATFORM" == *"MSYS"* ]]; then
     # PowerShell 스크립트 실행
-    powershell -ExecutionPolicy Bypass -File ".claude/scripts/init-workspace.ps1" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+    if [[ "$SCRIPT_PATH" == *.ps1 ]]; then
+        powershell -ExecutionPolicy Bypass -File "$SCRIPT_PATH" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+    else
+        # .ps1이 없으면 bash 스크립트 실행
+        bash "$SCRIPT_PATH" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+    fi
 else
     # Bash 스크립트 실행
-    bash ".claude/scripts/init-workspace.sh" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+    bash "$SCRIPT_PATH" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
 fi
 ```
 
-**IMPORTANT:** 스크립트를 직접 실행해야 합니다. 파일을 직접 생성하거나 repo를 clone하지 마세요.
+**IMPORTANT:**
+- 스크립트를 직접 실행해야 합니다
+- 파일을 직접 생성하거나 repo를 clone하지 마세요
+- 스크립트가 없으면 `/apply-settings` 실행 필요
 
 ### 4. 추가 요구사항 처리 (선택)
 
