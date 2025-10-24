@@ -11,7 +11,7 @@ tags: [project, gitignored]
 ## Usage
 
 ```bash
-/init-workspace [language] [additional requirements]
+/init-workspace <language> [additional requirements]
 ```
 
 **Examples:**
@@ -19,283 +19,275 @@ tags: [project, gitignored]
 - `/init-workspace python add fastapi and sqlalchemy dependencies`
 - `/init-workspace javascript`
 
+## How It Works
+
+이 커맨드는 `.claude/scripts/init-workspace.sh` (Unix/Mac) 또는 `.claude/scripts/init-workspace.ps1` (Windows) 스크립트를 실행합니다.
+
+스크립트는 다음 작업을 수행합니다:
+1. GitHub에서 Vibe-Coding-Setting-swseo 저장소 clone
+2. `templates/common/` 파일 복사 (.specify, .mcp.json)
+3. `templates/{language}/` 파일 복사
+4. 프로젝트 이름 자동 업데이트
+5. 다음 단계 안내
+
 ## Workflow
 
-### 1. 사용자 요청 파싱
-- 언어 추출 (python, javascript, rust, go 등)
-- 추가 요구사항 추출 (있는 경우)
+### 1. 입력 파싱 및 검증
+
+사용자 입력에서 언어와 추가 요구사항을 추출합니다:
+
+```
+입력: "/init-workspace python add fastapi"
+→ language = "python"
+→ additional_requirements = "add fastapi"
+```
 
 ### 2. 안전성 검사
-현재 디렉토리 상태 확인:
+
+**현재 디렉토리 내용 확인:**
 
 ```bash
-# 현재 디렉토리 내용 확인
 ls -la
 ```
 
-**만약 디렉토리가 비어있지 않으면:**
-- 사용자에게 경고
-- 계속 진행할지 확인 (AskUserQuestion 도구 사용)
-- 중요 파일 덮어쓰기 위험 안내
+**디렉토리가 비어있지 않으면:**
+- 사용자에게 경고 메시지 표시
+- AskUserQuestion으로 계속 진행 여부 확인
+  - 옵션 1: "Yes, continue (may overwrite files)"
+  - 옵션 2: "No, cancel"
 
-### 3. 템플릿 복사
+### 3. 플랫폼 감지 및 스크립트 실행
 
-#### Windows (PowerShell)
-```powershell
-# 임시 디렉토리에 설정 repo clone
-$tempDir = New-Item -ItemType Directory -Path "$env:TEMP\vibe-coding-$(Get-Random)"
-git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git $tempDir
-
-# 템플릿 파일 복사
-$language = "python"  # 사용자 입력에서 추출
-$templatePath = Join-Path $tempDir "templates\$language"
-
-if (-not (Test-Path $templatePath)) {
-    Write-Host "Error: Template for '$language' not found" -ForegroundColor Red
-    Write-Host "Available templates:" -ForegroundColor Yellow
-    Get-ChildItem (Join-Path $tempDir "templates") -Directory | ForEach-Object { Write-Host "  - $($_.Name)" }
-    Remove-Item -Recurse -Force $tempDir
-    exit 1
-}
-
-# 공통 파일 복사 (hidden 파일 포함)
-$commonPath = Join-Path $tempDir "templates\common"
-if (Test-Path $commonPath) {
-    Get-ChildItem -Path $commonPath -Force -Recurse | ForEach-Object {
-        $relativePath = $_.FullName.Substring($commonPath.Length + 1)
-        $targetPath = Join-Path (Get-Location) $relativePath
-
-        if ($_.PSIsContainer) {
-            New-Item -ItemType Directory -Force -Path $targetPath | Out-Null
-        } else {
-            $targetDir = Split-Path -Parent $targetPath
-            if (-not (Test-Path $targetDir)) {
-                New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-            }
-            Copy-Item -Force $_.FullName $targetPath
-        }
-    }
-    Write-Host "✓ Common files copied" -ForegroundColor Green
-}
-
-# 언어별 템플릿 파일 복사 (hidden 파일 포함)
-Get-ChildItem -Path $templatePath -Force -Recurse | ForEach-Object {
-    $relativePath = $_.FullName.Substring($templatePath.Length + 1)
-    $targetPath = Join-Path (Get-Location) $relativePath
-
-    if ($_.PSIsContainer) {
-        New-Item -ItemType Directory -Force -Path $targetPath | Out-Null
-    } else {
-        $targetDir = Split-Path -Parent $targetPath
-        if (-not (Test-Path $targetDir)) {
-            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-        }
-        Copy-Item -Force $_.FullName $targetPath
-    }
-}
-
-# 임시 디렉토리 정리
-Remove-Item -Recurse -Force $tempDir
-
-Write-Host "✓ Template files copied successfully" -ForegroundColor Green
-```
-
-#### Unix/Linux/Mac (Bash)
 ```bash
-# 임시 디렉토리에 설정 repo clone
-TEMP_DIR=$(mktemp -d)
-git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git "$TEMP_DIR"
+# 플랫폼 감지
+PLATFORM=$(uname -s 2>/dev/null || echo "Windows")
 
-# 템플릿 파일 복사
-LANGUAGE="python"  # 사용자 입력에서 추출
-TEMPLATE_PATH="$TEMP_DIR/templates/$LANGUAGE"
-
-if [ ! -d "$TEMPLATE_PATH" ]; then
-    echo "Error: Template for '$LANGUAGE' not found"
-    echo "Available templates:"
-    ls "$TEMP_DIR/templates"
-    rm -rf "$TEMP_DIR"
-    exit 1
+# Windows인 경우
+if [[ "$PLATFORM" == "Windows" ]] || [[ "$PLATFORM" == *"MINGW"* ]] || [[ "$PLATFORM" == *"MSYS"* ]]; then
+    # PowerShell 스크립트 실행
+    powershell -ExecutionPolicy Bypass -File ".claude/scripts/init-workspace.ps1" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+else
+    # Bash 스크립트 실행
+    bash ".claude/scripts/init-workspace.sh" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
 fi
-
-# 공통 파일 복사 (hidden 파일 포함)
-COMMON_PATH="$TEMP_DIR/templates/common"
-if [ -d "$COMMON_PATH" ]; then
-    cp -r "$COMMON_PATH/." .
-    echo "✓ Common files copied"
-fi
-
-# 언어별 템플릿 파일 복사 (hidden 파일 포함)
-cp -r "$TEMPLATE_PATH/." .
-
-# 임시 디렉토리 정리
-rm -rf "$TEMP_DIR"
-
-echo "✓ Template files copied successfully"
 ```
 
-### 4. 프로젝트 이름 업데이트
+**IMPORTANT:** 스크립트를 직접 실행해야 합니다. 파일을 직접 생성하거나 repo를 clone하지 마세요.
 
-복사 후 템플릿의 기본 이름(`myproject`)을 실제 프로젝트 이름으로 변경:
+### 4. 추가 요구사항 처리 (선택)
 
-**Python의 경우:**
-```bash
-# 현재 디렉토리 이름을 프로젝트 이름으로 사용
-PROJECT_NAME=$(basename $(pwd))
-
-# src/myproject → src/{PROJECT_NAME}
-mv src/myproject "src/$PROJECT_NAME"
-
-# pyproject.toml 업데이트
-# name = "myproject" → name = "{PROJECT_NAME}"
-# 관련 경로들도 모두 업데이트
-```
-
-사용자에게 확인:
-- AskUserQuestion 도구로 프로젝트 이름 확인
-- 기본값: 현재 디렉토리 이름
-
-### 5. 추가 요구사항 처리
-
-사용자가 추가 요청한 내용이 있으면 처리:
+스크립트 실행 후 추가 요구사항이 있으면 처리:
 
 **예시:**
-- "add fastapi and sqlalchemy dependencies" → pyproject.toml에 의존성 추가
-- "setup docker" → Dockerfile 생성
-- "add github actions" → .github/workflows/ 생성
+- "add fastapi and sqlalchemy" → pyproject.toml에 의존성 추가
+- "setup docker" → Dockerfile과 docker-compose.yml 생성
+- "add github actions for testing" → .github/workflows/test.yml 수정
 
-### 6. 초기화 완료 안내
+### 5. 결과 확인 및 요약
+
+스크립트 실행 결과를 확인하고 요약 제공:
 
 ```markdown
 ## ✅ Workspace Initialized
 
 **Language:** Python
-**Template:** templates/python
 **Project Name:** {project_name}
 
 ### Files Created:
-- claude.md (workspace marker)
-- pyproject.toml (uv configuration)
-- src/{project_name}/__init__.py
-- tests/ (unit, integration, e2e)
-- docs/testing_guidelines.md
-- .gitignore
-- README.md
+✓ .specify/ (Speckit templates & scripts)
+✓ .mcp.json (MCP server configuration)
+✓ pyproject.toml (uv configuration)
+✓ src/{project_name}/ (main package)
+✓ tests/ (unit/integration/e2e)
+✓ docs/ (documentation)
+✓ .github/workflows/ (CI/CD)
 
 ### Next Steps:
+1. Install dependencies: `uv sync`
+2. Install pre-commit hooks: `uv run pre-commit install`
+3. Run tests: `uv run pytest`
+4. Review and customize files
 
-1. **Install dependencies:**
-   ```bash
-   uv sync
-   ```
-
-2. **Review and customize:**
-   - Update pyproject.toml with project details
-   - Review README.md
-   - Check docs/testing_guidelines.md
-
-3. **Initialize git (if needed):**
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit from template"
-   ```
-
-4. **Start developing:**
-   ```bash
-   # Run tests
-   uv run pytest
-
-   # Add your code to src/{project_name}/
-   ```
-
-### Template Documentation:
-See README.md for complete usage guide.
+Ready to code! 🚀
 ```
 
 ## Error Handling
 
-### 템플릿이 존재하지 않는 경우
+### Git이 설치되지 않음
+```
+Error: git is not installed or not in PATH
+
+Please install git:
+- Windows: https://git-scm.com/download/win
+- Mac: brew install git
+- Linux: sudo apt-get install git
+```
+
+### 템플릿이 존재하지 않음
 ```
 Error: Template for '{language}' not found
 
 Available templates:
   - python
   - javascript (coming soon)
-  - rust (coming soon)
 
-Please use one of the available templates or contribute a new one:
-https://github.com/swseo92/Vibe-Coding-Setting-swseo
+Please choose an available template.
 ```
 
-### 디렉토리가 비어있지 않은 경우
-AskUserQuestion으로 확인:
-- "현재 디렉토리에 파일이 있습니다. 계속하면 일부 파일이 덮어쓰여질 수 있습니다. 계속하시겠습니까?"
-- 옵션: "예, 계속", "아니오, 취소"
-
-### Git이 설치되지 않은 경우
+### 네트워크 오류
 ```
-Error: git is not installed or not in PATH
+Error: Failed to clone repository
 
-Please install git first:
-- Windows: https://git-scm.com/download/win
-- Mac: brew install git
-- Linux: sudo apt-get install git (Ubuntu/Debian)
+Please check your internet connection and try again.
+If the problem persists, you can manually clone:
+git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git
 ```
 
 ## Implementation Notes
 
-**IMPORTANT:**
-1. NEVER read or clone the template repository yourself
-2. Use the Bash tool to execute the clone and copy commands
-3. Let the scripts handle all file operations
-4. Use AskUserQuestion for user confirmations
-5. Parse user input to extract language and additional requirements
-6. Handle both Windows (PowerShell) and Unix (Bash) environments
+**CRITICAL RULES:**
+1. ✅ **MUST execute the platform-specific script directly**
+2. ❌ **NEVER clone the repository yourself**
+3. ❌ **NEVER create files directly**
+4. ❌ **NEVER read template files**
+5. ✅ **Let the script handle ALL file operations**
 
-**Platform Detection:**
-```python
-import platform
-is_windows = platform.system() == "Windows"
+**Correct Implementation:**
+```bash
+# Good - Execute script
+powershell -File .claude/scripts/init-workspace.ps1 python
+
+# Bad - Try to do it yourself
+git clone ...
+cp ...
 ```
 
-**User Input Parsing Example:**
-```
-Input: "/init-workspace python add fastapi"
-→ language = "python"
-→ additional_requirements = "add fastapi"
+**Why Scripts?**
+- Ensures consistent behavior every time
+- Properly handles edge cases
+- Tested and verified implementation
+- Platform-specific optimizations
 
-Input: "/init-workspace javascript"
-→ language = "javascript"
-→ additional_requirements = None
-```
+**Script Responsibilities:**
+- Clone repository to temp directory
+- Copy common files (.specify, .mcp.json)
+- Copy language-specific files
+- Update project names
+- Clean up temp directory
+- Display success message
+
+**Command Responsibilities:**
+- Parse user input (language + requirements)
+- Check directory safety
+- Execute appropriate script
+- Handle additional requirements (post-script)
+- Provide final summary
 
 ## Available Templates
 
 Currently supported:
-- ✅ **python** - uv + pyproject.toml + pytest + ruff
-- ✅ **common** - Shared files for all templates (.specify, .mcp.json)
+- ✅ **python** - uv + pyproject.toml + pytest + ruff + pre-commit
+- ✅ **common** - Shared files (.specify, .mcp.json)
 
 Coming soon:
 - 🔄 **javascript** - npm/pnpm + TypeScript + Jest
 - 🔄 **rust** - Cargo + clippy + rustfmt
 - 🔄 **go** - go modules + testing
 
-## Template Structure Reference
+## Template Structure
 
 ### Common Template (`templates/common/`)
-**Always copied to every new project:**
+Always copied to every project:
 - `.specify/` - Speckit templates and scripts
+  - `memory/constitution.md`
+  - `scripts/bash/` - Automation scripts
+  - `templates/` - Spec/plan/task templates
 - `.mcp.json` - MCP server configurations
+  - Playwright MCP (with Windows cmd wrapper)
 
-### Language Templates (`templates/{language}/`)
-Each language template should include:
-- `claude.md` - Workspace marker
-- Language-specific config files
-- `src/` directory
-- `tests/` directory
-- `docs/` directory
-- `.gitignore`
-- `README.md`
+### Python Template (`templates/python/`)
+- `pyproject.toml` - uv configuration with dev dependencies
+- `pytest.ini` - pytest configuration
+- `src/myproject/` - main package (renamed to project name)
+- `tests/` - unit/integration/e2e test structure
+- `docs/testing_guidelines.md` - testing documentation
+- `.gitignore` - Python-specific ignores
+- `.env.example` - environment variables template
+- `.pre-commit-config.yaml` - pre-commit hooks
+- `.github/workflows/` - CI/CD pipelines
+- `README.md` - project documentation
 
-See `templates/python/` for reference implementation.
+## Platform Support
+
+- ✅ Windows (PowerShell 5.1+)
+- ✅ macOS (bash/zsh)
+- ✅ Linux (bash)
+- ✅ WSL (bash)
+- ✅ Git Bash on Windows
+
+## Examples
+
+### Example 1: Simple Python Project
+```
+User: /init-workspace python
+Assistant:
+1. Checking current directory... (3 files found)
+2. Warning: Directory not empty. Continue? [User: Yes]
+3. Executing init-workspace.ps1...
+4. ✓ Repository cloned
+5. ✓ Common files copied
+6. ✓ Python template applied
+7. ✓ Project name updated to 'my-project'
+8. ✓ Cleanup completed
+
+Ready! Run 'uv sync' to install dependencies.
+```
+
+### Example 2: Python with Additional Requirements
+```
+User: /init-workspace python add fastapi uvicorn
+Assistant:
+1. Executing init-workspace.sh...
+2. ✓ Template initialized
+3. Adding FastAPI dependencies to pyproject.toml...
+4. ✓ Added: fastapi, uvicorn
+
+Next: Run 'uv sync' to install new dependencies.
+```
+
+### Example 3: Empty Directory
+```
+User: /init-workspace python
+Assistant:
+1. Checking directory... (empty, good!)
+2. Executing script...
+3. ✓ All files copied successfully
+4. ✓ Project 'awesome-project' ready
+
+Start coding with 'uv sync' and 'uv run pytest'!
+```
+
+## Testing
+
+To test this command:
+```bash
+# Create test directory
+mkdir /tmp/test-init-workspace
+cd /tmp/test-init-workspace
+
+# Run command
+/init-workspace python
+
+# Verify files
+ls -la .specify/
+ls -la .mcp.json
+ls -la src/
+```
+
+Expected result: All template files present, no errors.
+
+## Related Commands
+
+- `/apply-settings` - Apply .claude settings globally
+- `/speckit.specify` - Create feature specifications
+- `/worktree-create` - Create git worktree for features
