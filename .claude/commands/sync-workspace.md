@@ -8,7 +8,9 @@ tags: [project, gitignored]
 
 Vibe-Coding-Setting-swseo GitHub 저장소의 최신 변경사항을 현재 프로젝트에 적용합니다.
 
-**중요:** 현재 프로젝트의 `.git`은 그대로 유지되며, 설정 파일들만 업데이트됩니다.
+**중요:**
+- 현재 프로젝트의 `.git`은 그대로 유지되며, 설정 파일들만 업데이트됩니다.
+- Vibe-Coding-Setting-swseo 저장소 자체에서 실행 시, 자동으로 전역 설정(`~/.claude/`, `~/.specify/`)도 업데이트됩니다.
 
 ## Usage
 
@@ -370,7 +372,98 @@ sync_settings() {
 SYNCED_COUNT=$(sync_settings "$TEMP_DIR" "." "$ONLY_ITEM")
 ```
 
-### 6. 정리 및 완료
+### 6. Apply Settings to Global Config
+
+프로젝트 설정을 전역 설정에 자동으로 적용합니다 (`/apply-settings` 기능).
+
+**중요:** 이 단계는 현재 프로젝트가 **Vibe-Coding-Setting-swseo 저장소 자체**인 경우에만 실행됩니다.
+
+#### Windows (PowerShell)
+```powershell
+# 현재 프로젝트가 Vibe-Coding-Setting 저장소인지 확인
+$gitRemote = git remote get-url origin 2>$null
+if ($gitRemote -match "Vibe-Coding-Setting-swseo") {
+    Write-Host "`nApplying settings to global config (~/.claude/)..." -ForegroundColor Cyan
+
+    # .claude 전체 복사
+    if (Test-Path ".claude") {
+        $globalClaudeDir = Join-Path $env:USERPROFILE ".claude"
+
+        # 백업 생성 (선택사항)
+        # $backupDir = "$globalClaudeDir.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        # Copy-Item -Recurse $globalClaudeDir $backupDir -ErrorAction SilentlyContinue
+
+        # 기존 디렉토리 제거 후 복사
+        if (Test-Path $globalClaudeDir) {
+            Remove-Item -Recurse -Force $globalClaudeDir -ErrorAction SilentlyContinue
+        }
+        Copy-Item -Recurse -Force ".claude" $globalClaudeDir
+        Write-Host "  ✓ Synced .claude/ to ~/.claude/" -ForegroundColor Green
+    }
+
+    # settings.local.json → settings.json
+    if (Test-Path ".claude/settings.local.json") {
+        Copy-Item -Force ".claude/settings.local.json" "$globalClaudeDir/settings.json"
+        Write-Host "  ✓ Synced settings.local.json to settings.json" -ForegroundColor Green
+    }
+
+    # .specify 전체 복사
+    if (Test-Path ".specify") {
+        $globalSpecifyDir = Join-Path $env:USERPROFILE ".specify"
+        if (Test-Path $globalSpecifyDir) {
+            Remove-Item -Recurse -Force $globalSpecifyDir -ErrorAction SilentlyContinue
+        }
+        Copy-Item -Recurse -Force ".specify" $globalSpecifyDir
+        Write-Host "  ✓ Synced .specify/ to ~/.specify/" -ForegroundColor Green
+    }
+
+    Write-Host "`n✓ Global settings updated!" -ForegroundColor Green
+} else {
+    Write-Host "`nSkipping global settings sync (not in Vibe-Coding-Setting repo)" -ForegroundColor Gray
+}
+```
+
+#### Unix/Linux/Mac (Bash)
+```bash
+# 현재 프로젝트가 Vibe-Coding-Setting 저장소인지 확인
+GIT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
+if [[ "$GIT_REMOTE" == *"Vibe-Coding-Setting-swseo"* ]]; then
+    echo ""
+    echo "Applying settings to global config (~/.claude/)..."
+
+    # .claude 전체 복사
+    if [ -d ".claude" ]; then
+        GLOBAL_CLAUDE_DIR="$HOME/.claude"
+
+        # 기존 디렉토리 제거 후 복사
+        rm -rf "$GLOBAL_CLAUDE_DIR" 2>/dev/null
+        cp -r ".claude" "$GLOBAL_CLAUDE_DIR"
+        echo "  ✓ Synced .claude/ to ~/.claude/"
+    fi
+
+    # settings.local.json → settings.json
+    if [ -f ".claude/settings.local.json" ]; then
+        cp -f ".claude/settings.local.json" "$GLOBAL_CLAUDE_DIR/settings.json"
+        echo "  ✓ Synced settings.local.json to settings.json"
+    fi
+
+    # .specify 전체 복사
+    if [ -d ".specify" ]; then
+        GLOBAL_SPECIFY_DIR="$HOME/.specify"
+        rm -rf "$GLOBAL_SPECIFY_DIR" 2>/dev/null
+        cp -r ".specify" "$GLOBAL_SPECIFY_DIR"
+        echo "  ✓ Synced .specify/ to ~/.specify/"
+    fi
+
+    echo ""
+    echo "✓ Global settings updated!"
+else
+    echo ""
+    echo "Skipping global settings sync (not in Vibe-Coding-Setting repo)"
+fi
+```
+
+### 7. 정리 및 완료
 
 임시 디렉토리 정리:
 
@@ -384,7 +477,7 @@ Remove-Item -Recurse -Force $tempDir
 rm -rf "$TEMP_DIR"
 ```
 
-### 7. 완료 메시지
+### 8. 완료 메시지
 
 ```markdown
 ## ✅ Workspace Sync Complete
@@ -401,6 +494,10 @@ rm -rf "$TEMP_DIR"
 - New files added: 3
 - Files updated: 5
 - Time taken: 3.2s
+
+### Global Settings:
+- ✓ Applied to ~/.claude/ (if in Vibe-Coding-Setting repo)
+- ✓ Applied to ~/.specify/ (if in Vibe-Coding-Setting repo)
 
 ### Next Steps:
 
@@ -503,7 +600,8 @@ Show what would be synced without actually syncing
 5. Clean up temporary directory in all cases (success/failure)
 6. Preserve current project's .git completely
 7. Only sync .claude/ and .specify/ directories
-8. Show clear summary of what was changed
+8. **Automatically apply settings to global config if in Vibe-Coding-Setting repo**
+9. Show clear summary of what was changed
 
 **Repository URL:**
 ```
