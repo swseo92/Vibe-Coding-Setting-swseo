@@ -1,510 +1,558 @@
 ---
 name: sync-workspace
-description: Sync workspace settings between local and global configurations
+description: Sync latest Vibe-Coding-Setting changes to current project
 tags: [project, gitignored]
 ---
 
 # Sync Workspace Settings
 
-로컬 프로젝트 설정과 전역 설정(`~/.claude/`, `~/.specify/`) 간 양방향 동기화를 수행합니다.
+Vibe-Coding-Setting-swseo GitHub 저장소의 최신 변경사항을 현재 프로젝트에 적용합니다.
+
+**중요:** 현재 프로젝트의 `.git`은 그대로 유지되며, 설정 파일들만 업데이트됩니다.
 
 ## Usage
 
 ```bash
-# 전역 → 로컬 (pull)
-/sync-workspace --from-global
-/sync-workspace pull
-
-# 로컬 → 전역 (push)
-/sync-workspace --to-global
-/sync-workspace push
-
-# 대화형 모드 (기본)
+# 기본 실행 (전체 동기화)
 /sync-workspace
 
 # 특정 항목만 동기화
-/sync-workspace --from-global --only commands
-/sync-workspace push --only skills
+/sync-workspace --only claude-config
+/sync-workspace --only specify
+
+# 변경사항만 미리보기
+/sync-workspace --dry-run
 ```
 
 ## Workflow
 
-### 1. 방향 결정
+### 1. Vibe-Coding-Setting 저장소 Clone
 
-사용자가 방향을 지정하지 않으면 AskUserQuestion으로 확인:
-
-**질문:**
-"어떤 방향으로 동기화하시겠습니까?"
-
-**옵션:**
-1. **From Global (Pull)** - 전역 설정을 로컬로 가져오기
-   - 설명: `~/.claude/` → 현재 프로젝트
-   - 용도: 다른 머신이나 업데이트된 전역 설정 가져오기
-
-2. **To Global (Push)** - 로컬 설정을 전역으로 보내기
-   - 설명: 현재 프로젝트 → `~/.claude/`
-   - 용도: 이 프로젝트의 설정을 모든 프로젝트에 적용
-
-3. **Both (Interactive)** - 대화형으로 파일별 선택
-   - 설명: 파일마다 어느 버전을 유지할지 선택
-   - 용도: 세밀한 제어가 필요할 때
-
-### 2. 동기화 전 검사
+임시 디렉토리에 최신 버전을 clone합니다.
 
 #### Windows (PowerShell)
 ```powershell
-$globalClaude = Join-Path $env:USERPROFILE ".claude"
-$globalSpecify = Join-Path $env:USERPROFILE ".specify"
-$localClaude = ".claude"
-$localSpecify = ".specify"
+# 임시 디렉토리 생성
+$tempDir = New-Item -ItemType Directory -Path "$env:TEMP\vibe-coding-sync-$(Get-Random)"
 
-# 디렉토리 존재 확인
-if (-not (Test-Path $globalClaude)) {
-    Write-Host "Warning: Global .claude directory not found at $globalClaude" -ForegroundColor Yellow
-    Write-Host "Run /apply-settings first to initialize global settings" -ForegroundColor Yellow
+Write-Host "Fetching latest Vibe-Coding-Setting from GitHub..." -ForegroundColor Cyan
+
+# Clone 저장소
+git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git $tempDir
+
+if (-not (Test-Path $tempDir)) {
+    Write-Host "Error: Failed to clone Vibe-Coding-Setting repository" -ForegroundColor Red
     exit 1
 }
 
-if (-not (Test-Path $localClaude)) {
-    Write-Host "Error: Local .claude directory not found" -ForegroundColor Red
-    Write-Host "This command must be run from a repository with .claude/ directory" -ForegroundColor Yellow
-    exit 1
-}
+Write-Host "✓ Successfully fetched latest version" -ForegroundColor Green
 ```
 
 #### Unix/Linux/Mac (Bash)
 ```bash
-GLOBAL_CLAUDE="$HOME/.claude"
-GLOBAL_SPECIFY="$HOME/.specify"
-LOCAL_CLAUDE=".claude"
-LOCAL_SPECIFY=".specify"
+# 임시 디렉토리 생성
+TEMP_DIR=$(mktemp -d)
 
-# 디렉토리 존재 확인
-if [ ! -d "$GLOBAL_CLAUDE" ]; then
-    echo "Warning: Global .claude directory not found at $GLOBAL_CLAUDE"
-    echo "Run /apply-settings first to initialize global settings"
+echo "Fetching latest Vibe-Coding-Setting from GitHub..."
+
+# Clone 저장소
+git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git "$TEMP_DIR"
+
+if [ ! -d "$TEMP_DIR" ]; then
+    echo "Error: Failed to clone Vibe-Coding-Setting repository"
     exit 1
 fi
 
-if [ ! -d "$LOCAL_CLAUDE" ]; then
-    echo "Error: Local .claude directory not found"
-    echo "This command must be run from a repository with .claude/ directory"
-    exit 1
-fi
+echo "✓ Successfully fetched latest version"
 ```
 
-### 3. 차이점 분석
+### 2. 현재 프로젝트 확인
 
-동기화 전에 변경사항을 사용자에게 보여줍니다.
+현재 디렉토리가 올바른 프로젝트인지 확인:
+
+```bash
+# 현재 프로젝트의 git remote 확인
+git remote -v
+
+# 사용자에게 확인
+# 출력 예시:
+# origin  https://github.com/user/my-project.git (fetch)
+# origin  https://github.com/user/my-project.git (push)
+```
+
+**확인 메시지:**
+```
+Current project git remote:
+  origin: https://github.com/user/my-project.git
+
+This will sync Vibe-Coding-Setting changes to this project.
+Your project's .git and code will NOT be affected.
+
+Continue? (y/N)
+```
+
+### 3. 변경사항 분석
+
+동기화할 파일들의 차이를 분석합니다.
 
 #### Windows (PowerShell)
 ```powershell
-function Compare-Directories {
-    param($Source, $Target, $Label)
-
-    Write-Host "`n=== $Label ===" -ForegroundColor Cyan
+function Compare-Settings {
+    param($SourceDir, $TargetDir)
 
     $changes = @{
         "New" = @()
         "Modified" = @()
-        "Deleted" = @()
+        "Unchanged" = @()
     }
 
-    # Source에만 있는 파일 (New)
-    Get-ChildItem -Recurse -File $Source | ForEach-Object {
-        $relativePath = $_.FullName.Substring($Source.Length + 1)
-        $targetFile = Join-Path $Target $relativePath
+    # .claude 디렉토리 비교
+    if (Test-Path "$SourceDir/.claude") {
+        Get-ChildItem -Recurse -File "$SourceDir/.claude" | ForEach-Object {
+            $relativePath = $_.FullName.Substring("$SourceDir/.claude".Length + 1)
+            $targetFile = Join-Path "$TargetDir/.claude" $relativePath
 
-        if (-not (Test-Path $targetFile)) {
-            $changes["New"] += $relativePath
-        } elseif ((Get-FileHash $_.FullName).Hash -ne (Get-FileHash $targetFile).Hash) {
-            $changes["Modified"] += $relativePath
+            if (-not (Test-Path $targetFile)) {
+                $changes["New"] += ".claude/$relativePath"
+            } elseif ((Get-FileHash $_.FullName).Hash -ne (Get-FileHash $targetFile).Hash) {
+                $changes["Modified"] += ".claude/$relativePath"
+            } else {
+                $changes["Unchanged"] += ".claude/$relativePath"
+            }
         }
     }
 
-    # Target에만 있는 파일 (Deleted)
-    Get-ChildItem -Recurse -File $Target | ForEach-Object {
-        $relativePath = $_.FullName.Substring($Target.Length + 1)
-        $sourceFile = Join-Path $Source $relativePath
+    # .specify 디렉토리 비교
+    if (Test-Path "$SourceDir/.specify") {
+        Get-ChildItem -Recurse -File "$SourceDir/.specify" | ForEach-Object {
+            $relativePath = $_.FullName.Substring("$SourceDir/.specify".Length + 1)
+            $targetFile = Join-Path "$TargetDir/.specify" $relativePath
 
-        if (-not (Test-Path $sourceFile)) {
-            $changes["Deleted"] += $relativePath
+            if (-not (Test-Path $targetFile)) {
+                $changes["New"] += ".specify/$relativePath"
+            } elseif ((Get-FileHash $_.FullName).Hash -ne (Get-FileHash $targetFile).Hash) {
+                $changes["Modified"] += ".specify/$relativePath"
+            } else {
+                $changes["Unchanged"] += ".specify/$relativePath"
+            }
         }
-    }
-
-    # 결과 출력
-    if ($changes["New"].Count -gt 0) {
-        Write-Host "`nNew files ($($changes["New"].Count)):" -ForegroundColor Green
-        $changes["New"] | ForEach-Object { Write-Host "  + $_" -ForegroundColor Green }
-    }
-
-    if ($changes["Modified"].Count -gt 0) {
-        Write-Host "`nModified files ($($changes["Modified"].Count)):" -ForegroundColor Yellow
-        $changes["Modified"] | ForEach-Object { Write-Host "  ~ $_" -ForegroundColor Yellow }
-    }
-
-    if ($changes["Deleted"].Count -gt 0) {
-        Write-Host "`nDeleted files ($($changes["Deleted"].Count)):" -ForegroundColor Red
-        $changes["Deleted"] | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
-    }
-
-    if ($changes["New"].Count -eq 0 -and $changes["Modified"].Count -eq 0 -and $changes["Deleted"].Count -eq 0) {
-        Write-Host "  No changes" -ForegroundColor Gray
     }
 
     return $changes
 }
 
-# From Global 방향
-if ($Direction -eq "from-global") {
-    $changes = Compare-Directories -Source $globalClaude -Target $localClaude -Label "Changes from Global → Local"
+$changes = Compare-Settings -SourceDir $tempDir -TargetDir "."
+
+# 결과 출력
+Write-Host "`n=== Sync Preview ===" -ForegroundColor Cyan
+
+if ($changes["New"].Count -gt 0) {
+    Write-Host "`nNew files ($($changes["New"].Count)):" -ForegroundColor Green
+    $changes["New"] | ForEach-Object { Write-Host "  + $_" -ForegroundColor Green }
 }
-# To Global 방향
-elseif ($Direction -eq "to-global") {
-    $changes = Compare-Directories -Source $localClaude -Target $globalClaude -Label "Changes from Local → Global"
+
+if ($changes["Modified"].Count -gt 0) {
+    Write-Host "`nModified files ($($changes["Modified"].Count)):" -ForegroundColor Yellow
+    $changes["Modified"] | ForEach-Object { Write-Host "  ~ $_" -ForegroundColor Yellow }
 }
+
+if ($changes["New"].Count -eq 0 -and $changes["Modified"].Count -eq 0) {
+    Write-Host "`nNo changes - already up to date!" -ForegroundColor Green
+    Remove-Item -Recurse -Force $tempDir
+    exit 0
+}
+
+Write-Host "`nUnchanged: $($changes["Unchanged"].Count) files" -ForegroundColor Gray
 ```
 
-### 4. 확인 프롬프트
+#### Unix/Linux/Mac (Bash)
+```bash
+compare_settings() {
+    local source_dir="$1"
+    local target_dir="$2"
 
-변경사항이 있으면 사용자 확인:
+    NEW_FILES=()
+    MODIFIED_FILES=()
+    UNCHANGED_COUNT=0
+
+    # .claude 디렉토리 비교
+    if [ -d "$source_dir/.claude" ]; then
+        while IFS= read -r -d '' file; do
+            relative_path="${file#$source_dir/.claude/}"
+            target_file="$target_dir/.claude/$relative_path"
+
+            if [ ! -f "$target_file" ]; then
+                NEW_FILES+=(".claude/$relative_path")
+            elif ! cmp -s "$file" "$target_file"; then
+                MODIFIED_FILES+=(".claude/$relative_path")
+            else
+                ((UNCHANGED_COUNT++))
+            fi
+        done < <(find "$source_dir/.claude" -type f -print0)
+    fi
+
+    # .specify 디렉토리 비교
+    if [ -d "$source_dir/.specify" ]; then
+        while IFS= read -r -d '' file; do
+            relative_path="${file#$source_dir/.specify/}"
+            target_file="$target_dir/.specify/$relative_path"
+
+            if [ ! -f "$target_file" ]; then
+                NEW_FILES+=(".specify/$relative_path")
+            elif ! cmp -s "$file" "$target_file"; then
+                MODIFIED_FILES+=(".specify/$relative_path")
+            else
+                ((UNCHANGED_COUNT++))
+            fi
+        done < <(find "$source_dir/.specify" -type f -print0)
+    fi
+
+    # 결과 출력
+    echo ""
+    echo "=== Sync Preview ==="
+
+    if [ ${#NEW_FILES[@]} -gt 0 ]; then
+        echo ""
+        echo "New files (${#NEW_FILES[@]}):"
+        for file in "${NEW_FILES[@]}"; do
+            echo "  + $file"
+        done
+    fi
+
+    if [ ${#MODIFIED_FILES[@]} -gt 0 ]; then
+        echo ""
+        echo "Modified files (${#MODIFIED_FILES[@]}):"
+        for file in "${MODIFIED_FILES[@]}"; do
+            echo "  ~ $file"
+        done
+    fi
+
+    if [ ${#NEW_FILES[@]} -eq 0 ] && [ ${#MODIFIED_FILES[@]} -eq 0 ]; then
+        echo ""
+        echo "No changes - already up to date!"
+        rm -rf "$TEMP_DIR"
+        exit 0
+    fi
+
+    echo ""
+    echo "Unchanged: $UNCHANGED_COUNT files"
+}
+
+compare_settings "$TEMP_DIR" "."
+```
+
+### 4. 사용자 확인
+
+변경사항을 적용할지 확인:
 
 **AskUserQuestion:**
 ```
 다음 변경사항을 적용하시겠습니까?
 
-- 새 파일: 5개
-- 수정된 파일: 3개
-- 삭제될 파일: 1개
+- 새 파일: 3개
+- 수정된 파일: 5개
+- 변경 없음: 142개
+
+적용하면 현재 프로젝트의 .claude/ 및 .specify/ 내용이 업데이트됩니다.
 ```
 
 **옵션:**
-- "Yes, proceed" - 계속 진행
+- "Yes, apply changes" - 변경사항 적용
 - "No, cancel" - 취소
-- "Show details" - 파일 목록 자세히 보기
+- "Show file details" - 변경된 파일 목록 자세히 보기
 
 ### 5. 동기화 실행
 
-#### From Global (Pull)
+변경사항 적용:
 
-**Windows (PowerShell):**
+#### Windows (PowerShell)
 ```powershell
-function Sync-FromGlobal {
-    param($OnlyItem = $null)
+function Sync-Settings {
+    param($SourceDir, $TargetDir, $OnlyItem = $null)
 
-    $itemsToCopy = @{
-        "commands" = @{
-            Source = Join-Path $globalClaude "commands"
-            Target = Join-Path $localClaude "commands"
-        }
-        "agents" = @{
-            Source = Join-Path $globalClaude "agents"
-            Target = Join-Path $localClaude "agents"
-        }
-        "skills" = @{
-            Source = Join-Path $globalClaude "skills"
-            Target = Join-Path $localClaude "skills"
-        }
-        "personas" = @{
-            Source = Join-Path $globalClaude "personas"
-            Target = Join-Path $localClaude "personas"
-        }
-        "scripts" = @{
-            Source = Join-Path $globalClaude "scripts"
-            Target = Join-Path $localClaude "scripts"
-        }
-        "settings" = @{
-            Source = Join-Path $globalClaude "settings.json"
-            Target = Join-Path $localClaude "settings.local.json"
-        }
-        "specify" = @{
-            Source = $globalSpecify
-            Target = $localSpecify
-        }
+    $syncItems = @{
+        "claude-config" = ".claude"
+        "specify" = ".specify"
     }
 
     # Filter if --only specified
     if ($OnlyItem) {
-        $itemsToCopy = @{$OnlyItem = $itemsToCopy[$OnlyItem]}
+        $syncItems = @{$OnlyItem = $syncItems[$OnlyItem]}
     }
 
-    foreach ($item in $itemsToCopy.GetEnumerator()) {
-        $name = $item.Key
-        $source = $item.Value.Source
-        $target = $item.Value.Target
+    $totalSynced = 0
 
-        if (Test-Path $source) {
+    foreach ($item in $syncItems.GetEnumerator()) {
+        $name = $item.Key
+        $dir = $item.Value
+        $sourcePath = Join-Path $SourceDir $dir
+        $targetPath = Join-Path $TargetDir $dir
+
+        if (Test-Path $sourcePath) {
             Write-Host "Syncing $name..." -ForegroundColor Yellow
 
-            # 디렉토리면 전체 복사
-            if (Test-Path $source -PathType Container) {
-                if (Test-Path $target) {
-                    Remove-Item -Recurse -Force $target
-                }
-                Copy-Item -Recurse -Force $source $target
-            }
-            # 파일이면 개별 복사
-            else {
-                $targetDir = Split-Path -Parent $target
-                if (-not (Test-Path $targetDir)) {
-                    New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-                }
-                Copy-Item -Force $source $target
+            # 타겟 디렉토리 백업 (선택사항)
+            # if (Test-Path $targetPath) {
+            #     $backupPath = "$targetPath.backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+            #     Copy-Item -Recurse $targetPath $backupPath
+            # }
+
+            # 기존 디렉토리 제거
+            if (Test-Path $targetPath) {
+                Remove-Item -Recurse -Force $targetPath
             }
 
-            Write-Host "  ✓ Synced $name" -ForegroundColor Green
+            # 새 버전 복사
+            Copy-Item -Recurse -Force $sourcePath $targetPath
+
+            $fileCount = (Get-ChildItem -Recurse -File $targetPath).Count
+            $totalSynced += $fileCount
+
+            Write-Host "  ✓ Synced $name ($fileCount files)" -ForegroundColor Green
         } else {
-            Write-Host "  ⊘ $name not found in global, skipping" -ForegroundColor Gray
+            Write-Host "  ⊘ $name not found in source, skipping" -ForegroundColor Gray
         }
     }
+
+    return $totalSynced
 }
 
-Sync-FromGlobal -OnlyItem $OnlyItem
+$syncedCount = Sync-Settings -SourceDir $tempDir -TargetDir "." -OnlyItem $OnlyItem
 ```
 
-**Unix/Linux/Mac (Bash):**
+#### Unix/Linux/Mac (Bash)
 ```bash
-sync_from_global() {
-    local only_item="$1"
+sync_settings() {
+    local source_dir="$1"
+    local target_dir="$2"
+    local only_item="$3"
 
-    declare -A items_to_copy=(
-        ["commands"]="$GLOBAL_CLAUDE/commands:$LOCAL_CLAUDE/commands"
-        ["agents"]="$GLOBAL_CLAUDE/agents:$LOCAL_CLAUDE/agents"
-        ["skills"]="$GLOBAL_CLAUDE/skills:$LOCAL_CLAUDE/skills"
-        ["personas"]="$GLOBAL_CLAUDE/personas:$LOCAL_CLAUDE/personas"
-        ["scripts"]="$GLOBAL_CLAUDE/scripts:$LOCAL_CLAUDE/scripts"
-        ["settings"]="$GLOBAL_CLAUDE/settings.json:$LOCAL_CLAUDE/settings.local.json"
-        ["specify"]="$GLOBAL_SPECIFY:$LOCAL_SPECIFY"
+    declare -A sync_items=(
+        ["claude-config"]=".claude"
+        ["specify"]=".specify"
     )
 
-    for name in "${!items_to_copy[@]}"; do
+    local total_synced=0
+
+    for name in "${!sync_items[@]}"; do
         # Filter if --only specified
         if [ -n "$only_item" ] && [ "$name" != "$only_item" ]; then
             continue
         fi
 
-        IFS=':' read -r source target <<< "${items_to_copy[$name]}"
+        local dir="${sync_items[$name]}"
+        local source_path="$source_dir/$dir"
+        local target_path="$target_dir/$dir"
 
-        if [ -e "$source" ]; then
+        if [ -d "$source_path" ]; then
             echo "Syncing $name..."
 
-            # 디렉토리면 전체 복사
-            if [ -d "$source" ]; then
-                rm -rf "$target"
-                cp -r "$source" "$target"
-            # 파일이면 개별 복사
-            else
-                mkdir -p "$(dirname "$target")"
-                cp "$source" "$target"
+            # 기존 디렉토리 제거
+            if [ -d "$target_path" ]; then
+                rm -rf "$target_path"
             fi
 
-            echo "  ✓ Synced $name"
+            # 새 버전 복사
+            cp -r "$source_path" "$target_path"
+
+            local file_count=$(find "$target_path" -type f | wc -l)
+            total_synced=$((total_synced + file_count))
+
+            echo "  ✓ Synced $name ($file_count files)"
         else
-            echo "  ⊘ $name not found in global, skipping"
+            echo "  ⊘ $name not found in source, skipping"
         fi
     done
+
+    echo "$total_synced"
 }
 
-sync_from_global "$ONLY_ITEM"
+SYNCED_COUNT=$(sync_settings "$TEMP_DIR" "." "$ONLY_ITEM")
 ```
 
-#### To Global (Push)
+### 6. 정리 및 완료
 
-**Windows (PowerShell):**
+임시 디렉토리 정리:
+
 ```powershell
-function Sync-ToGlobal {
-    param($OnlyItem = $null)
-
-    $itemsToCopy = @{
-        "commands" = @{
-            Source = Join-Path $localClaude "commands"
-            Target = Join-Path $globalClaude "commands"
-        }
-        "agents" = @{
-            Source = Join-Path $localClaude "agents"
-            Target = Join-Path $globalClaude "agents"
-        }
-        "skills" = @{
-            Source = Join-Path $localClaude "skills"
-            Target = Join-Path $globalClaude "skills"
-        }
-        "personas" = @{
-            Source = Join-Path $localClaude "personas"
-            Target = Join-Path $globalClaude "personas"
-        }
-        "scripts" = @{
-            Source = Join-Path $localClaude "scripts"
-            Target = Join-Path $globalClaude "scripts"
-        }
-        "settings" = @{
-            Source = Join-Path $localClaude "settings.local.json"
-            Target = Join-Path $globalClaude "settings.json"
-        }
-        "specify" = @{
-            Source = $localSpecify
-            Target = $globalSpecify
-        }
-    }
-
-    # Filter if --only specified
-    if ($OnlyItem) {
-        $itemsToCopy = @{$OnlyItem = $itemsToCopy[$OnlyItem]}
-    }
-
-    foreach ($item in $itemsToCopy.GetEnumerator()) {
-        $name = $item.Key
-        $source = $item.Value.Source
-        $target = $item.Value.Target
-
-        if (Test-Path $source) {
-            Write-Host "Syncing $name..." -ForegroundColor Yellow
-
-            # 디렉토리면 전체 복사
-            if (Test-Path $source -PathType Container) {
-                if (Test-Path $target) {
-                    Remove-Item -Recurse -Force $target
-                }
-                Copy-Item -Recurse -Force $source $target
-            }
-            # 파일이면 개별 복사
-            else {
-                $targetDir = Split-Path -Parent $target
-                if (-not (Test-Path $targetDir)) {
-                    New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-                }
-                Copy-Item -Force $source $target
-            }
-
-            Write-Host "  ✓ Synced $name" -ForegroundColor Green
-        } else {
-            Write-Host "  ⊘ $name not found in local, skipping" -ForegroundColor Gray
-        }
-    }
-}
-
-Sync-ToGlobal -OnlyItem $OnlyItem
+# Windows
+Remove-Item -Recurse -Force $tempDir
 ```
 
-### 6. 완료 메시지
+```bash
+# Unix
+rm -rf "$TEMP_DIR"
+```
+
+### 7. 완료 메시지
 
 ```markdown
 ## ✅ Workspace Sync Complete
 
-**Direction:** Global → Local (Pull)
-**Synced Items:**
-- ✓ commands (13 files)
-- ✓ agents (2 files)
-- ✓ skills (12 directories)
-- ✓ personas (2 files)
-- ✓ scripts (4 files)
-- ✓ settings (settings.json → settings.local.json)
-- ⊘ specify (not found in global)
+**Source:** Vibe-Coding-Setting-swseo (latest from GitHub)
+**Target:** Current project
+
+### Changes Applied:
+- ✓ .claude/ - 13 commands, 2 agents, 12 skills, 2 personas, 4 scripts
+- ✓ .specify/ - Templates and scripts updated
 
 **Summary:**
 - Total files synced: 145
-- Time taken: 2.3s
+- New files added: 3
+- Files updated: 5
+- Time taken: 3.2s
 
 ### Next Steps:
 
-**If synced FROM global:**
-- Review changes: `git diff .claude/`
-- Commit if satisfied: `git add .claude/ && git commit`
+1. **Review changes:**
+   ```bash
+   git status
+   git diff .claude/
+   git diff .specify/
+   ```
 
-**If synced TO global:**
-- Global settings updated at: `~/.claude/`
-- All projects will now use these settings
+2. **Test the changes:**
+   - Try new commands: `/help`
+   - Verify settings work
 
-### Rollback:
-To undo this sync, run:
-```bash
-git restore .claude/  # If synced from global
-# or
-/sync-workspace --from-global  # If synced to global
-```
+3. **Commit if satisfied:**
+   ```bash
+   git add .claude/ .specify/
+   git commit -m "chore: Sync Vibe-Coding-Setting updates"
+   ```
+
+4. **Or rollback:**
+   ```bash
+   git restore .claude/ .specify/
+   ```
+
+### What was NOT changed:
+- ✓ Your project's .git directory
+- ✓ Your source code
+- ✓ Your project-specific files
+- ✓ Your git history and branches
 ```
 
 ## Error Handling
 
-### Global directory not found
+### Repository clone failed
 ```
-Error: Global .claude directory not found
+Error: Failed to clone Vibe-Coding-Setting-swseo repository
 
-Initialize global settings first:
-1. Run /apply-settings from Vibe-Coding-Setting-swseo repository
-2. Or manually create ~/.claude/
+Possible causes:
+- No internet connection
+- GitHub is down
+- Repository URL has changed
+- Authentication required
 
-Current location: ~/.claude/ (not found)
+Please try again later or check:
+https://github.com/swseo92/Vibe-Coding-Setting-swseo
 ```
 
-### Sync conflict detection
+### Not in a git repository
 ```
-Warning: Conflicting changes detected
+Warning: Current directory is not a git repository
 
-The following files have been modified in both locations:
-- .claude/commands/custom-command.md
-- .claude/settings.local.json
+This command is designed to sync settings to an existing project.
 
 Options:
-1. Keep local version
-2. Keep global version
-3. Cancel and resolve manually
+1. Initialize git: git init
+2. Use /init-workspace to create new project from template
+3. Cancel and run from correct directory
 ```
 
 ### Permission errors
 ```
-Error: Permission denied writing to ~/.claude/
+Error: Permission denied writing to .claude/
 
 Possible solutions:
-- Check file permissions: ls -la ~/.claude/
-- Run with appropriate permissions
-- Check if files are in use by another process
+- Check file permissions
+- Close any programs using these files
+- Run from correct directory
+```
+
+## Options
+
+### --only <item>
+Sync only specific item
+
+**Available items:**
+- `claude-config` - Only .claude/ directory
+- `specify` - Only .specify/ directory
+
+**Example:**
+```bash
+/sync-workspace --only claude-config
+```
+
+### --dry-run
+Show what would be synced without actually syncing
+
+**Example:**
+```bash
+/sync-workspace --dry-run
 ```
 
 ## Implementation Notes
 
 **IMPORTANT:**
-1. Use Bash tool for all file operations
-2. Detect platform (Windows/Unix) automatically
+1. Use Bash tool to execute git clone
+2. Detect platform (Windows/Unix) and use appropriate scripts
 3. Always show diff before syncing
-4. Provide rollback instructions
-5. Handle settings.json vs settings.local.json correctly
-6. Support --only filter for partial sync
-7. Create backup before major operations (optional)
+4. Get user confirmation via AskUserQuestion
+5. Clean up temporary directory in all cases (success/failure)
+6. Preserve current project's .git completely
+7. Only sync .claude/ and .specify/ directories
+8. Show clear summary of what was changed
 
-**Sync Items:**
-- `commands/` - Slash commands
-- `agents/` - Custom agents
-- `skills/` - Skills
-- `personas/` - Personas
-- `scripts/` - Scripts
-- `settings.json` ↔ `settings.local.json`
-- `.specify/` - Speckit templates (optional)
+**Repository URL:**
+```
+https://github.com/swseo92/Vibe-Coding-Setting-swseo.git
+```
+
+**Sync Targets:**
+- `.claude/` - All Claude Code configurations
+  - commands/
+  - agents/
+  - skills/
+  - personas/
+  - scripts/
+  - settings.local.json
+- `.specify/` - Speckit templates and scripts
 
 **Exclude from sync:**
-- `.claude/shell-snapshots/`
-- `.claude/history/`
-- `.claude/debug/`
-- `.claude/.credentials`
+- `.git/` - Current project's git (NEVER touch)
+- `src/`, `tests/`, etc. - Project source code
+- `templates/` - Template files (not needed in projects)
+- `speckit/` - Only in Vibe-Coding-Setting repo
+- `docs/` - Documentation (project-specific)
 
-## Options
+## Use Cases
 
-### --from-global / pull
-Pull settings from global to local
+### Use Case 1: Update Commands on Existing Project
+```bash
+cd ~/my-existing-project
+/sync-workspace --only claude-config
+# → Get latest commands, agents, skills
+```
 
-### --to-global / push
-Push settings from local to global
+### Use Case 2: Sync After Vibe-Coding-Setting Update
+```bash
+# Vibe-Coding-Setting repo got new updates
+cd ~/my-api-project
+/sync-workspace
+# → Apply all latest changes
+```
 
-### --only <item>
-Sync only specific item (commands, agents, skills, personas, scripts, settings, specify)
-
-### --dry-run
-Show what would be synced without actually syncing
-
-### --backup
-Create backup before syncing
+### Use Case 3: Preview Changes
+```bash
+cd ~/critical-project
+/sync-workspace --dry-run
+# → See what would change before applying
+```
 
 ## Related Commands
 
-- `/apply-settings` - One-way sync: local → global (legacy)
-- `/update-claude-skills` - Update Anthropic skills from GitHub
-- `/init-workspace` - Initialize new project from template
+- `/init-workspace` - Initialize NEW project from template
+- `/update-claude-skills` - Update only Anthropic skills from GitHub
+- `/apply-settings` - Apply local settings to global ~/.claude/
