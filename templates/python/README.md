@@ -45,14 +45,15 @@ uv run pytest
 ├── claude.md              # Claude Code 프로젝트 설명 (templates/common/에서 복사)
 ├── src/
 │   └── myproject/         # 메인 소스 코드
-└── tests/                 # 테스트 코드
-    ├── conftest.py        # 전역 테스트 설정
-    ├── unit/              # 단위 테스트
-    │   └── conftest.py
-    ├── integration/       # 통합 테스트
-    │   └── conftest.py
-    └── e2e/              # E2E 테스트
-        └── conftest.py
+├── tests/                 # 테스트 코드
+│   ├── conftest.py        # 전역 테스트 설정
+│   ├── unit/              # 단위 테스트
+│   │   └── conftest.py
+│   ├── integration/       # 통합 테스트
+│   │   └── conftest.py
+│   └── e2e/              # E2E 테스트
+│       └── conftest.py
+└── notebooks/             # Jupyter notebook 파일
 ```
 
 **참고**: `claude.md` 파일은 `templates/common/claude.md`에서 복사하여 프로젝트에 맞게 수정하세요.
@@ -272,6 +273,7 @@ uv run pre-commit run --hook-stage push --all-files
 - 큰 파일 체크
 - Private key 감지
 - Bandit 보안 스캔
+- **Jupyter notebook output 자동 제거** (실행 결과와 카운트 제거하여 깔끔한 commit)
 
 **Push 시 실행되는 훅:**
 - 위의 모든 commit 훅
@@ -290,6 +292,33 @@ uv run pre-commit run --hook-stage push --all-files
 3. **의존성 자동 업데이트**:
    - Dependabot이 자동으로 활성화됨
    - PR 검토 및 병합만 하면 됨
+
+## Jupyter Notebook 사용
+
+프로젝트에는 Jupyter notebook 지원이 포함되어 있습니다:
+
+```bash
+# Jupyter notebook 실행
+uv run jupyter notebook
+
+# 특정 포트로 실행
+uv run jupyter notebook --port=8889
+
+# notebooks/ 폴더에서 시작
+cd notebooks && uv run jupyter notebook
+```
+
+**자동 output 제거**:
+- Commit 시 `nbstripout`이 자동으로 실행됩니다
+- 실행 결과, output, 실행 카운트가 자동으로 제거됩니다
+- **코드만 git에 저장**되어 깔끔한 버전 관리가 가능합니다
+- 매번 실행 결과가 달라져도 git diff가 깔끔합니다
+
+**사용 팁**:
+- 탐색적 데이터 분석 (EDA)
+- 프로토타입 코드 작성
+- 시각화 및 결과 확인
+- 문서화된 예제 작성
 
 ## 추가 도구
 

@@ -18,6 +18,12 @@ dev = [
     "bandit[toml]>=1.7.0",
     "pre-commit>=3.8.0",
 ]
+notebook = [
+    "jupyter>=1.0.0",
+    "notebook>=7.0.0",
+    "ipykernel>=6.29.0",
+    "nbstripout>=0.7.0",  # Commit 시 실행 결과 자동 제거
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -34,6 +40,10 @@ dev-dependencies = [
     "mypy>=1.11.0",
     "bandit[toml]>=1.7.0",
     "pre-commit>=3.8.0",
+    "jupyter>=1.0.0",
+    "notebook>=7.0.0",
+    "ipykernel>=6.29.0",
+    "nbstripout>=0.7.0",
 ]
 
 [tool.pytest.ini_options]

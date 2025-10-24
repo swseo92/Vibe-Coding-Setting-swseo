@@ -75,10 +75,16 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb_checkpoints/
+.jupyter/
 
 # IPython
 profile_default/
 ipython_config.py
+
+# Jupyter runtime files
+jupyter_runtime/
+*.kernel.json
 
 # pyenv
 .python-version

@@ -45,6 +45,13 @@ repos:
         args: ["-c", "pyproject.toml"]
         additional_dependencies: ["bandit[toml]"]
 
+  # Clean Jupyter notebook outputs before commit
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.7.1
+    hooks:
+      - id: nbstripout
+        files: \.ipynb$
+
   # Run tests on push (not on commit)
   - repo: local
     hooks:
