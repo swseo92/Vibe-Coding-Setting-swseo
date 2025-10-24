@@ -58,7 +58,27 @@ if (-not (Test-Path $templatePath)) {
     exit 1
 }
 
-# 모든 파일 복사 (hidden 파일 포함)
+# 공통 파일 복사 (hidden 파일 포함)
+$commonPath = Join-Path $tempDir "templates\common"
+if (Test-Path $commonPath) {
+    Get-ChildItem -Path $commonPath -Force -Recurse | ForEach-Object {
+        $relativePath = $_.FullName.Substring($commonPath.Length + 1)
+        $targetPath = Join-Path (Get-Location) $relativePath
+
+        if ($_.PSIsContainer) {
+            New-Item -ItemType Directory -Force -Path $targetPath | Out-Null
+        } else {
+            $targetDir = Split-Path -Parent $targetPath
+            if (-not (Test-Path $targetDir)) {
+                New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+            }
+            Copy-Item -Force $_.FullName $targetPath
+        }
+    }
+    Write-Host "✓ Common files copied" -ForegroundColor Green
+}
+
+# 언어별 템플릿 파일 복사 (hidden 파일 포함)
 Get-ChildItem -Path $templatePath -Force -Recurse | ForEach-Object {
     $relativePath = $_.FullName.Substring($templatePath.Length + 1)
     $targetPath = Join-Path (Get-Location) $relativePath
@@ -98,7 +118,14 @@ if [ ! -d "$TEMPLATE_PATH" ]; then
     exit 1
 fi
 
-# 모든 파일 복사 (hidden 파일 포함)
+# 공통 파일 복사 (hidden 파일 포함)
+COMMON_PATH="$TEMP_DIR/templates/common"
+if [ -d "$COMMON_PATH" ]; then
+    cp -r "$COMMON_PATH/." .
+    echo "✓ Common files copied"
+fi
+
+# 언어별 템플릿 파일 복사 (hidden 파일 포함)
 cp -r "$TEMPLATE_PATH/." .
 
 # 임시 디렉토리 정리
@@ -247,6 +274,7 @@ Input: "/init-workspace javascript"
 
 Currently supported:
 - ✅ **python** - uv + pyproject.toml + pytest + ruff
+- ✅ **common** - Shared files for all templates (.specify, .mcp.json)
 
 Coming soon:
 - 🔄 **javascript** - npm/pnpm + TypeScript + Jest
@@ -255,7 +283,13 @@ Coming soon:
 
 ## Template Structure Reference
 
-Each template should include:
+### Common Template (`templates/common/`)
+**Always copied to every new project:**
+- `.specify/` - Speckit templates and scripts
+- `.mcp.json` - MCP server configurations
+
+### Language Templates (`templates/{language}/`)
+Each language template should include:
 - `claude.md` - Workspace marker
 - Language-specific config files
 - `src/` directory

@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+
+    - name: Install dependencies
+      run: |
+        uv sync --all-extras
+
+    - name: Run linting (ruff)
+      run: |
+        uv run ruff check .
+
+    - name: Run formatting check (ruff)
+      run: |
+        uv run ruff format --check .
+
+    - name: Run type checking (mypy)
+      run: |
+        uv run mypy src/
+      continue-on-error: true
+
+    - name: Run tests with coverage
+      run: |
+        uv run pytest --cov=myproject --cov-report=xml --cov-report=term
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Run ruff linting
+      run: |
+        uv run ruff check . --output-format=github
+
+    - name: Run ruff formatting check
+      run: |
+        uv run ruff format --check .
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+        uv pip install bandit[toml] safety
+
+    - name: Run bandit security scan
+      run: |
+        uv run bandit -r src/ -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Run safety check
+      run: |
+        uv run safety check --json
+      continue-on-error: true
+
+    - name: Upload bandit report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: bandit-report
+        path: bandit-report.json

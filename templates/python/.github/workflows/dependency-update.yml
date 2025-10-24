@@ -1,0 +1,51 @@
+name: Dependency Update
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Update dependencies
+      run: |
+        uv sync --upgrade
+
+    - name: Run tests
+      run: |
+        uv run pytest
+      continue-on-error: true
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "chore: Update dependencies"
+        title: "chore: Weekly dependency update"
+        body: |
+          Automated dependency update by GitHub Actions.
+
+          Please review the changes and test thoroughly before merging.
+
+          **Updated dependencies:**
+          - All dependencies updated to latest compatible versions
+
+          **Test results:**
+          - Check test workflow results above
+        branch: dependency-update/weekly
+        delete-branch: true
+        labels: dependencies

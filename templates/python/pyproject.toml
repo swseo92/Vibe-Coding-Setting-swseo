@@ -14,6 +14,9 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-xdist>=3.5.0",
     "ruff>=0.1.0",
+    "mypy>=1.11.0",
+    "bandit[toml]>=1.7.0",
+    "pre-commit>=3.8.0",
 ]
 
 [build-system]
@@ -28,6 +31,9 @@ dev-dependencies = [
     "pytest-asyncio>=0.23.0",
     "pytest-xdist>=3.5.0",
     "ruff>=0.1.0",
+    "mypy>=1.11.0",
+    "bandit[toml]>=1.7.0",
+    "pre-commit>=3.8.0",
 ]
 
 [tool.pytest.ini_options]
@@ -94,3 +100,27 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", ".uv"]
+skips = ["B101"]  # Skip assert_used in tests
+
+[tool.bandit.assert_used]
+skips = ["*/test_*.py", "*_test.py"]
