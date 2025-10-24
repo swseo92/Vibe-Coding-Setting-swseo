@@ -2,30 +2,42 @@
 set -e
 
 # init-workspace.sh - Initialize workspace from language template
-# Usage: init-workspace.sh <language> [additional-requirements]
+# Usage: init-workspace.sh <temp-dir> <language> [additional-requirements]
+# Or: init-workspace.sh <language> [additional-requirements] (will clone)
 
-LANGUAGE="$1"
-ADDITIONAL_REQUIREMENTS="${@:2}"
+# Check if first argument is a directory (TEMP_DIR passed from command)
+if [ -d "$1" ] && [ -d "$1/templates" ]; then
+    TEMP_DIR="$1"
+    LANGUAGE="$2"
+    ADDITIONAL_REQUIREMENTS="${@:3}"
+    CLEANUP=false
+    echo "Using provided repository: $TEMP_DIR"
+else
+    # Old behavior: clone ourselves
+    LANGUAGE="$1"
+    ADDITIONAL_REQUIREMENTS="${@:2}"
+    CLEANUP=true
 
-if [ -z "$LANGUAGE" ]; then
-    echo "Error: Language not specified"
-    echo "Usage: init-workspace.sh <language> [additional-requirements]"
-    echo ""
-    echo "Available languages:"
-    echo "  - python"
-    echo "  - javascript (coming soon)"
-    exit 1
+    if [ -z "$LANGUAGE" ]; then
+        echo "Error: Language not specified"
+        echo "Usage: init-workspace.sh [temp-dir] <language> [additional-requirements]"
+        echo ""
+        echo "Available languages:"
+        echo "  - python"
+        echo "  - javascript (coming soon)"
+        exit 1
+    fi
+
+    echo "Initializing workspace for language: $LANGUAGE"
+
+    # Create temporary directory
+    TEMP_DIR=$(mktemp -d)
+    echo "Created temporary directory: $TEMP_DIR"
+
+    # Clone the settings repository
+    echo "Cloning Vibe-Coding-Setting-swseo repository..."
+    git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git "$TEMP_DIR" 2>&1 | grep -v "Cloning into"
 fi
-
-echo "Initializing workspace for language: $LANGUAGE"
-
-# Create temporary directory
-TEMP_DIR=$(mktemp -d)
-echo "Created temporary directory: $TEMP_DIR"
-
-# Clone the settings repository
-echo "Cloning Vibe-Coding-Setting-swseo repository..."
-git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git "$TEMP_DIR" 2>&1 | grep -v "Cloning into"
 
 # Check if language template exists
 TEMPLATE_PATH="$TEMP_DIR/templates/$LANGUAGE"
@@ -51,9 +63,11 @@ echo "Copying $LANGUAGE template files..."
 cp -r "$TEMPLATE_PATH/." .
 echo "✓ Template files copied successfully"
 
-# Clean up temporary directory
-rm -rf "$TEMP_DIR"
-echo "✓ Cleanup completed"
+# Clean up temporary directory (only if we created it)
+if [ "$CLEANUP" = true ]; then
+    rm -rf "$TEMP_DIR"
+    echo "✓ Cleanup completed"
+fi
 
 # Get project name from current directory
 PROJECT_NAME=$(basename "$(pwd)")

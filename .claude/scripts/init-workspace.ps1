@@ -1,30 +1,55 @@
 # init-workspace.ps1 - Initialize workspace from language template
-# Usage: init-workspace.ps1 <language> [additional-requirements]
+# Usage: init-workspace.ps1 <temp-dir> <language> [additional-requirements]
+# Or: init-workspace.ps1 <language> [additional-requirements] (will clone)
 
 param(
     [Parameter(Mandatory=$true)]
-    [string]$Language,
+    [string]$FirstArg,
 
     [Parameter(ValueFromRemainingArguments=$true)]
-    [string[]]$AdditionalRequirements
+    [string[]]$RemainingArgs
 )
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "Initializing workspace for language: $Language" -ForegroundColor Cyan
+# Check if first argument is a directory (TEMP_DIR passed from command)
+if (Test-Path $FirstArg -PathType Container) {
+    $TemplatesPath = Join-Path $FirstArg "templates"
+    if (Test-Path $TemplatesPath) {
+        $TempDir = $FirstArg
+        $Language = $RemainingArgs[0]
+        $AdditionalRequirements = $RemainingArgs[1..($RemainingArgs.Length-1)]
+        $Cleanup = $false
+        Write-Host "Using provided repository: $TempDir" -ForegroundColor Cyan
+    } else {
+        # Not a valid repo directory, treat as language
+        $Language = $FirstArg
+        $AdditionalRequirements = $RemainingArgs
+        $Cleanup = $true
+    }
+} else {
+    # First arg is not a directory, treat as language
+    $Language = $FirstArg
+    $AdditionalRequirements = $RemainingArgs
+    $Cleanup = $true
+}
 
-# Create temporary directory
-$TempDir = New-Item -ItemType Directory -Path "$env:TEMP\vibe-coding-$(Get-Random)"
-Write-Host "Created temporary directory: $TempDir" -ForegroundColor Gray
+if ($Cleanup) {
+    Write-Host "Initializing workspace for language: $Language" -ForegroundColor Cyan
 
-# Clone the settings repository
-Write-Host "Cloning Vibe-Coding-Setting-swseo repository..." -ForegroundColor Gray
-try {
-    git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git $TempDir 2>&1 | Out-Null
-} catch {
-    Write-Host "Error: Failed to clone repository" -ForegroundColor Red
-    Remove-Item -Recurse -Force $TempDir
-    exit 1
+    # Create temporary directory
+    $TempDir = New-Item -ItemType Directory -Path "$env:TEMP\vibe-coding-$(Get-Random)"
+    Write-Host "Created temporary directory: $TempDir" -ForegroundColor Gray
+
+    # Clone the settings repository
+    Write-Host "Cloning Vibe-Coding-Setting-swseo repository..." -ForegroundColor Gray
+    try {
+        git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git $TempDir 2>&1 | Out-Null
+    } catch {
+        Write-Host "Error: Failed to clone repository" -ForegroundColor Red
+        Remove-Item -Recurse -Force $TempDir
+        exit 1
+    }
 }
 
 # Check if language template exists
@@ -79,9 +104,11 @@ Get-ChildItem -Path $TemplatePath -Force -Recurse | ForEach-Object {
 }
 Write-Host "✓ Template files copied successfully" -ForegroundColor Green
 
-# Clean up temporary directory
-Remove-Item -Recurse -Force $TempDir
-Write-Host "✓ Cleanup completed" -ForegroundColor Green
+# Clean up temporary directory (only if we created it)
+if ($Cleanup) {
+    Remove-Item -Recurse -Force $TempDir
+    Write-Host "✓ Cleanup completed" -ForegroundColor Green
+}
 
 # Get project name from current directory
 $ProjectName = Split-Path -Leaf (Get-Location)

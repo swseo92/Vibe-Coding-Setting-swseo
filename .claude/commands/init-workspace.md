@@ -56,52 +56,82 @@ ls -la
   - 옵션 1: "Yes, continue (may overwrite files)"
   - 옵션 2: "No, cancel"
 
-### 3. 플랫폼 감지 및 스크립트 실행
+### 3. Repository Clone 및 스크립트 실행
 
-스크립트를 로컬 또는 전역 위치에서 찾아 실행합니다.
-
-**스크립트 검색 순서:**
-1. 로컬 프로젝트: `.claude/scripts/init-workspace.*`
-2. 전역 설정: `~/.claude/scripts/init-workspace.*`
+GitHub에서 repo를 clone하고 그 안의 스크립트를 실행합니다.
 
 ```bash
 # 플랫폼 감지
 PLATFORM=$(uname -s 2>/dev/null || echo "Windows")
 
-# 스크립트 위치 찾기
-if [ -f ".claude/scripts/init-workspace.sh" ]; then
-    SCRIPT_PATH=".claude/scripts/init-workspace.sh"
-elif [ -f "$HOME/.claude/scripts/init-workspace.sh" ]; then
-    SCRIPT_PATH="$HOME/.claude/scripts/init-workspace.sh"
-elif [ -f ".claude/scripts/init-workspace.ps1" ]; then
-    SCRIPT_PATH=".claude/scripts/init-workspace.ps1"
-elif [ -f "$HOME/.claude/scripts/init-workspace.ps1" ]; then
-    SCRIPT_PATH="$HOME/.claude/scripts/init-workspace.ps1"
+# 임시 디렉토리 생성
+if [[ "$PLATFORM" == *"MINGW"* ]] || [[ "$PLATFORM" == *"MSYS"* ]]; then
+    # Windows (Git Bash)
+    TEMP_DIR=$(mktemp -d -t vibe-coding-XXXXXX 2>/dev/null || echo "/tmp/vibe-coding-$$")
+    mkdir -p "$TEMP_DIR"
 else
-    echo "Error: init-workspace script not found"
-    echo "Please run /apply-settings to install scripts globally"
+    # Unix/Linux/Mac
+    TEMP_DIR=$(mktemp -d)
+fi
+
+echo "Cloning repository to: $TEMP_DIR"
+
+# Repository clone
+git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git "$TEMP_DIR"
+
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to clone repository"
+    echo "Please check your internet connection and try again"
+    rm -rf "$TEMP_DIR"
     exit 1
 fi
 
-# Windows인 경우
+# 스크립트 실행 (clone된 repo의 스크립트 사용)
+# TEMP_DIR를 첫 번째 인자로 전달하여 중복 clone 방지
 if [[ "$PLATFORM" == "Windows" ]] || [[ "$PLATFORM" == *"MINGW"* ]] || [[ "$PLATFORM" == *"MSYS"* ]]; then
-    # PowerShell 스크립트 실행
-    if [[ "$SCRIPT_PATH" == *.ps1 ]]; then
-        powershell -ExecutionPolicy Bypass -File "$SCRIPT_PATH" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+    # Windows - PowerShell 스크립트 실행
+    SCRIPT_PATH="$TEMP_DIR/.claude/scripts/init-workspace.ps1"
+
+    if [ -f "$SCRIPT_PATH" ]; then
+        # Git Bash에서 Windows 경로로 변환
+        WIN_SCRIPT_PATH=$(cygpath -w "$SCRIPT_PATH" 2>/dev/null || echo "$SCRIPT_PATH")
+        WIN_TEMP_DIR=$(cygpath -w "$TEMP_DIR" 2>/dev/null || echo "$TEMP_DIR")
+
+        # TEMP_DIR를 첫 번째 인자로 전달
+        powershell -ExecutionPolicy Bypass -File "$WIN_SCRIPT_PATH" "$WIN_TEMP_DIR" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+
+        # Cleanup (스크립트가 cleanup하지 않으므로 여기서 처리)
+        rm -rf "$TEMP_DIR"
     else
-        # .ps1이 없으면 bash 스크립트 실행
-        bash "$SCRIPT_PATH" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+        echo "Error: Script not found in repository"
+        rm -rf "$TEMP_DIR"
+        exit 1
     fi
 else
-    # Bash 스크립트 실행
-    bash "$SCRIPT_PATH" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+    # Unix/Linux/Mac - Bash 스크립트 실행
+    SCRIPT_PATH="$TEMP_DIR/.claude/scripts/init-workspace.sh"
+
+    if [ -f "$SCRIPT_PATH" ]; then
+        # TEMP_DIR를 첫 번째 인자로 전달
+        bash "$SCRIPT_PATH" "$TEMP_DIR" "$LANGUAGE" $ADDITIONAL_REQUIREMENTS
+
+        # Cleanup (스크립트가 cleanup하지 않으므로 여기서 처리)
+        rm -rf "$TEMP_DIR"
+    else
+        echo "Error: Script not found in repository"
+        rm -rf "$TEMP_DIR"
+        exit 1
+    fi
 fi
+
+echo "✓ Cleanup completed"
 ```
 
 **IMPORTANT:**
-- 스크립트를 직접 실행해야 합니다
-- 파일을 직접 생성하거나 repo를 clone하지 마세요
-- 스크립트가 없으면 `/apply-settings` 실행 필요
+- Repository를 clone하고 그 안의 스크립트를 실행합니다
+- 스크립트가 모든 파일 복사 작업을 처리합니다
+- 임시 디렉토리는 스크립트가 정리합니다
+- 직접 파일을 생성하거나 복사하지 마세요
 
 ### 4. 추가 요구사항 처리 (선택)
 
