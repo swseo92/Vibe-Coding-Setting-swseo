@@ -172,8 +172,16 @@ def test_double(input, expected):
 
 테스트 실행 시 자동으로 `TEST_MODE=true`가 설정됩니다.
 
-추가 환경 변수는 `.env` 파일에 정의하고, `python-dotenv`를 사용하세요:
+### 환경 변수 설정
 
+1. `.env.example`을 `.env`로 복사:
+```bash
+cp .env.example .env
+```
+
+2. `.env` 파일 수정하여 실제 값 입력
+
+3. python-dotenv 사용:
 ```bash
 uv add python-dotenv
 ```
@@ -183,45 +191,110 @@ from dotenv import load_dotenv
 load_dotenv()
 ```
 
-## CI/CD 설정 예시
+## CI/CD 파이프라인
 
-### GitHub Actions
+이 템플릿에는 완전한 CI/CD 워크플로우가 포함되어 있습니다.
 
-```yaml
-name: Tests
-on: [push, pull_request]
+### GitHub Actions 워크플로우
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v1
+#### 1. CI (`.github/workflows/ci.yml`)
+**트리거:** Push 및 Pull Request (main, master, develop 브랜치)
 
-      - name: Install dependencies
-        run: uv sync --all-extras
+**작업:**
+- **Test Job**: Python 3.10, 3.11, 3.12에서 테스트 실행
+- **Lint Job**: Ruff 린팅 및 포맷팅 검사
+- **Security Job**: Bandit 보안 스캔 및 Safety 의존성 검사
 
-      - name: Run tests
-        run: uv run pytest --cov=myproject
-```
-
-## 추가 도구
-
-### 타입 체킹 (mypy)
 ```bash
-uv add --dev mypy
+# 로컬에서 CI와 동일한 검사 실행
+uv run ruff check .
+uv run ruff format --check .
 uv run mypy src/
-```
-
-### 보안 검사
-```bash
-uv add --dev bandit
+uv run pytest --cov=myproject
 uv run bandit -r src/
 ```
 
-### 문서 생성
+#### 2. Release (`.github/workflows/release.yml`)
+**트리거:** 태그 푸시 (v*.*.*)
+
+**작업:**
+- 테스트 실행
+- 패키지 빌드
+- GitHub Release 생성
+- PyPI 배포 (옵션)
+
 ```bash
-uv add --dev sphinx
+# 릴리즈 만들기
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+#### 3. Dependency Update (`.github/workflows/dependency-update.yml`)
+**트리거:** 매주 월요일 또는 수동 실행
+
+**작업:**
+- 의존성 자동 업데이트
+- 테스트 실행
+- Pull Request 자동 생성
+
+### Dependabot
+
+`.github/dependabot.yml`이 설정되어 있어 자동으로 의존성을 업데이트합니다:
+- GitHub Actions 주간 업데이트
+- Python 패키지 주간 업데이트
+- 관련 패키지 그룹화 (testing, linting, production)
+
+### Pre-commit Hooks
+
+로컬 개발 환경에서 커밋 전 자동 검사:
+
+```bash
+# Pre-commit 설치
+uv run pre-commit install
+
+# 모든 파일에 수동 실행
+uv run pre-commit run --all-files
+```
+
+**포함된 훅:**
+- Ruff 린팅 및 포맷팅
+- Mypy 타입 체킹
+- Trailing whitespace 제거
+- 큰 파일 체크
+- Private key 감지
+- Bandit 보안 스캔
+
+### CI/CD 워크플로우 활성화
+
+1. **Codecov 설정** (선택):
+   - https://codecov.io 에서 계정 생성
+   - Repository secrets에 `CODECOV_TOKEN` 추가
+
+2. **PyPI 배포** (선택):
+   - PyPI 계정 생성 및 API 토큰 발급
+   - Repository secrets에 `PYPI_TOKEN` 추가
+
+3. **의존성 자동 업데이트**:
+   - Dependabot이 자동으로 활성화됨
+   - PR 검토 및 병합만 하면 됨
+
+## 추가 도구
+
+템플릿에는 이미 포함되어 있습니다:
+
+### 타입 체킹 (mypy)
+```bash
+uv run mypy src/
+```
+
+### 보안 검사 (bandit)
+```bash
+uv run bandit -r src/
+```
+
+### 문서 생성 (Sphinx)
+```bash
+uv add --dev sphinx sphinx-rtd-theme
 uv run sphinx-quickstart docs/
 ```
 
