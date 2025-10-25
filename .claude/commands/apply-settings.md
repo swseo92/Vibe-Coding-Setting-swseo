@@ -51,6 +51,13 @@ if (Test-Path '.claude/settings.local.json') {
   Write-Host '✓ Settings synced to ~/.claude/settings.json' -ForegroundColor Green
 }
 
+# Remove settings.local.json from global directory (should only have settings.json)
+$globalSettingsLocal = Join-Path $globalClaude 'settings.local.json'
+if (Test-Path $globalSettingsLocal) {
+  Remove-Item -Force $globalSettingsLocal
+  Write-Host '✓ Removed settings.local.json from global directory' -ForegroundColor Green
+}
+
 # Sync speckit commands
 if (Test-Path 'speckit/.claude/commands') {
   $commandsPath = Join-Path $globalClaude 'commands'
@@ -114,6 +121,12 @@ PSEOF
     elif [ -f ".claude/settings.json" ]; then
       cp .claude/settings.json ~/.claude/settings.json
       echo "✓ Settings synced to ~/.claude/settings.json"
+    fi
+
+    # Remove settings.local.json from global directory (should only have settings.json)
+    if [ -f ~/.claude/settings.local.json ]; then
+      rm ~/.claude/settings.local.json
+      echo "✓ Removed settings.local.json from global directory"
     fi
 
     # Sync speckit commands

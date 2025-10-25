@@ -77,6 +77,17 @@ Vibe-Coding-Setting-swseo/
 │       └── testing_guidelines.md
 │
 ├── templates/                    # 언어별 프로젝트 템플릿
+│   ├── common/                   # 공통 템플릿 (모든 프로젝트)
+│   │   ├── .claude/              # Claude Code 기본 설정
+│   │   │   ├── scripts/          # Hook 스크립트
+│   │   │   │   ├── notify.py     # 알림 TTS 스크립트
+│   │   │   │   ├── run-notify.cmd  # Windows wrapper
+│   │   │   │   └── run-notify.sh   # Unix wrapper
+│   │   │   └── settings.json     # 상대경로 hook 설정
+│   │   ├── .specify/             # Speckit 기본 구조
+│   │   ├── .mcp.json             # MCP 설정
+│   │   └── claude.md             # 프로젝트 마커 템플릿
+│   │
 │   └── python/                   # Python 템플릿
 │       ├── claude.md             # 프로젝트용 마커
 │       ├── pyproject.toml        # uv 설정
@@ -213,6 +224,56 @@ templates/
 ├── rust/         # TODO
 └── go/           # TODO
 ```
+
+---
+
+## Hook 설정 (알림 기능)
+
+**모든 템플릿에는 작업 완료 시 TTS 알림을 제공하는 hook이 포함되어 있습니다.**
+
+### 작동 방식
+
+1. **상대경로 기반**: `.claude/scripts/run-notify.cmd` (Windows) 또는 `.claude/scripts/run-notify.sh` (Unix)
+2. **자동 트리거**: Claude Code 세션 종료 또는 알림 이벤트 시 자동 실행
+3. **폴더 이름 인식**: 현재 작업 중인 폴더 이름을 음성으로 알려줌
+
+### 설정 파일
+
+**`templates/common/.claude/settings.json`**:
+```json
+{
+  "hooks": {
+    "Notification": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "command",
+        "command": "\".claude\\scripts\\run-notify.cmd\" \"작업 완료\""
+      }]
+    }],
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "\".claude\\scripts\\run-notify.cmd\" \"작업 완료\""
+      }]
+    }]
+  }
+}
+```
+
+### Hook 스크립트
+
+- **`notify.py`**: 크로스 플랫폼 TTS 알림 (Windows/Mac/Linux)
+- **`run-notify.cmd`**: Windows wrapper (Python 실행)
+- **`run-notify.sh`**: Unix/Linux wrapper
+
+### 커스터마이징
+
+알림 메시지를 변경하려면:
+```json
+"command": "\".claude\\scripts\\run-notify.cmd\" \"원하는 메시지\""
+```
+
+알림을 비활성화하려면 `settings.json`에서 `hooks` 섹션을 제거하세요.
 
 ---
 

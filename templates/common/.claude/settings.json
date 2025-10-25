@@ -1,18 +1,7 @@
 {
   "permissions": {
     "defaultMode": "bypassPermissions",
-    "allow": [
-      "Bash(mkdir:*)",
-      "Bash(env)",
-      "Bash(set)",
-      "Bash(cat:*)",
-      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
-      "Bash(git checkout:*)",
-      "Bash(git branch:*)",
-      "Bash(rm:*)",
-      "Bash(cd:*)",
-      "Bash(speckit/.specify/scripts/bash/create-new-feature.sh:*)"
-    ],
+    "allow": [],
     "deny": [],
     "ask": []
   },
