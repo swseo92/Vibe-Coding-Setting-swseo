@@ -1,399 +1,263 @@
-# Code Review Report
+# Code Review Report - {DATE_TIME}
 
-**Date**: {CURRENT_DATE}
-**Time**: {CURRENT_TIME}
-**Reviewer**: Claude Code Assistant
-**Commit**: {COMMIT_HASH or "Staged Changes"}
+**Reviewer**: OpenAI Codex (GPT-5-Codex)
+**Date**: {YYYY-MM-DD HH:MM}
+**Overall Score**: {SCORE}/100
+**Recommendation**: {COMMIT ✅ | NEEDS WORK 🔴 | MAJOR REFACTOR 🔥}
 
 ---
 
 ## Summary
 
-**Overall Assessment**: {PASS/NEEDS_WORK/CRITICAL_ISSUES}
+{CODEX_SUMMARY}
 
-- **Files Reviewed**: {COUNT}
-- **Critical Issues**: {COUNT} 🚨
-- **Warnings**: {COUNT} ⚠️
-- **Suggestions**: {COUNT} 💡
+---
 
-**Recommendation**: {COMMIT_READY/FIX_CRITICAL/FIX_WARNINGS_FIRST}
+## Score Breakdown
 
-**Note**: This is an objective technical assessment. Issues are flagged based on industry standards and best practices, not personal preference.
+| Metric | Score | Status |
+|--------|-------|--------|
+| Overall Quality | {SCORE}/100 | {✅ PASS / 🔴 FAIL} |
+| Critical Issues | {COUNT} | {🚨 if >0, ✅ if 0} |
+| Warnings | {COUNT} | {⚠️ if >3, ✅ if ≤3} |
+| Suggestions | {COUNT} | 💡 |
+
+**Pass Threshold**: ≥70/100 with 0 critical issues
+
+**Assessment**:
+- {PASS/FAIL}: {REASON}
 
 ---
 
 ## Files Reviewed
 
-{LIST_OF_FILES_WITH_STATUS}
+{FOR_EACH_FILE}
+- `{FILE_PATH}` ({STATUS})
+{END_FOR}
 
 Example:
-- ✅ `src/models/user.py` - No issues
-- ⚠️ `src/services/user_service.py` - 2 warnings
-- 🚨 `src/api/routes.py` - 1 critical issue
+- `src/api/user.py` (Modified)
+- `src/models/user_model.py` (Modified)
+- `tests/test_user.py` (New)
 
 ---
 
-## Critical Issues (Must Fix Before Commit)
+## 🚨 Critical Issues
+
+**These MUST be fixed before commit:**
 
 {IF_NO_CRITICAL_ISSUES}
-✅ No critical issues found.
-{ENDIF}
+✅ **No critical issues found.**
+{ELSE}
 
 {FOR_EACH_CRITICAL_ISSUE}
-### 🚨 {ISSUE_NUMBER}: {ISSUE_TITLE}
+### {NUMBER}. [{FILE}:{LINE}] {ISSUE_TITLE}
 
-**File**: `{FILE_PATH}:{LINE_NUMBER}`
-**Category**: {SECURITY/BUG/DATA_LOSS}
-**Severity**: Critical
+**Severity**: 🚨 Critical
+**Category**: {Security / Bug / Data Loss}
 
-**Issue**:
+**Description**:
 {DETAILED_DESCRIPTION}
 
-**Code**:
+**Impact**:
+{WHAT_COULD_GO_WRONG}
+
+**Fix**:
+{HOW_TO_FIX}
+
+**Code Reference**:
 ```python
-{CODE_SNIPPET}
+{CODE_SNIPPET_IF_AVAILABLE}
 ```
 
-**Why This Is Critical**:
-{EXPLANATION_OF_IMPACT}
-
-**Recommended Fix**:
-```python
-{SUGGESTED_FIX}
-```
-
-**References**:
-- {LINK_TO_DOCUMENTATION}
-- {RELATED_BEST_PRACTICE}
-
 ---
-{END_FOR_EACH}
-
----
-
-## Warnings (Should Fix)
-
-{IF_NO_WARNINGS}
-✅ No warnings.
+{END_FOR}
 {ENDIF}
 
+---
+
+## ⚠️ Warnings
+
+**These SHOULD be fixed:**
+
+{IF_NO_WARNINGS}
+✅ **No warnings.**
+{ELSE}
+
 {FOR_EACH_WARNING}
-### ⚠️ {ISSUE_NUMBER}: {ISSUE_TITLE}
+### {NUMBER}. [{FILE}:{LINE}] {ISSUE_TITLE}
 
-**File**: `{FILE_PATH}:{LINE_NUMBER}`
-**Category**: {CODE_QUALITY/PERFORMANCE/MAINTAINABILITY}
-**Severity**: Warning
+**Severity**: ⚠️ Warning
+**Category**: {Code Quality / Performance / Maintainability}
 
-**Issue**:
+**Description**:
 {DESCRIPTION}
-
-**Code**:
-```python
-{CODE_SNIPPET}
-```
 
 **Why This Matters**:
 {EXPLANATION}
 
-**Suggested Improvement**:
-```python
-{SUGGESTED_IMPROVEMENT}
-```
+**Suggestion**:
+{HOW_TO_IMPROVE}
 
 ---
-{END_FOR_EACH}
-
----
-
-## Suggestions (Nice to Have)
-
-{IF_NO_SUGGESTIONS}
-✅ No additional suggestions.
+{END_FOR}
 {ENDIF}
 
+---
+
+## 💡 Suggestions
+
+**Nice to have improvements:**
+
+{IF_NO_SUGGESTIONS}
+✅ **No additional suggestions.**
+{ELSE}
+
 {FOR_EACH_SUGGESTION}
-### 💡 {ISSUE_NUMBER}: {SUGGESTION_TITLE}
+### {NUMBER}. [{FILE}:{LINE}] {SUGGESTION_TITLE}
 
-**File**: `{FILE_PATH}:{LINE_NUMBER}`
-**Category**: {STYLE/REFACTORING/ENHANCEMENT}
+**Category**: {Style / Refactoring / Enhancement}
 
-**Suggestion**:
+**Description**:
 {DESCRIPTION}
 
 **Benefit**:
-{WHY_THIS_WOULD_HELP}
-
-**Optional Change**:
-```python
-{SUGGESTED_CODE}
-```
+{WHY_THIS_HELPS}
 
 ---
-{END_FOR_EACH}
+{END_FOR}
+{ENDIF}
 
 ---
 
-## Review Checklist
+## Recommendation
 
-{CHECKLIST_TABLE}
+### {COMMIT ✅ | NEEDS WORK 🔴 | MAJOR REFACTOR 🔥}
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| **Documentation** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Bug Possibilities** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Test Coverage** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Clean Code** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **SOLID Principles** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **File Structure** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Type Hints** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Error Handling** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Security** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Performance** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Readability** | {PASS/FAIL/PARTIAL} | {NOTES} |
-| **Reusability** | {PASS/FAIL/PARTIAL} | {NOTES} |
+**Reasoning**:
+{EXPLANATION_BASED_ON_SCORE_AND_ISSUES}
 
-**Legend**:
-- ✅ **PASS**: Meets standards
-- ⚠️ **PARTIAL**: Some issues, not critical
-- ❌ **FAIL**: Significant issues found
-
----
-
-## Detailed Analysis by Category
-
-### 1. Documentation Updates
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Findings**:
-- {FINDING_1}
-- {FINDING_2}
-
-**Action Items**:
-- {ACTION_1}
-- {ACTION_2}
-
----
-
-### 2. Bug Possibilities
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Potential Bugs Identified**:
-- {BUG_1}
-- {BUG_2}
-
-**Recommendations**:
-- {RECOMMENDATION_1}
-
----
-
-### 3. Test Coverage
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Coverage Analysis**:
-- New functions tested: {YES/NO}
-- Edge cases covered: {YES/NO}
-- Integration tests: {YES/NO}
-
-**Missing Tests**:
-- {MISSING_TEST_1}
-- {MISSING_TEST_2}
-
----
-
-### 4. Clean Code Principles
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Adherence**:
-- Meaningful names: {PASS/FAIL}
-- Function size: {PASS/FAIL} (avg: {AVG_LINES} lines)
-- DRY principle: {PASS/FAIL}
-
-**Violations**:
-- {VIOLATION_1}
-
----
-
-### 5. SOLID Principles
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Assessment**:
-- Single Responsibility: {PASS/FAIL}
-- Open/Closed: {PASS/FAIL}
-- Liskov Substitution: {PASS/FAIL}
-- Interface Segregation: {PASS/FAIL}
-- Dependency Inversion: {PASS/FAIL}
-
-**Notes**:
-{DETAILED_NOTES}
-
----
-
-### 6. File & Folder Structure
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Structure Check**:
-- Proper organization: {YES/NO}
-- Naming conventions: {YES/NO}
-- Import organization: {YES/NO}
-- Circular dependencies: {NONE/DETECTED}
-
----
-
-### 7. Type Hints
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Coverage**:
-- Functions with type hints: {PERCENTAGE}%
-- Return types specified: {PERCENTAGE}%
-
-**Missing Type Hints**:
-- {FUNCTION_1}
-- {FUNCTION_2}
-
----
-
-### 8. Error Handling
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Assessment**:
-- Appropriate exceptions: {YES/NO}
-- Resource cleanup: {YES/NO}
-- Error messages: {CLEAR/UNCLEAR}
-
----
-
-### 9. Security
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Security Checks**:
-- No hardcoded secrets: {PASS/FAIL}
-- SQL injection prevention: {PASS/FAIL}
-- Input validation: {PASS/FAIL}
-
-**Vulnerabilities**:
-- {VULNERABILITY_1}
-
----
-
-### 10. Performance
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Performance Analysis**:
-- Algorithm complexity: {ACCEPTABLE/CONCERNING}
-- Database queries: {OPTIMIZED/NEEDS_WORK}
-- Memory usage: {EFFICIENT/INEFFICIENT}
-
----
-
-### 11. Readability
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Readability Score**: {SCORE}/10
-
-**Factors**:
-- Code complexity: {LOW/MEDIUM/HIGH}
-- Logical flow: {CLEAR/CONFUSING}
-- Formatting: {CONSISTENT/INCONSISTENT}
-
----
-
-### 12. Reusability
-
-{PASS/FAIL/PARTIAL}: {SUMMARY}
-
-**Reusability Assessment**:
-- Functions designed for reuse: {YES/NO}
-- Hard-coded values extracted: {YES/NO}
-- Dependency injection used: {YES/NO}
-
-**Improvements**:
-- {IMPROVEMENT_1}
-
----
-
-## Top Priority Action Items
-
-1. **{PRIORITY_1}** - {DESCRIPTION}
-   File: `{FILE}:{LINE}`
-
-2. **{PRIORITY_2}** - {DESCRIPTION}
-   File: `{FILE}:{LINE}`
-
-3. **{PRIORITY_3}** - {DESCRIPTION}
-   File: `{FILE}:{LINE}`
-
----
-
-## Strengths (If Any)
-
-{OBJECTIVE_ASSESSMENT_OF_GOOD_PRACTICES}
-
-**Note**: Strengths are noted objectively, but do not offset issues found. Meeting standards is expected, not exceptional.
-
-Examples (only if genuinely present):
-- Adequate test coverage for critical paths (>80%)
-- Type hints present where required
-- Error handling implemented correctly
-- Security considerations addressed
+**Decision Logic**:
+- Score ≥ 70 AND 0 critical issues → ✅ COMMIT
+- Score 50-69 OR 1-2 critical issues → 🔴 NEEDS WORK
+- Score < 50 OR 3+ critical issues → 🔥 MAJOR REFACTOR
 
 ---
 
 ## Next Steps
 
-### Before Committing:
+**Before Committing**:
 - [ ] {ACTION_ITEM_1}
 - [ ] {ACTION_ITEM_2}
 - [ ] {ACTION_ITEM_3}
 
-### Future Improvements:
+**Future Improvements** (non-blocking):
 - {FUTURE_IMPROVEMENT_1}
 - {FUTURE_IMPROVEMENT_2}
+
+---
+
+## Full Codex Output
+
+<details>
+<summary>Click to expand complete Codex CLI output</summary>
+
+```
+{COMPLETE_CODEX_CLI_OUTPUT}
+```
+
+</details>
 
 ---
 
 ## Appendix: Issue Severity Guide
 
 ### 🚨 Critical (Must Fix)
-- Security vulnerabilities
-- Data loss risks
-- Critical bugs
-- Breaking changes without migration
+Blocks commit. Must be resolved before merging.
+
+**Examples**:
+- Security vulnerabilities (SQL injection, XSS, hardcoded secrets)
+- Critical bugs (data loss, crashes, logic errors)
+- Breaking changes without migration path
+- Undefined dependencies causing NameError
 
 ### ⚠️ Warning (Should Fix)
-- Code quality issues
-- Performance problems
-- Incomplete test coverage
+Doesn't block commit but should be addressed soon.
+
+**Examples**:
+- Missing type hints
+- Insufficient test coverage
+- Missing error handling
+- Performance issues (O(n²) algorithms)
 - SOLID principle violations
+- Code complexity issues
 
 ### 💡 Suggestion (Nice to Have)
+Optional improvements. Consider for future refactoring.
+
+**Examples**:
 - Style improvements
+- Docstring additions
 - Refactoring opportunities
-- Documentation enhancements
 - Minor optimizations
+- Better naming conventions
+
+---
+
+## Scoring Rubric
+
+Codex evaluates code on these dimensions:
+
+| Dimension | Weight | Description |
+|-----------|--------|-------------|
+| **Security** | 20% | Vulnerabilities, auth, input validation |
+| **Correctness** | 20% | Bugs, logic errors, edge cases |
+| **Quality** | 15% | Code smells, complexity, DRY |
+| **Testing** | 15% | Coverage, edge cases, mocking |
+| **Performance** | 10% | Algorithm efficiency, memory |
+| **Maintainability** | 10% | Readability, type hints, docs |
+| **Best Practices** | 10% | SOLID, error handling, logging |
+
+**Formula**: Weighted average of all dimensions with penalties for critical issues.
+
+---
+
+## Review Methodology
+
+**Tool**: OpenAI Codex CLI v{VERSION}
+**Model**: GPT-5-Codex (specialized for code review)
+**Approach**: LLM-as-Judge with structured scoring
+
+**Process**:
+1. Analyze git staged changes
+2. Evaluate against best practices
+3. Categorize issues by severity
+4. Generate objective score (0-100)
+5. Provide actionable recommendations
+
+**Note**: This is an automated review. Always combine with:
+- Human code review for complex logic
+- Actual testing (unit, integration, e2e)
+- Security scanning tools
+- Static analysis (linters, type checkers)
 
 ---
 
 ## References
 
-{REFERENCES_USED}
+**Documentation**:
+- [OpenAI Codex CLI](https://developers.openai.com/codex/cli/)
+- [Python Best Practices](../../references/python-best-practices.md)
+- [SOLID Principles](../../references/solid-principles.md)
+- [Testing Guidelines](../../references/testing-checklist.md)
 
-Example:
-- [PEP 8 - Style Guide for Python](https://pep8.org/)
-- [Clean Code Principles](references/clean-code-principles.md)
-- [SOLID Principles](references/solid-principles.md)
+**Standards**:
+- [PEP 8 - Python Style Guide](https://pep8.org/)
+- [PEP 484 - Type Hints](https://www.python.org/dev/peps/pep-0484/)
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 
 ---
 
-**Review Generated By**: Claude Code Assistant (pre-commit-code-reviewer skill)
+**Generated By**: Pre-Commit Code Reviewer (Codex-Powered) v2.0
 **Report Location**: `.code-reviews/{FILENAME}`
+**Session ID**: {TIMESTAMP}

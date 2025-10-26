@@ -1,13 +1,26 @@
 ---
 name: pre-commit-code-reviewer
-description: Perform comprehensive code review before git commit for Python projects. Analyze staged changes for documentation updates, bugs, test coverage, clean code principles, SOLID principles, file structure, type hints, error handling, security, performance, readability, and reusability. Generate detailed markdown review reports saved to .code-reviews/ directory.
+description: Perform comprehensive code review using OpenAI Codex (GPT-5-Codex) as LLM judge before git commit for Python projects. Analyze staged changes for bugs, security, performance, readability, and best practices. Generate scored reviews (0-100) with detailed markdown reports saved to .code-reviews/ directory.
 ---
 
-# Pre-Commit Code Reviewer
+# Pre-Commit Code Reviewer (Codex-Powered)
 
 ## Overview
 
-This skill transforms Claude into a comprehensive code review assistant that analyzes staged git changes before commit. Perform in-depth reviews across multiple dimensions including code quality, architecture, testing, documentation, security, and performance. Generate detailed markdown reports to guide code improvements and maintain high code quality standards.
+This skill uses **OpenAI Codex CLI** (GPT-5-Codex model) as an LLM judge to perform comprehensive code reviews before commit. Get objective, scored assessments (0-100) with categorized issues (critical/warning/suggestion) and detailed improvement recommendations.
+
+## Prerequisites
+
+**Required:**
+- OpenAI Codex CLI installed: `npm i -g @openai/codex`
+- ChatGPT Plus/Pro subscription (or OpenAI API access)
+- Git repository with staged changes
+
+**Verify:**
+```bash
+codex --version
+# Should show: codex-cli 0.50.0 or higher
+```
 
 ## When to Use This Skill
 
@@ -16,141 +29,65 @@ Activate this skill when:
 - User says "이 코드 커밋해도 괜찮을까?" or "is this code ready to commit?"
 - User explicitly requests code review before committing changes
 - User wants to check if changes follow best practices
+- User says "pre-commit review" or "check before commit"
 
 Trigger keywords: code review, commit review, 커밋 리뷰, pre-commit, review changes, check code
 
 ## Review Mindset: Be Critical, Not Complimentary
 
-**IMPORTANT**: This is a CODE REVIEW, not a praise session. The goal is to FIND PROBLEMS, not to compliment the user.
+**IMPORTANT**: This is a CODE REVIEW, not a praise session. Codex is configured to FIND PROBLEMS.
 
 ### Critical Review Principles
 
-**Your role is to be a strict, experienced code reviewer who:**
-- Actively looks for bugs, security issues, and code smells
-- Questions design decisions and implementation choices
-- Applies high standards without being apologetic
-- Finds issues even in "good-looking" code
-- Treats every line of code as potentially problematic until proven otherwise
+Codex is instructed to:
+- Actively look for bugs, security issues, and code smells
+- Question design decisions and implementation choices
+- Apply high standards without being apologetic
+- Find issues even in "good-looking" code
+- Treat every line of code as potentially problematic
 
 **Default stance**: "What could go wrong with this code?"
-
-### Anti-Patterns to Avoid
-
-**❌ DON'T be overly positive:**
-```
-Bad: "Great code! Everything looks good!"
-Bad: "Excellent work! Just a few minor suggestions..."
-Bad: "Outstanding implementation!"
-```
-
-**✅ DO be objective and critical:**
-```
-Good: "Found 3 potential bugs and 5 code quality issues."
-Good: "This function violates Single Responsibility Principle."
-Good: "Security concern: User input not validated."
-```
-
-### Strictness Guidelines
-
-1. **No Free Passes**: Even if code "looks good", scrutinize it
-   - Check for edge cases
-   - Look for missing error handling
-   - Verify test coverage
-   - Question naming choices
-
-2. **Be Skeptical**: Don't assume code works
-   - What if input is None?
-   - What if list is empty?
-   - What if database fails?
-   - What if API returns error?
-
-3. **Apply Standards Rigorously**:
-   - Function >50 lines? Flag it
-   - No type hints? Flag it
-   - No tests? Flag it
-   - Missing docstring? Flag it
-   - Complex logic without comments? Flag it
-
-4. **Don't Sugarcoat**: Be direct
-   - "This is a security vulnerability" not "might want to consider security"
-   - "Missing error handling" not "could potentially add error handling"
-   - "Violates SOLID principles" not "might benefit from refactoring"
-
-5. **Find Something**: If you're not finding issues, you're not looking hard enough
-   - Every code change has room for improvement
-   - Even "perfect" code can be more maintainable, testable, or documented
-   - Minimum: Always check if tests and docs are complete
-
-### Calibration Examples
-
-**Scenario**: User commits a simple function
-```python
-def get_user(user_id):
-    return database.query(f"SELECT * FROM users WHERE id = {user_id}")
-```
-
-**❌ Weak Review:**
-"Function looks good! Works as expected."
-
-**✅ Strong Review:**
-```
-🚨 CRITICAL: SQL injection vulnerability
-⚠️  WARNING: No type hints
-⚠️  WARNING: No docstring
-⚠️  WARNING: No error handling (what if database fails?)
-⚠️  WARNING: No validation (what if user_id is None?)
-💡 SUGGESTION: Return type not specified
-💡 SUGGESTION: Magic string query could be in repository layer
-
-RECOMMENDATION: Fix critical security issue before commit
-```
-
-### Tone Guidelines
-
-- **Objective**: State facts, not opinions
-- **Direct**: Don't apologize for finding issues
-- **Specific**: Point to exact line numbers and explain impact
-- **Actionable**: Always provide fix suggestions
-- **Professional**: Critical but not insulting
-
-**Good phrasing:**
-- "This code has a security vulnerability"
-- "Missing error handling will cause crashes"
-- "Function violates Single Responsibility Principle"
-- "Test coverage insufficient for production code"
-
-**Avoid:**
-- "Maybe you could consider..." (too weak)
-- "This is terrible code" (unprofessional)
-- "Everything is perfect!" (unrealistic)
-- "Just a tiny suggestion..." (downplaying real issues)
 
 ### Quality Bar
 
 **PASS criteria** (all must be true):
-- ✅ No security vulnerabilities
+- ✅ Score ≥ 70/100
+- ✅ No critical security vulnerabilities
 - ✅ No obvious bugs
-- ✅ Adequate test coverage (>80% for new code)
+- ✅ Adequate test coverage
 - ✅ Documentation present
-- ✅ No SOLID violations in new code
 - ✅ Error handling present
-- ✅ Type hints present
 
 **Anything less = NEEDS WORK**
-
-Don't let code pass just because "it's better than it was" or "it works". The question is: "Is this production-ready?"
 
 ## Core Review Process
 
 Follow this workflow for every code review request:
 
-### Step 1: Identify Staged Changes
+### Step 1: Verify Codex CLI Installation
+
+```bash
+codex --version
+```
+
+If not installed, inform user:
+```
+❌ Codex CLI not found.
+
+Install with:
+  npm i -g @openai/codex
+
+Then authenticate with ChatGPT Plus account:
+  codex
+```
+
+### Step 2: Identify Staged Changes
 
 ```bash
 # Get list of staged files
 git diff --staged --name-only
 
-# Get detailed diff of changes
+# Get detailed diff
 git diff --staged
 ```
 
@@ -158,323 +95,657 @@ If no files are staged:
 - Inform user: "No staged changes found. Use 'git add <files>' to stage changes first."
 - Stop the review process
 
-### Step 2: Analyze Changes by File
+### Step 3: Call Codex CLI for Review
 
-For each staged file, analyze the following dimensions:
+Execute Codex CLI with structured prompt:
 
-#### 2.1 Documentation Updates
-Reference: `references/documentation-checklist.md`
+```bash
+codex exec "Act as an expert LLM judge performing critical code review for commit readiness.
 
-Check:
-- README.md updated if public API changed
-- Docstrings added/updated for new/modified functions and classes
-- Type hints documented in docstrings
-- CHANGELOG.md updated with user-facing changes
-- API documentation synchronized
-- Comments explain "why" not "what"
+Review the following aspects with HIGH STANDARDS:
+- Bugs and correctness
+- Security vulnerabilities (SQL injection, XSS, auth issues, etc.)
+- Performance issues (algorithm complexity, N+1 queries, memory leaks)
+- Code quality and readability (naming, complexity, duplication)
+- Best practices adherence (SOLID, DRY, type hints, error handling)
+- Test coverage (do tests exist for new code?)
+- Documentation (docstrings, comments, README updates)
 
-#### 2.2 Bug Possibilities
-Reference: `references/python-best-practices.md`
+Your role is to FIND PROBLEMS, not to praise. Be critical and thorough.
 
-Check:
-- Common Python antipatterns (mutable default arguments, etc.)
-- Potential None/AttributeError issues
-- Off-by-one errors in loops
-- Exception handling catches specific exceptions
-- Resource leaks (unclosed files, connections)
-- Race conditions in concurrent code
-- Edge case handling
+Provide response in this EXACT format:
 
-#### 2.3 Test Coverage
-Reference: `references/testing-checklist.md`
+OVERALL SCORE: X/100
 
-Check:
-- New functions have corresponding test cases
-- Edge cases covered in tests
-- Happy path and error path tested
-- Test naming follows conventions
-- Mocking used appropriately
-- Test coverage meets project standards (>80%)
-- Integration tests for critical paths
+CRITICAL ISSUES (must fix before commit):
+- [file:line] Description and impact
+- [file:line] Description and impact
 
-#### 2.4 Clean Code Principles
-Reference: `references/clean-code-principles.md`
+WARNINGS (should fix):
+- [file:line] Description
+- [file:line] Description
 
-Check:
-- Meaningful variable/function/class names
-- Functions do one thing (Single Responsibility)
-- Function length reasonable (<50 lines preferred)
-- Avoid magic numbers (use constants)
-- DRY: No code duplication
-- KISS: Simple solutions over complex ones
-- YAGNI: Only implement what's needed now
-- Comments explain "why" not "what"
+SUGGESTIONS (nice to have):
+- [file:line] Description
+- [file:line] Description
 
-#### 2.5 SOLID Principles (Object-Oriented Design)
-Reference: `references/solid-principles.md`
+RECOMMENDATION: [commit | needs_work | major_refactor]
 
-Check:
-- **S**ingle Responsibility: Each class has one reason to change
-- **O**pen/Closed: Open for extension, closed for modification
-- **L**iskov Substitution: Subtypes are substitutable for base types
-- **I**nterface Segregation: Many specific interfaces > one general
-- **D**ependency Inversion: Depend on abstractions, not concretions
-- Classes/functions properly separated by concern
-- Cohesion is high, coupling is low
+SUMMARY: [2-3 sentence critical assessment]
 
-#### 2.6 File & Folder Structure
-Reference: `references/file-structure-guidelines.md`
-
-Check:
-- Files in appropriate directories (src/, tests/, docs/)
-- Module naming follows conventions (lowercase_with_underscores)
-- Package structure logical and scalable
-- __init__.py files present where needed
-- Imports organized (stdlib → third-party → local)
-- Circular dependencies avoided
-- Related functionality grouped together
-
-#### 2.7 Type Hints
-Check:
-- Function parameters have type hints
-- Return types specified
-- Complex types use typing module (List, Dict, Optional, Union)
-- Type hints match actual usage
-- Generic types properly parameterized
-- Type: ignore used sparingly with justification
-
-#### 2.8 Error Handling
-Check:
-- Appropriate exception types raised
-- Exceptions caught at right level
-- Error messages are informative
-- Resources cleaned up in finally blocks or context managers
-- Don't catch exceptions silently
-- Custom exceptions for domain-specific errors
-- Input validation before processing
-
-#### 2.9 Security
-Check:
-- No hardcoded passwords, API keys, secrets
-- SQL injection prevention (parameterized queries)
-- XSS prevention (proper escaping)
-- File path validation (prevent directory traversal)
-- Input sanitization for user data
-- Sensitive data not logged
-- Dependencies have no known vulnerabilities
-
-#### 2.10 Performance
-Check:
-- Algorithm complexity reasonable (avoid O(n²) when O(n) possible)
-- Database queries optimized (avoid N+1 queries)
-- Caching used where appropriate
-- Lazy evaluation for expensive operations
-- List comprehensions over loops where appropriate
-- Generators for large datasets
-- Memory usage reasonable (no unnecessary data copies)
-
-#### 2.11 Readability
-Check:
-- Code is self-explanatory
-- Cognitive complexity low (avoid deeply nested code)
-- Consistent formatting (PEP 8 compliance)
-- Logical flow easy to follow
-- Related code grouped together
-- Function complexity score acceptable (<10)
-
-#### 2.12 Reusability
-Check:
-- Functions/classes designed for reuse
-- Hard-coded values extracted to parameters/config
-- Generic solutions over specific ones
-- Pure functions where possible (no side effects)
-- Dependency injection used appropriately
-- Interfaces/abstractions for flexibility
-- Utility functions extracted to common modules
-
-### Step 3: Generate Review Report
-
-Use the template from `assets/review-report-template.md` to create a comprehensive review report.
-
-Report structure:
-1. **Summary**: Overall assessment and key findings
-2. **Files Reviewed**: List of staged files
-3. **Critical Issues**: Must fix before commit (bugs, security)
-4. **Warnings**: Should fix (code quality, performance)
-5. **Suggestions**: Nice to have (style, refactoring)
-6. **Checklist**: Pass/Fail for each review dimension
-7. **Recommendation**: Ready to commit? / Needs changes?
-
-### Step 4: Save Review Report
-
-Save the report to:
-```
-.code-reviews/YYYY-MM-DD-HH-MM-review.md
+Here's the git diff to review:
+$(git diff --staged)
+"
 ```
 
-Create `.code-reviews/` directory if it doesn't exist.
+**Important flags:**
+- Default mode is `--mode suggest` (read-only, safe)
+- Codex won't modify files during review
+- Review only, no auto-fixing
 
-Example filename: `.code-reviews/2025-01-27-14-30-review.md`
+### Step 4: Parse Codex Response
 
-### Step 5: Present Findings
+Extract key information:
+- Overall score (0-100)
+- Critical issue count
+- Warning count
+- Suggestion count
+- Recommendation (commit/needs_work/major_refactor)
+- Summary
 
-Show the user:
-1. Location of saved review report
-2. High-level summary (Critical/Warning/Suggestion counts)
-3. Recommendation (commit or fix issues first)
-4. Top 3 most important issues to address
-
-## Output Format
-
-### Console Output
+**Example Codex output:**
 ```
-📋 Code Review Complete!
+OVERALL SCORE: 65/100
+
+CRITICAL ISSUES (must fix before commit):
+- [user.py:45] SQL injection risk: f-string allows arbitrary SQL execution
+
+WARNINGS (should fix):
+- [user.py:15] Missing type hints reduces type safety
+- [test_user.py:20] Insufficient test coverage for error cases
+
+SUGGESTIONS (nice to have):
+- [user.py:50] Function too complex, consider splitting
+- [user.py:1] Add module-level docstring
+
+RECOMMENDATION: needs_work
+
+SUMMARY: Critical SQL injection vulnerability must be addressed before commit. Code also lacks type hints and comprehensive tests. Fix security issue and add type safety before merging.
+```
+
+### Step 5: Generate Review Report
+
+Create comprehensive markdown report using template:
+
+**Template structure:**
+```markdown
+# Code Review Report - [Date Time]
+
+**Reviewer:** OpenAI Codex (GPT-5-Codex)
+**Date:** YYYY-MM-DD HH:MM
+**Overall Score:** X/100
+**Recommendation:** [COMMIT | NEEDS WORK | MAJOR REFACTOR]
+
+---
+
+## Summary
+
+[Codex's summary]
+
+---
+
+## Score Breakdown
+
+| Metric | Score | Status |
+|--------|-------|--------|
+| Overall Quality | X/100 | [Pass/Fail] |
+| Critical Issues | X | [🚨 if >0, ✅ if 0] |
+| Warnings | X | [⚠️ if >3, ✅ if ≤3] |
+| Suggestions | X | [💡] |
+
+**Pass Threshold:** ≥70/100 with 0 critical issues
+
+---
+
+## Files Reviewed
+
+- file1.py (Modified)
+- file2.py (New)
+- test_file.py (Modified)
+
+---
+
+## 🚨 Critical Issues
+
+**These MUST be fixed before commit:**
+
+1. **[file:line] Issue title**
+   - **Severity:** Critical
+   - **Description:** [Full description]
+   - **Impact:** [What could go wrong]
+   - **Fix:** [How to fix]
+
+---
+
+## ⚠️ Warnings
+
+**These SHOULD be fixed:**
+
+1. **[file:line] Issue title**
+   - **Severity:** Warning
+   - **Description:** [Full description]
+   - **Suggestion:** [How to improve]
+
+---
+
+## 💡 Suggestions
+
+**Nice to have improvements:**
+
+1. **[file:line] Issue title**
+   - **Description:** [Full description]
+   - **Benefit:** [Why this helps]
+
+---
+
+## Recommendation
+
+[COMMIT ✅ | NEEDS WORK 🔴 | MAJOR REFACTOR 🔥]
+
+**Reasoning:**
+[Explanation based on score and issues]
+
+**Next Steps:**
+- [ ] Fix critical issue: [description]
+- [ ] Address warning: [description]
+- [ ] Consider suggestion: [description]
+
+---
+
+## Full Codex Output
+
+```
+[Complete Codex CLI output for reference]
+```
+
+---
+
+**Generated by:** Pre-Commit Code Reviewer (Codex-Powered)
+**Model:** GPT-5-Codex via OpenAI Codex CLI
+**Session:** [timestamp]
+```
+
+### Step 6: Save Review Report
+
+Save to `.code-reviews/` directory:
+
+```bash
+# Create directory if needed
+mkdir -p .code-reviews
+
+# Save report
+.code-reviews/YYYY-MM-DD-HH-MM-codex-review.md
+```
+
+**Example filename:** `.code-reviews/2025-01-27-16-30-codex-review.md`
+
+Add to `.gitignore` if needed (optional):
+```bash
+# Option 1: Keep reviews in repo (recommended for team learning)
+# .code-reviews/ is committed
+
+# Option 2: Local reviews only
+echo ".code-reviews/" >> .gitignore
+```
+
+### Step 7: Present Findings to User
+
+**Console output format:**
+
+```
+📋 Codex Code Review Complete!
 
 📁 Files Reviewed: 3
-  - src/api/user.py
-  - src/models/user_model.py
-  - tests/test_user.py
+  - src/api/user.py (Modified)
+  - src/models/user_model.py (Modified)
+  - tests/test_user.py (New)
+
+📊 Overall Score: 65/100
 
 🚨 Critical Issues: 1
-⚠️  Warnings: 4
-💡 Suggestions: 7
+⚠️  Warnings: 3
+💡 Suggestions: 5
 
-Top Issues to Address:
-1. [CRITICAL] SQL injection vulnerability in user.py:45
-2. [WARNING] Missing test coverage for error cases in test_user.py
-3. [WARNING] Function create_user() has too many responsibilities (user.py:23-67)
+---
 
-📄 Full report saved to: .code-reviews/2025-01-27-14-30-review.md
+Top 3 Issues to Address:
 
-🔴 Recommendation: Fix critical issues before committing
+1. 🚨 [CRITICAL] SQL injection vulnerability (user.py:45)
+   → f-string allows arbitrary SQL execution
+   → FIX: Use parameterized queries
+
+2. ⚠️  [WARNING] Missing type hints (user.py:15-20)
+   → Reduces type safety
+   → ADD: def get_user(id: int) -> Optional[User]:
+
+3. ⚠️  [WARNING] Insufficient test coverage (test_user.py)
+   → Error cases not tested
+   → ADD: Test for None inputs, database failures
+
+---
+
+🔴 Recommendation: NEEDS WORK
+
+Fix the critical SQL injection vulnerability before committing.
+Address type hints and test coverage in near future.
+
+📄 Full report saved to:
+   .code-reviews/2025-01-27-16-30-codex-review.md
+
+---
+
+Would you like me to:
+1. Show the full Codex analysis?
+2. Help fix the SQL injection issue?
+3. Generate improved code with Codex auto-fix?
 ```
 
-## Resources
+## Codex Review Dimensions
 
-This skill includes comprehensive reference documentation for each review dimension:
+Codex analyzes these aspects automatically:
 
-### references/python-best-practices.md
-- PEP 8 style guide essentials
-- Common Python antipatterns to avoid
-- Typical bug patterns and how to detect them
-- Performance optimization tips specific to Python
+### 1. Security
+- SQL injection, XSS, CSRF
+- Authentication/authorization issues
+- Hardcoded secrets
+- Input validation
+- Dependency vulnerabilities
 
-### references/clean-code-principles.md
-- Clean Code principles by Robert C. Martin
-- Naming conventions and best practices
-- Function and class design guidelines
-- DRY, KISS, YAGNI explained with Python examples
-- Code smell detection guide
+### 2. Bugs & Correctness
+- Logic errors
+- Edge case handling
+- None/null pointer issues
+- Type mismatches
+- Off-by-one errors
+- Resource leaks
 
-### references/solid-principles.md
-- Detailed explanation of each SOLID principle
-- Python-specific examples for each principle
-- How to apply SOLID in Python (differs from Java/C#)
-- Common violations and refactoring strategies
-- Class design patterns aligned with SOLID
+### 3. Performance
+- Algorithm complexity (O(n²) vs O(n))
+- Database N+1 queries
+- Memory leaks
+- Unnecessary computations
+- Missing caching
 
-### references/testing-checklist.md
-- Unit testing best practices
-- Test coverage guidelines and tools
-- Edge case identification strategies
-- Mocking and stubbing in Python (unittest.mock)
-- Test naming conventions
-- AAA pattern (Arrange, Act, Assert)
+### 4. Code Quality
+- Function length and complexity
+- Code duplication (DRY)
+- Naming conventions
+- Magic numbers
+- Dead code
 
-### references/documentation-checklist.md
-- README structure and essential sections
-- Docstring formats (Google, NumPy, reStructuredText)
-- API documentation synchronization
-- CHANGELOG format and best practices
-- When to update docs vs when to clarify code
+### 5. Best Practices
+- SOLID principles
+- Type hints (Python)
+- Error handling
+- Logging
+- Documentation
 
-### references/file-structure-guidelines.md
-- Standard Python project layouts
-- Module and package organization
-- Import statement organization (isort)
-- Circular dependency prevention
-- Monorepo vs multi-repo considerations
+### 6. Testing
+- Test coverage for new code
+- Edge cases covered
+- Mocking appropriately
+- Test naming
 
-### assets/review-report-template.md
-- Markdown template for review reports
-- Issue severity classification guide
-- Structured format for consistent reviews
-- Examples of well-written review comments
+### 7. Documentation
+- Docstrings
+- Comments (why, not what)
+- README updates
+- API docs
+
+## Scoring System
+
+Codex uses this scale:
+
+| Score | Grade | Meaning | Action |
+|-------|-------|---------|--------|
+| 90-100 | A | Excellent | ✅ Commit ready |
+| 80-89 | B | Good | ✅ Commit with minor notes |
+| 70-79 | C | Acceptable | ⚠️ Commit, but improve soon |
+| 60-69 | D | Needs work | 🔴 Fix issues before commit |
+| 0-59 | F | Poor | 🔴 Major refactoring needed |
+
+**Critical issues always block commit, regardless of score.**
+
+## Advanced Usage
+
+### Option 1: Quick Review (Default)
+
+```bash
+# Standard review mode
+codex exec "Review this diff: $(git diff --staged)"
+```
+
+### Option 2: Detailed Review
+
+```bash
+# Request more detailed analysis
+codex exec "Perform VERY thorough code review with detailed explanations for each issue. Include code examples for fixes: $(git diff --staged)"
+```
+
+### Option 3: Specific Aspect Review
+
+```bash
+# Focus on security only
+codex exec "Review this diff ONLY for security vulnerabilities. Be extremely thorough: $(git diff --staged)"
+
+# Focus on performance only
+codex exec "Review this diff ONLY for performance issues and algorithm complexity: $(git diff --staged)"
+```
+
+### Option 4: Compare with Auto-fix
+
+```bash
+# 1. Get review
+codex exec "Review: $(git diff --staged)"
+
+# 2. If issues found, ask Codex to fix
+codex exec --mode auto-edit "Fix the SQL injection and add type hints in user.py"
+
+# 3. Review again
+codex exec "Review the fixed version: $(git diff --staged)"
+```
+
+## Integration with Git Hooks
+
+### Pre-commit Hook (Optional)
+
+Create `.git/hooks/pre-commit`:
+
+```bash
+#!/bin/bash
+
+echo "🔍 Running Codex code review..."
+
+# Check if there are staged changes
+if git diff --staged --quiet; then
+    echo "No staged changes to review."
+    exit 0
+fi
+
+# Run Codex review
+REVIEW=$(codex exec "Quick review, score only: $(git diff --staged)")
+
+# Extract score (basic parsing)
+SCORE=$(echo "$REVIEW" | grep -oP 'OVERALL SCORE: \K\d+')
+
+if [ -z "$SCORE" ]; then
+    echo "⚠️  Could not determine score, allowing commit"
+    exit 0
+fi
+
+# Block commit if score < 70
+if [ "$SCORE" -lt 70 ]; then
+    echo "❌ Code review failed (Score: $SCORE/100)"
+    echo "Fix issues before committing."
+    exit 1
+fi
+
+echo "✅ Code review passed (Score: $SCORE/100)"
+exit 0
+```
+
+Make executable:
+```bash
+chmod +x .git/hooks/pre-commit
+```
 
 ## Best Practices
 
-### Do's
-- **Be critical and thorough** - Your job is to find problems
-- **Look for what could go wrong** - Don't assume code works
-- Review staged changes only (not entire codebase)
-- Provide specific line numbers for issues
-- Explain "why" for each suggestion with impact analysis
-- Prioritize critical issues (security, bugs) but don't ignore quality issues
-- Give actionable recommendations with code examples
-- Be direct and objective - state facts, not softened opinions
-- Focus on patterns and principles, not just style nitpicks
-- **Always find something** - Every code has room for improvement
-- Check tests and docs completeness for every change
-- Question design decisions - why this approach?
+### Do's ✅
 
-### Don'ts
-- **Don't be complimentary** - This is not a praise session
-- **Don't say "looks good" without thorough analysis**
-- **Don't give free passes** - Apply standards rigorously
-- Don't overwhelm with trivial issues (focus on impact)
-- Don't suggest changes without explanation
-- Don't ignore context of the change
-- Don't apply rules dogmatically without considering context
-- Don't review unstaged changes
-- Don't use weak language ("maybe", "might want to consider")
-- Don't apologize for finding issues - you're helping
-- Don't let code pass just because "it works"
+1. **Always review before commit**
+   - Make it a habit
+   - Catch issues early
+   - Improve code quality over time
+
+2. **Trust but verify**
+   - Codex is very good but not perfect
+   - Review Codex's suggestions critically
+   - Use your judgment
+
+3. **Fix critical issues immediately**
+   - Never commit with critical security issues
+   - Address bugs before they reach production
+   - Don't accumulate technical debt
+
+4. **Track review history**
+   - Keep `.code-reviews/` in git
+   - Learn from past issues
+   - Measure quality trends
+
+5. **Use specific prompts**
+   - Ask for detailed explanations when needed
+   - Focus on specific aspects (security, performance)
+   - Request code examples for fixes
+
+### Don'ts ❌
+
+1. **Don't skip reviews for "small" changes**
+   - Small changes can have big bugs
+   - Security issues don't discriminate by LOC
+   - Build the habit
+
+2. **Don't ignore warnings**
+   - Today's warning = tomorrow's bug
+   - Code quality compounds
+   - Fix early, fix often
+
+3. **Don't commit on red**
+   - If recommendation is "needs_work", don't commit
+   - If critical issues exist, fix first
+   - Never compromise on security
+
+4. **Don't review huge diffs**
+   - Break large changes into smaller commits
+   - Review file-by-file if needed
+   - Large diffs = missed issues
+
+5. **Don't disable the skill**
+   - Consistency is key
+   - Quality requires discipline
+   - Make it non-negotiable
+
+## Comparison: Codex vs Claude Review
+
+| Feature | Codex (This Skill) | Claude Built-in |
+|---------|-------------------|-----------------|
+| **Model** | GPT-5-Codex | Claude 3.5 Sonnet |
+| **Scoring** | 0-100 (LLM Judge) | Manual |
+| **Format** | Structured | Flexible |
+| **Speed** | Medium (~5-10s) | Fast (~2-5s) |
+| **Cost** | $20/mo (ChatGPT Plus) | Included |
+| **Strictness** | Very strict | Configurable |
+| **Auto-fix** | Yes (separate mode) | Via Claude |
+
+**Recommendation:** Use both for comprehensive review!
+
+## Troubleshooting
+
+### Error: "codex: command not found"
+
+**Solution:**
+```bash
+# Install Codex CLI
+npm i -g @openai/codex
+
+# Verify
+codex --version
+```
+
+### Error: "Authentication required"
+
+**Solution:**
+```bash
+# Run once to authenticate
+codex
+
+# Sign in with ChatGPT Plus account
+```
+
+### Error: "No staged changes found"
+
+**Solution:**
+```bash
+# Stage files first
+git add file1.py file2.py
+
+# Or stage all
+git add .
+
+# Then request review
+```
+
+### Warning: "Score could not be determined"
+
+**Possible causes:**
+- Codex output format unexpected
+- Network issues
+- Rate limiting
+
+**Solution:**
+- Retry the review
+- Check internet connection
+- Verify Codex CLI is up to date
+
+### Issue: "Review too slow"
+
+**Solutions:**
+- Review smaller diffs (break into multiple commits)
+- Use Quick Review mode
+- Check network speed
+
+### Issue: "Codex missed an obvious bug"
+
+**Remember:**
+- No LLM is perfect
+- Always use critical thinking
+- Combine Codex + Claude + Human review
+- Report patterns to improve prompts
 
 ## Example Usage
 
-**User**: "커밋 전에 코드 리뷰 해줘"
+### Example 1: Basic Review
 
-**Claude Response**:
+**User:** "커밋 전에 코드 리뷰 해줘"
+
+**Claude:**
 ```
-Reviewing staged changes...
+Checking staged changes...
 
 Found 2 staged files:
 - src/user_service.py (Modified)
 - tests/test_user_service.py (New)
 
-Analyzing code...
+Running Codex code review...
+[Calls Codex CLI]
 
-📋 Code Review Complete!
+📋 Codex Code Review Complete!
+
+📊 Overall Score: 78/100
 
 🚨 Critical Issues: 0
 ⚠️  Warnings: 2
-💡 Suggestions: 5
+💡 Suggestions: 3
 
 Top Issues:
-1. [WARNING] Missing type hints for function parameters (user_service.py:15-20)
-2. [WARNING] Function get_user_data() could be split into smaller functions
-3. [SUGGESTION] Consider using dataclass for User model
+1. ⚠️  Missing type hints (user_service.py:15)
+2. ⚠️  Error handling could be more specific (user_service.py:30)
+3. 💡 Consider using dataclass for User model
 
-✅ Recommendation: Safe to commit (fix warnings in future refactoring)
+✅ Recommendation: COMMIT
 
-📄 Full report: .code-reviews/2025-01-27-14-30-review.md
+Code is production-ready. Address warnings in future refactoring.
+
+📄 Full report: .code-reviews/2025-01-27-16-45-codex-review.md
 ```
 
-## Integration with Workflow
+### Example 2: Critical Issues Found
 
-This skill works best when:
-- Used consistently before every commit
-- Combined with pre-commit hooks (optional)
-- Review reports tracked in git (add .code-reviews/ to repo)
-- Team reviews historical reports for patterns
-- Integrated with CI/CD for automated checks
+**User:** "Is this ready to commit?"
+
+**Claude:**
+```
+Reviewing staged changes with Codex...
+
+📋 Codex Code Review Complete!
+
+📊 Overall Score: 35/100
+
+🚨 Critical Issues: 2
+⚠️  Warnings: 4
+💡 Suggestions: 6
+
+Top Issues:
+1. 🚨 [CRITICAL] SQL injection (user.py:45)
+   Severity: High - allows arbitrary SQL execution
+
+2. 🚨 [CRITICAL] Hardcoded API key (config.py:12)
+   Severity: High - security credential exposed
+
+3. ⚠️  Missing error handling (api.py:67)
+
+🔴 Recommendation: NEEDS WORK
+
+DO NOT COMMIT until critical security issues are fixed.
+
+Would you like me to help fix these issues?
+```
+
+## Cost Considerations
+
+**Codex CLI Pricing:**
+- **ChatGPT Plus:** $20/month (unlimited reviews)
+- **ChatGPT Pro:** $200/month (higher limits)
+- **API:** Pay-per-use (~$0.01-0.05/review)
+
+**Typical usage:**
+- Solo developer: ~10-50 reviews/day → ChatGPT Plus sufficient
+- Team: ~100+ reviews/day → ChatGPT Team or API
+
+**Free alternative:**
+- Use built-in Claude review (no Codex)
+- See: `.claude/skills/pre-commit-code-reviewer/skill.md.backup`
+
+## Resources
+
+### Documentation
+- [OpenAI Codex CLI](https://developers.openai.com/codex/cli/)
+- [Codex GitHub](https://github.com/openai/codex)
+- [OpenAI Codex Guide](../../docs/openai-codex-guide.md)
+
+### Related Skills
+- `codex-integration` - General Codex usage
+- Original Claude review: `skill.md.backup`
+
+### Templates
+- Review report template: `assets/review-report-template.md`
+- Git hook examples: `.git/hooks/pre-commit`
 
 ## Limitations
 
 This skill cannot:
 - Execute code or run tests (use pytest separately)
-- Access external linters (SonarQube, etc.)
-- Modify code automatically (provides recommendations only)
-- Review changes not yet staged with git
-- Detect runtime-only issues
+- Access external linters (use alongside, not replace)
+- Modify code automatically (use `--mode auto-edit` separately)
+- Review changes not yet staged
+- Detect all runtime-only issues
 - Replace human code review for complex changes
+
+**Always combine:** Codex + Claude + Human review for critical code
+
+---
+
+**Version:** 2.0 (Codex-Powered)
+**Last Updated:** 2025-01-27
+**Model:** GPT-5-Codex via OpenAI Codex CLI
+**Backup:** Original Claude-based version saved to `skill.md.backup`
