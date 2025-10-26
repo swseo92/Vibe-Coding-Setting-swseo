@@ -2,12 +2,39 @@
 .idea/
 .vscode/
 *.swp
-*.swo
+.swo
 *~
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Python
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb
 
 # Project specific
 *.local.*
@@ -15,3 +42,7 @@ Thumbs.db
 temp/
 tmp/
 __pycache__/
+
+# Claude Code specific
+.code-reviews/
+.playwright-mcp/
