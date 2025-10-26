@@ -54,6 +54,48 @@ Trigger keywords: n8n, workflow automation, automate my business, side business,
 
 **This skill focuses on workflow building only.** Docker setup and n8n installation are outside the scope - ask user to ensure n8n is running before proceeding.
 
+## Workflow Implementation Approaches
+
+This skill supports two workflow implementation methods:
+
+### Approach A: JSON-Based Incremental Development (Recommended)
+**Best for**: Complex workflows, version control, incremental testing, team collaboration
+
+**Workflow**:
+1. Create workflow JSON locally with tools like Write
+2. Clear n8n canvas (Ctrl+A → Delete) - **CRITICAL**
+3. Import JSON via browser automation
+4. Execute workflow to verify functionality
+5. Export JSON for version control
+6. Repeat for incremental additions
+
+**Advantages**:
+- ✅ Version control friendly (git-trackable JSON files)
+- ✅ Incremental testing (add nodes one at a time)
+- ✅ Faster iteration (no manual clicking)
+- ✅ Reusable templates
+- ✅ Team collaboration (share JSON files)
+
+**Validated workflow**: See `tmp/incremental-workflow-findings.md` for detailed test results
+
+### Approach B: Direct Browser Building
+**Best for**: Simple workflows, exploratory design, learning n8n UI
+
+**Workflow**:
+1. Navigate to n8n in browser
+2. Click to add nodes one by one
+3. Configure each node via UI
+4. Test and export when complete
+
+**Advantages**:
+- ✅ Visual feedback
+- ✅ Easier for beginners
+- ✅ Good for exploration
+
+**Choose based on**:
+- **JSON approach**: 4+ nodes, needs version control, incremental testing
+- **Browser approach**: 2-3 nodes, simple workflows, UI exploration
+
 ## Core Workflow
 
 ### Step 1: Verify n8n is Running
@@ -234,6 +276,167 @@ Before implementing in self-hosted n8n, plan the browser interaction steps:
 2. Verify outputs at each node
 3. Debug any errors
 ```
+
+### Step 5.5: Create Workflow JSON (JSON Approach Only)
+
+**For JSON-based workflow development, create the workflow JSON file locally:**
+
+#### JSON Structure Template
+
+```json
+{
+  "name": "Workflow Name",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "unique-id-001",
+      "name": "Node Display Name",
+      "type": "n8n-nodes-base.nodeType",
+      "typeVersion": 1,
+      "position": [x, y]
+    }
+  ],
+  "connections": {
+    "Source Node Name": {
+      "main": [[{"node": "Target Node Name", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "settings": {"executionOrder": "v1"},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-01-27T00:00:00.000Z",
+  "versionId": "v1-description"
+}
+```
+
+#### Node Types Reference
+
+**Common nodes**:
+- **Trigger**: `n8n-nodes-base.manualTrigger` (manual execution)
+- **HTTP Request**: `n8n-nodes-base.httpRequest` (API calls)
+- **Set**: `n8n-nodes-base.set` (data transformation)
+- **Code**: `n8n-nodes-base.code` (Python/JavaScript)
+- **IF**: `n8n-nodes-base.if` (conditional logic)
+
+See `references/n8n-nodes-reference.md` for complete node catalog.
+
+#### Incremental Development Pattern
+
+**For complex workflows (4+ nodes), build incrementally:**
+
+1. **v1 - Trigger only**:
+   ```json
+   {
+     "name": "Workflow v1",
+     "nodes": [{"type": "n8n-nodes-base.manualTrigger", ...}],
+     "connections": {}
+   }
+   ```
+   Save as `tmp/workflow-v1-trigger.json`
+
+2. **v2 - Add first action**:
+   ```json
+   {
+     "name": "Workflow v2",
+     "nodes": [
+       {"type": "n8n-nodes-base.manualTrigger", ...},
+       {"type": "n8n-nodes-base.httpRequest", ...}
+     ],
+     "connections": {
+       "Trigger Name": {"main": [[{"node": "HTTP Request", ...}]]}
+     }
+   }
+   ```
+   Save as `tmp/workflow-v2-trigger-http.json`
+
+3. **v3+ - Continue adding nodes**, testing after each addition
+
+#### Import to n8n Browser Automation
+
+**After creating JSON file**:
+
+1. **Clear canvas** (CRITICAL - imports accumulate otherwise):
+   ```
+   Use mcp__microsoft-playwright-mcp__browser_press_key with "Control+a"
+   Use mcp__microsoft-playwright-mcp__browser_press_key with "Delete"
+   ```
+
+2. **Import JSON**:
+   ```
+   Click "..." menu button
+   Click "Import from File..."
+   Use mcp__microsoft-playwright-mcp__browser_file_upload with absolute path to JSON
+   ```
+
+3. **Verify import**:
+   ```
+   Take snapshot to confirm all nodes loaded
+   Check node connections are correct
+   ```
+
+4. **Execute workflow**:
+   ```
+   Click "Execute workflow" button
+   Verify each node shows expected item count (e.g., "1 item")
+   Click nodes to inspect data flow
+   ```
+
+5. **Export for version control**:
+   ```
+   Click "..." menu
+   Click "Download"
+   File saves to .playwright-mcp/ directory automatically
+   ```
+
+#### Key Findings from Validation Tests
+
+**Canvas Clearing**:
+- ⚠️ **MANDATORY**: Import adds to existing canvas instead of replacing
+- ✅ **Solution**: Always Ctrl+A → Delete before import
+
+**Node IDs**:
+- Custom IDs (e.g., "trigger-001") are replaced by n8n-generated UUIDs
+- Don't rely on IDs for tracking - use node names
+
+**Positions**:
+- n8n auto-adjusts positions proportionally
+- Use generous spacing in source JSON (200+ pixels between nodes)
+
+**Parameters**:
+- Core parameters preserved (URLs, assignments, connections)
+- Default parameters may be removed (mode, duplicateItem)
+- n8n adds meta fields (versionId, instanceId, workflow id)
+
+**Data Transformation (Set Node)**:
+```json
+"parameters": {
+  "assignments": {
+    "assignments": [
+      {"name": "userId", "value": "={{ $json.userId }}", "type": "number"},
+      {"name": "title", "value": "={{ $json.title }}", "type": "string"},
+      {"name": "processedAt", "value": "={{ $now }}", "type": "string"}
+    ]
+  }
+}
+```
+All n8n expressions (={{ ... }}) evaluate correctly.
+
+#### When to Use JSON vs Browser Building
+
+**Use JSON approach when**:
+- Workflow has 4+ nodes
+- Need version control and git tracking
+- Want to test incrementally
+- Building similar workflows (reusable templates)
+- Working with a team
+
+**Use browser building when**:
+- Simple 2-3 node workflows
+- Learning n8n UI
+- Exploring available nodes
+- Quick prototypes
 
 ### Step 6: Initialize Self-Hosted n8n Browser Session
 
@@ -737,6 +940,10 @@ Structure responses following this format:
 - Don't forget to export workflow JSON from n8n dashboard
 - Don't leave workflows undocumented—future you will thank present you
 - Don't assume n8n is running—verify accessibility first
+- **Don't import JSON without clearing canvas first** (Ctrl+A → Delete)
+- **Don't skip incremental testing** when using JSON approach (test v1, v2, v3...)
+- Don't rely on custom node IDs—n8n replaces them with UUIDs
+- Don't use browser building for complex workflows—prefer JSON for 4+ nodes
 
 ### Error Handling in Browser Automation
 
@@ -1041,6 +1248,12 @@ Common workflow patterns with complete examples:
 14. **Use git version control**: Commit workflow documentation to git repository
 15. **Document credentials**: List all required API keys and permissions in README
 16. **Track changes**: Update CHANGELOG.md when modifying existing workflows
+17. **Choose right approach**: JSON for complex/versioned workflows, browser for simple ones
+18. **Always clear canvas**: Ctrl+A → Delete before importing JSON workflows
+19. **Use incremental JSON versions**: Build v1, test, v2, test, v3, test...
+20. **Save JSON to tmp/**: Keep test/development JSONs in tmp/ folder (gitignored)
+21. **Export after every test**: Download workflow JSON after successful execution
+22. **Generous node spacing**: Use 200+ pixel spacing in JSON for better visual layout
 
 ### Limitations
 
@@ -1081,13 +1294,22 @@ The focus is on:
 
 ## Final Notes
 
-**Always remember**: Users chose self-hosted n8n for full control and flexibility. Leverage this by suggesting Python libraries and custom code solutions that wouldn't work in cloud environments. The combination of strategic planning, hands-on browser automation, and comprehensive documentation makes this skill uniquely valuable.
+**Always remember**: Users chose self-hosted n8n for full control and flexibility. Leverage this by suggesting Python libraries and custom code solutions that wouldn't work in cloud environments. The combination of strategic planning, **JSON-based incremental development**, hands-on browser automation, and comprehensive documentation makes this skill uniquely valuable.
+
+**JSON-First Approach**: For complex workflows (4+ nodes), always use the JSON-based incremental development approach:
+1. Create JSON locally (v1, v2, v3...)
+2. Clear canvas (Ctrl+A → Delete) before each import
+3. Import → Execute → Export → Repeat
+4. Version control all JSON files
+5. Test after each node addition
 
 **Documentation is crucial**: Every workflow built should have:
 - Exported JSON file (workflow.json) from n8n
+- Source JSON versions (v1, v2, v3) in tmp/ for incremental development
 - README.md with setup, usage, and troubleshooting
 - Screenshots of the final workflow
 - Entry in workflow-inventory.md for tracking
+- CHANGELOG.md documenting each version
 
 **Self-hosted advantages to emphasize**:
 - Python code nodes can use **any library** (pandas, requests, beautifulsoup4, etc.)
