@@ -60,14 +60,17 @@ Vibe-Coding-Setting-swseo/  ← 이 CLAUDE.md가 위치한 폴더 (저장소 루
 
 ```
 Vibe-Coding-Setting-swseo/
-├── .claude/                      # Claude Code 설정
-│   ├── agents/                   # 커스텀 에이전트
-│   ├── commands/                 # 슬래시 커맨드
-│   ├── personas/                 # 페르소나
-│   ├── scripts/                  # 스크립트
-│   └── settings.local.json       # 로컬 설정
+├── .claude/                      # Claude Code 설정 (전역에서 사용)
+│   ├── agents/                   # 커스텀 에이전트 (13개)
+│   ├── commands/                 # 슬래시 커맨드 (2개)
+│   ├── personas/                 # 페르소나 (2개)
+│   ├── scripts/                  # 유틸리티 스크립트
+│   │   ├── init-workspace.sh     # 프로젝트 초기화 (Unix)
+│   │   └── init-workspace.ps1    # 프로젝트 초기화 (Windows)
+│   ├── skills/                   # 스킬 (13개)
+│   └── settings.local.json       # 전역 설정 템플릿
 │
-├── .specify/                     # Speckit 템플릿 & 스크립트
+├── .specify/                     # Speckit 템플릿 & 스크립트 (전역)
 │   ├── memory/                   # 프로젝트 헌법
 │   ├── scripts/bash/             # 자동화 스크립트
 │   └── templates/                # 스펙/플랜/태스크 템플릿
@@ -78,12 +81,12 @@ Vibe-Coding-Setting-swseo/
 │
 ├── templates/                    # 언어별 프로젝트 템플릿
 │   ├── common/                   # 공통 템플릿 (모든 프로젝트)
-│   │   ├── .claude/              # Claude Code 기본 설정
-│   │   │   ├── scripts/          # Hook 스크립트
+│   │   ├── .claude/              # 프로젝트 로컬 설정만
+│   │   │   ├── scripts/          # Hook 스크립트 (경로 의존적)
 │   │   │   │   ├── notify.py     # 알림 TTS 스크립트
 │   │   │   │   ├── run-notify.cmd  # Windows wrapper
 │   │   │   │   └── run-notify.sh   # Unix wrapper
-│   │   │   └── settings.json     # 상대경로 hook 설정
+│   │   │   └── settings.json     # Hook 설정 (경로 의존적)
 │   │   ├── .specify/             # Speckit 기본 구조
 │   │   ├── .mcp.json             # MCP 설정
 │   │   └── claude.md             # 프로젝트 마커 템플릿
@@ -103,24 +106,49 @@ Vibe-Coding-Setting-swseo/
 └── claude.md                     # 이 문서
 ```
 
+### 설정 파일 분리 원칙
+
+**프로젝트 로컬 (.claude/ in project):**
+- 경로 의존적 파일만 (상대경로 사용)
+- `settings.json` - Hook 설정 (.claude/scripts 참조)
+- `scripts/` - Hook 스크립트 (notify.py 등)
+
+**전역 공유 (~/.claude/):**
+- 경로 독립적 파일 (모든 프로젝트 공유)
+- `commands/` - 슬래시 커맨드
+- `agents/` - 에이전트
+- `skills/` - 스킬
+- `personas/` - 페르소나
+- `scripts/` - 유틸리티 스크립트 (init-workspace.sh 등)
+
 ---
 
 ## 주요 커맨드
 
 ### `/apply-settings`
-현재 프로젝트의 `.claude` 설정을 전역 설정(`~/.claude/`)으로 동기화합니다.
+**Vibe-Coding-Setting 저장소에서만 사용** - 로컬 변경사항을 전역으로 적용
 
 ```bash
 /apply-settings
 ```
 
 **동작:**
-- `.claude/` 전체 → `~/.claude/`
+- `.claude/` 전체 → `~/.claude/` (commands, agents, skills, personas, scripts 등)
 - `settings.local.json` → `~/.claude/settings.json`
-- `speckit/` 템플릿 → `~/.specify/`
+- `.specify/` → `~/.specify/`
 
-### `/init-workspace` (예정)
-새 프로젝트에 언어별 템플릿을 적용합니다.
+**사용 시기:**
+- ✅ Vibe-Coding-Setting 저장소에서 직접 명령어/스킬을 수정한 후
+- ✅ 전역 설정을 처음 설치할 때
+- ✅ `~/.claude/`가 손상되었거나 초기화하고 싶을 때
+
+**특징:**
+- 로컬 → 전역 복사만 (GitHub에서 가져오지 않음)
+- 프로젝트 파일은 건드리지 않음
+- Vibe-Coding-Setting 저장소 전용
+
+### `/init-workspace`
+새 프로젝트에 언어별 템플릿을 적용하고 전역 설정을 확인합니다.
 
 ```bash
 /init-workspace python
@@ -128,10 +156,50 @@ Vibe-Coding-Setting-swseo/
 ```
 
 **동작:**
-- 이 repo clone
-- templates/{언어}/ 파일들을 현재 디렉토리에 복사
-- 불필요한 파일 정리 (speckit/, .git/ 등)
-- 의존성 설치 안내
+1. GitHub에서 이 repo clone (임시 디렉토리)
+2. **프로젝트 로컬** 파일 복사:
+   - `templates/common/.claude/` (settings.json, scripts/)
+   - `templates/common/.specify/`
+   - `templates/{언어}/` 파일들
+3. **전역 설정 확인**:
+   - `~/.claude/commands/`가 없으면 사용자에게 알림
+   - `/apply-settings` 수동 실행 안내
+4. 의존성 설치 안내
+
+**복사되는 것:**
+- ✅ 프로젝트: .claude/settings.json, .claude/scripts/, .specify/, 언어별 템플릿
+- ❌ 복사 안 됨: commands, agents, skills, personas (전역에서 공유)
+
+### `/sync-workspace`
+**모든 프로젝트에서 사용** - GitHub 최신 버전으로 자동 업데이트
+
+```bash
+/sync-workspace              # 프로젝트 + 전역 모두 업데이트 (권장)
+/sync-workspace --local-only # 프로젝트만 (전역 설정 유지)
+/sync-workspace --global-only # 전역만 (프로젝트 파일 유지)
+```
+
+**동작:**
+1. **GitHub에서** 최신 Vibe-Coding-Setting repo clone (자동)
+2. **프로젝트 로컬** 동기화:
+   - `.claude/settings.json` 업데이트 (덮어쓰기)
+   - `.claude/scripts/` 업데이트 (덮어쓰기, 삭제 안 함)
+   - `.specify/` 업데이트 (덮어쓰기, 삭제 안 함)
+3. **전역 설정** 동기화 (자동):
+   - `~/.claude/` 전체 업데이트 (commands, agents, skills, personas)
+   - `~/.specify/` 업데이트
+4. 백업 옵션 제공 (선택사항)
+
+**특징:**
+- ✅ GitHub 최신 버전 자동 가져오기
+- ✅ 한 번 실행으로 모든 프로젝트에 최신 명령어 적용
+- ✅ 프로젝트별 커스터마이징 보존 (기존 파일 삭제 안 함)
+- ✅ 변경사항 미리보기 + 백업 옵션
+- ✅ 어떤 프로젝트에서든 실행 가능
+
+**차이점:**
+- `/apply-settings`: 로컬 → 전역 (수동 수정 후)
+- `/sync-workspace`: GitHub → 로컬 + 전역 (자동 업데이트)
 
 ### `/merge`
 브랜치를 merge하고 conflict를 자동으로 해결합니다.
@@ -163,43 +231,66 @@ Vibe-Coding-Setting-swseo/
 
 ## 사용 시나리오
 
-### 1. 전역 Claude Code 설정 적용
+### 1. 처음 설정 (전역 설정 설치)
 
 ```bash
-# 이 repo로 이동
-cd ~/Vibe-Coding-Setting-swseo
+# Vibe-Coding-Setting 저장소 clone
+git clone https://github.com/swseo92/Vibe-Coding-Setting-swseo.git
+cd Vibe-Coding-Setting-swseo
 
 # Claude Code 실행
 claude
 
-# 설정 적용
+# 전역 설정 적용 (~/.claude/, ~/.specify/)
 /apply-settings
+
+# 이제 모든 프로젝트에서 slash commands 사용 가능!
 ```
 
-### 2. 새 Python 프로젝트 시작 (예정)
+### 2. 새 Python 프로젝트 시작
 
 ```bash
 # 새 프로젝트 디렉토리 생성
-mkdir my-new-project
-cd my-new-project
+mkdir my-new-api
+cd my-new-api
 
 # Claude Code 실행
 claude
 
-# 작업환경 초기화
+# 작업환경 초기화 (프로젝트 로컬 파일 + 전역 설정 확인)
 /init-workspace python
 
 # 의존성 설치
 uv sync
+
+# 개발 시작!
 ```
 
-### 3. 기존 프로젝트에 설정 추가
+### 3. 기존 프로젝트 업데이트
 
 ```bash
 cd existing-project
 
-# 수동으로 필요한 파일만 복사
-# 또는 /init-workspace --minimal (향후 구현)
+# 프로젝트 로컬 + 전역 설정 모두 최신화
+/sync-workspace
+
+# 또는 전역 설정만 업데이트 (프로젝트 파일은 유지)
+/sync-workspace --global-only
+```
+
+### 4. Vibe-Coding-Setting 저장소 업데이트 후
+
+```bash
+# Vibe-Coding-Setting 저장소에서
+cd ~/Vibe-Coding-Setting-swseo
+git pull
+
+# 전역 설정에 반영
+/apply-settings
+
+# 또는 다른 프로젝트에서
+cd ~/my-api-project
+/sync-workspace --global-only  # 전역만 업데이트
 ```
 
 ---
@@ -233,7 +324,7 @@ templates/
 
 ### 작동 방식
 
-1. **상대경로 기반**: `.claude/scripts/run-notify.cmd` (Windows) 또는 `.claude/scripts/run-notify.sh` (Unix)
+1. **상대경로 기반**: `.claude/scripts/run-notify.sh` (크로스 플랫폼)
 2. **자동 트리거**: Claude Code 세션 종료 또는 알림 이벤트 시 자동 실행
 3. **폴더 이름 인식**: 현재 작업 중인 폴더 이름을 음성으로 알려줌
 
@@ -247,13 +338,13 @@ templates/
       "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "\".claude\\scripts\\run-notify.cmd\" \"작업 완료\""
+        "command": ".claude/scripts/run-notify.sh \"작업 완료\""
       }]
     }],
     "Stop": [{
       "hooks": [{
         "type": "command",
-        "command": "\".claude\\scripts\\run-notify.cmd\" \"작업 완료\""
+        "command": ".claude/scripts/run-notify.sh \"작업 완료\""
       }]
     }]
   }
@@ -263,17 +354,29 @@ templates/
 ### Hook 스크립트
 
 - **`notify.py`**: 크로스 플랫폼 TTS 알림 (Windows/Mac/Linux)
-- **`run-notify.cmd`**: Windows wrapper (Python 실행)
-- **`run-notify.sh`**: Unix/Linux wrapper
+- **`run-notify.cmd`**: Windows wrapper (순수 Windows 환경용)
+- **`run-notify.sh`**: Unix/Linux/Mac wrapper (기본 설정)
+
+**참고:**
+- 기본적으로 `.sh` 스크립트를 사용합니다 (Windows에서도 Git Bash가 있으면 작동)
+- 순수 Windows 환경 (Git Bash 없음)에서는 `.claude/settings.json`의 command를 `.cmd`로 수정하세요
+
+### 플랫폼별 수정 (필요시)
+
+**Windows (Git Bash 없음):**
+프로젝트의 `.claude/settings.json`에서:
+```json
+"command": ".claude/scripts/run-notify.cmd \"작업 완료\""
+```
 
 ### 커스터마이징
 
 알림 메시지를 변경하려면:
 ```json
-"command": "\".claude\\scripts\\run-notify.cmd\" \"원하는 메시지\""
+"command": ".claude/scripts/run-notify.sh \"원하는 메시지\""
 ```
 
-알림을 비활성화하려면 `settings.json`에서 `hooks` 섹션을 제거하세요.
+알림을 비활성화하려면 `.claude/settings.json`에서 `hooks` 섹션을 제거하세요.
 
 ---
 

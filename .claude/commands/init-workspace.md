@@ -25,10 +25,16 @@ tags: [project, gitignored]
 
 스크립트는 다음 작업을 수행합니다:
 1. GitHub에서 Vibe-Coding-Setting-swseo 저장소 clone
-2. `templates/common/` 파일 복사 (.specify, .mcp.json)
+2. `templates/common/` 파일 복사 (.claude/settings.json, .claude/scripts/, .specify/, .mcp.json)
 3. `templates/{language}/` 파일 복사
 4. 프로젝트 이름 자동 업데이트
-5. 다음 단계 안내
+5. 전역 설정 확인 및 안내 (commands, agents, skills 등)
+6. 다음 단계 안내
+
+**중요:**
+- 프로젝트 로컬에는 **경로 의존적 파일만** 복사 (.claude/settings.json, .claude/scripts/)
+- 경로 독립적 파일은 **전역 설정(`~/.claude/`)에서 공유** (commands, agents, skills, personas)
+- 전역 설정이 없으면 사용자에게 수동으로 설정하도록 안내 (자동 적용 안 함)
 
 ## Workflow
 
@@ -56,7 +62,20 @@ ls -la
   - 옵션 1: "Yes, continue (may overwrite files)"
   - 옵션 2: "No, cancel"
 
-### 3. Repository Clone 및 스크립트 실행
+### 3. 전역 설정 확인
+
+**전역 설정이 있는지 확인:**
+
+```bash
+# ~/.claude/commands 디렉토리 확인
+ls ~/.claude/commands/ 2>/dev/null || echo "전역 설정 없음"
+```
+
+**전역 설정이 없는 경우:**
+- 사용자에게 경고 메시지 표시
+- 수동으로 설정하도록 안내 (자동 적용하지 않음)
+
+### 4. Repository Clone 및 스크립트 실행
 
 GitHub에서 repo를 clone하고 그 안의 스크립트를 실행합니다.
 
@@ -129,11 +148,46 @@ echo "✓ Cleanup completed"
 
 **IMPORTANT:**
 - Repository를 clone하고 그 안의 스크립트를 실행합니다
-- 스크립트가 모든 파일 복사 작업을 처리합니다
+- 스크립트가 프로젝트 로컬 파일 복사를 처리합니다 (.claude/settings.json, .claude/scripts/, .specify/, 언어별 템플릿)
 - 임시 디렉토리는 스크립트가 정리합니다
 - 직접 파일을 생성하거나 복사하지 마세요
 
-### 4. 추가 요구사항 처리 (선택)
+### 5. 전역 설정 안내
+
+스크립트 실행 후 전역 설정 상태를 확인하고 사용자에게 안내합니다.
+
+**전역 설정 확인:**
+```bash
+# ~/.claude/commands가 있는지 확인
+if [ ! -d "$HOME/.claude/commands" ]; then
+    echo ""
+    echo "⚠️  전역 Claude 설정이 설치되어 있지 않습니다."
+    echo ""
+    echo "slash commands (/speckit.specify 등)를 사용하려면 전역 설정이 필요합니다."
+    echo ""
+    echo "다음 중 하나를 선택하세요:"
+    echo ""
+    echo "1. 지금 설정 (권장):"
+    echo "   /sync-workspace --global-only"
+    echo ""
+    echo "2. 나중에 설정:"
+    echo "   언제든 위 명령어를 실행하면 됩니다."
+    echo ""
+fi
+```
+
+**참고:**
+- 전역 설정은 commands, agents, skills, personas를 포함
+- 전역 설정이 없어도 프로젝트 로컬 파일(hook 등)은 정상 작동
+- 전역 설정은 모든 프로젝트에서 공유되므로 한 번만 설정하면 됨
+
+**권장 방법:**
+```bash
+# 현재 프로젝트에서 전역 설정 설치
+/sync-workspace --global-only
+```
+
+### 6. 추가 요구사항 처리 (선택)
 
 스크립트 실행 후 추가 요구사항이 있으면 처리:
 
@@ -142,7 +196,7 @@ echo "✓ Cleanup completed"
 - "setup docker" → Dockerfile과 docker-compose.yml 생성
 - "add github actions for testing" → .github/workflows/test.yml 수정
 
-### 5. 결과 확인 및 요약
+### 7. 결과 확인 및 요약
 
 스크립트 실행 결과를 확인하고 요약 제공:
 
@@ -152,7 +206,9 @@ echo "✓ Cleanup completed"
 **Language:** Python
 **Project Name:** {project_name}
 
-### Files Created:
+### Files Created (Local):
+✓ .claude/settings.json (hook configuration)
+✓ .claude/scripts/ (notification scripts)
 ✓ .specify/ (Speckit templates & scripts)
 ✓ .mcp.json (MCP server configuration)
 ✓ pyproject.toml (uv configuration)
@@ -161,11 +217,20 @@ echo "✓ Cleanup completed"
 ✓ docs/ (documentation)
 ✓ .github/workflows/ (CI/CD)
 
+### Global Settings:
+✓ ~/.claude/commands/ (slash commands - shared)
+✓ ~/.claude/agents/ (agents - shared)
+✓ ~/.claude/skills/ (skills - shared)
+✓ ~/.claude/personas/ (personas - shared)
+
+Note: Global settings are shared across all projects. If not present, run `/apply-settings`.
+
 ### Next Steps:
 1. Install dependencies: `uv sync`
 2. Install pre-commit hooks: `uv run pre-commit install`
 3. Run tests: `uv run pytest`
-4. Review and customize files
+4. If global settings are missing: Apply them from Vibe-Coding-Setting repo
+5. Review and customize files
 
 Ready to code! 🚀
 ```
@@ -256,13 +321,25 @@ Coming soon:
 ## Template Structure
 
 ### Common Template (`templates/common/`)
-Always copied to every project:
+Always copied to every project (local files only):
+- `.claude/settings.json` - Hook configuration (TTS notifications)
+- `.claude/scripts/` - Hook scripts for notifications
+  - `notify.py` - Cross-platform TTS notification
+  - `run-notify.cmd` - Windows wrapper
+  - `run-notify.sh` - Unix/Linux wrapper
 - `.specify/` - Speckit templates and scripts
   - `memory/constitution.md`
   - `scripts/bash/` - Automation scripts
   - `templates/` - Spec/plan/task templates
 - `.mcp.json` - MCP server configurations
   - Playwright MCP (with Windows cmd wrapper)
+- `claude.md` - Project root marker with instructions
+
+**NOT copied** (shared from global `~/.claude/`):
+- `commands/` - Slash commands
+- `agents/` - Specialized agents
+- `skills/` - Skills
+- `personas/` - Personas
 
 ### Python Template (`templates/python/`)
 - `pyproject.toml` - uv configuration with dev dependencies
