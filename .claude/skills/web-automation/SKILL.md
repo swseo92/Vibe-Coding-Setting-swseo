@@ -1,13 +1,13 @@
 ---
 name: web-automation
-description: Automate web browser tasks using Playwright MCP to navigate websites, fill forms, extract data, and generate API keys. Use this skill when users request browser automation like "get me an API key from GCP", "fill out this form", or "extract data from this website". Handles login and authentication by pausing for user intervention when needed.
+description: Automate web browser tasks using Playwright MCP to navigate websites, fill forms, extract data, and generate API keys. Use this skill when users request browser automation like "get me an API key from GCP", "fill out this form", or "extract data from this website". Automatically handles Google OAuth login using persistent browser sessions. For non-Google authentication, pauses for user intervention when needed.
 ---
 
 # Web Automation
 
 ## Overview
 
-This skill enables automated web browser interactions using Playwright MCP tools. It orchestrates complex multi-step browser workflows while gracefully handling scenarios requiring user intervention (authentication, CAPTCHA, 2FA).
+This skill enables automated web browser interactions using Playwright MCP tools. It orchestrates complex multi-step browser workflows with **automatic Google OAuth login** support. The browser uses persistent sessions to maintain login state, enabling seamless authentication for Google-based services. For non-Google authentication, it gracefully handles scenarios requiring user intervention (authentication, CAPTCHA, 2FA).
 
 ## When to Use This Skill
 
@@ -89,6 +89,56 @@ For each step in the plan that doesn't require user intervention:
 - Wait for page loads after navigation or clicks
 - Take snapshots frequently to verify state changes
 
+### Step 4.5: Handle Google OAuth Login (Automated)
+
+**When a Google social login option is detected, attempt automatic login:**
+
+1. **Detect Google login button** in the snapshot:
+   - Look for buttons with text like "Continue with Google", "Sign in with Google", "Google"
+   - Common patterns: "Google", "google", "Continue with Google", "Sign in with Google"
+
+2. **Attempt automated Google OAuth flow**:
+   ```
+   a. Click the Google login button
+   b. Wait for Google OAuth page to load (2-3 seconds)
+   c. Take snapshot to check current state
+   d. If already logged in (account selection page):
+      - Look for account email in the snapshot
+      - Click on the account to select it
+      - Wait for redirect back to the service
+   e. If Google login page appears:
+      - Report to user that manual login is needed
+      - Follow Step 5 (User Intervention Pattern)
+   ```
+
+3. **Handle account selection**:
+   - If multiple Google accounts are available, automatically select the first one
+   - If user wants to use a different account, they can interrupt and specify
+
+4. **Verify successful login**:
+   - After account selection, wait for redirect
+   - Take snapshot to confirm login success
+   - Look for user profile indicators or dashboard elements
+
+**Example flow**:
+```
+[Detected "Continue with Google" button]
+→ Clicking Google login button...
+→ Waiting for Google OAuth page...
+→ [Account selection page detected]
+→ Found account: user@gmail.com
+→ Selecting account...
+→ Waiting for redirect...
+→ ✓ Successfully logged in with Google account
+```
+
+**Fallback to manual intervention**:
+If any of these conditions occur, fall back to Step 5 (User Intervention):
+- Google login page requires password entry
+- 2FA/verification is required
+- Account selection page shows no accounts
+- Unexpected page state after clicking Google login
+
 ### Step 5: Handle User Intervention Points
 
 When reaching a step requiring user action (login, 2FA, CAPTCHA):
@@ -111,13 +161,14 @@ When reaching a step requiring user action (login, 2FA, CAPTCHA):
 4. **Resume automation**: After user confirmation, take a new snapshot and continue
 
 **Common intervention scenarios**:
-- Login/authentication
+- Login/authentication (non-Google) - Google OAuth is automated
 - Two-factor authentication (2FA)
 - CAPTCHA solving
 - Security questions
-- Account selection (when multiple accounts exist)
 - Important confirmations or approvals
 - Manual data entry (when automation cannot access secure fields)
+
+**Note**: Google OAuth login is handled automatically using persistent browser sessions. The browser maintains logged-in state across sessions, so account selection happens automatically.
 
 ### Step 6: Extract and Report Results
 
@@ -194,6 +245,9 @@ Reply with "done" when complete, and I'll continue.
 5. **Screenshots for context**: Provide visual feedback at intervention points
 6. **Progressive disclosure**: Don't overwhelm with technical details unless debugging
 7. **Graceful degradation**: If automation fails, clearly explain what manual steps are needed
+8. **Prefer Google OAuth**: When multiple login options exist, prioritize "Sign in with Google" for automatic authentication
+9. **Persistent session awareness**: Leverage persistent browser sessions to avoid repeated logins across different tasks
+10. **Account selection**: When multiple Google accounts are available, select the first one automatically (user can interrupt if needed)
 
 ## Common Scenarios
 
@@ -203,12 +257,15 @@ Reply with "done" when complete, and I'll continue.
 
 **Workflow**:
 1. Navigate to Google Cloud Console
-2. **[User intervention]**: Login page → Ask user to authenticate
-3. Select correct project (or ask user which project)
-4. Navigate to Vertex AI → API & Services → Credentials
-5. Click "Create Credentials" → "API Key"
-6. Copy generated key
-7. Report key to user
+2. **[Automated]**: Click "Sign in with Google" if present
+3. **[Automated]**: Select Google account from persistent browser session
+4. Select correct project (or ask user which project)
+5. Navigate to Vertex AI → API & Services → Credentials
+6. Click "Create Credentials" → "API Key"
+7. Copy generated key
+8. Report key to user
+
+**Note**: Steps 2-3 are fully automated thanks to persistent browser sessions. No user intervention needed for Google login.
 
 ### Scenario 2: Form Submission
 
@@ -247,17 +304,47 @@ Reply with "done" when complete, and I'll continue.
 
 ### Scenario 4: Account Settings Update
 
-**Example request**: "Change my notification settings to email-only"
+**Example request**: "Change my notification settings to email-only on this service"
 
 **Workflow**:
 1. Navigate to service homepage
-2. **[User intervention]**: Login if needed
+2. **[Automated or User intervention]**:
+   - If Google login available → Automated login
+   - If other auth required → User intervention
 3. Navigate to Settings → Notifications
 4. Locate notification preference controls
 5. Uncheck non-email options, ensure email is checked
 6. Click "Save" or "Update"
 7. Verify success message
 8. Take screenshot of updated settings
+
+### Scenario 5: Service with Google OAuth (Linear, Notion, etc.)
+
+**Example request**: "Get me an API key from Linear" or "Create a new page in Notion"
+
+**Workflow**:
+1. Navigate to service (e.g., linear.app/settings/api)
+2. **[Automated]**: Detect "Continue with Google" button
+3. **[Automated]**: Click Google login button
+4. **[Automated]**: Wait for Google account selection page
+5. **[Automated]**: Select account from persistent session
+6. **[Automated]**: Wait for redirect back to service
+7. Verify successful login (user profile visible)
+8. Proceed with requested action (create API key, create page, etc.)
+9. Report results to user
+
+**Supported services**:
+- Linear (Project management)
+- Notion (Knowledge base)
+- Figma (Design tool)
+- Vercel (Deployment platform)
+- Any service offering "Sign in with Google" option
+
+**Advantages**:
+- ✅ Zero user interaction required for login
+- ✅ Works across Claude Code restarts (persistent browser)
+- ✅ Automatic account selection
+- ✅ Fast and seamless authentication
 
 ## Reference Documentation
 
@@ -268,8 +355,20 @@ For detailed information on available Playwright MCP tools, see:
 
 This skill cannot:
 - Bypass security measures (CAPTCHA, 2FA) without user help
-- Access password managers or autofill credentials
+- Access password managers or autofill credentials (except Google OAuth via persistent browser)
 - Perform actions requiring physical devices (hardware keys)
 - Automate tasks on pages with heavy anti-bot protection
+- Automatically handle non-Google authentication (GitHub, Apple, email/password, etc.)
 
-For these scenarios, request user assistance explicitly.
+**What IS automated**:
+- ✅ Google OAuth login (via persistent browser sessions)
+- ✅ Google account selection
+- ✅ Redirect after Google authentication
+
+**What still requires user intervention**:
+- ❌ Non-Google login methods
+- ❌ 2FA/verification codes
+- ❌ CAPTCHA challenges
+- ❌ Password entry (even for Google if not already logged in)
+
+For non-automated scenarios, the skill will pause and request user assistance explicitly.
