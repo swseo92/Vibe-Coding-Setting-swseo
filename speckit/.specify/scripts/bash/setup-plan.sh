@@ -2,10 +2,6 @@
 
 set -e
 
-# Ensure UTF-8 encoding for all operations
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
 # Parse command line arguments
 JSON_MODE=false
 ARGS=()
@@ -40,11 +36,10 @@ check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
 # Ensure the feature directory exists
 mkdir -p "$FEATURE_DIR"
 
-# Copy plan template if it exists with UTF-8 encoding preservation
+# Copy plan template if it exists
 TEMPLATE="$REPO_ROOT/.specify/templates/plan-template.md"
 if [[ -f "$TEMPLATE" ]]; then
-    # Use cat to ensure UTF-8 encoding is preserved
-    cat "$TEMPLATE" > "$IMPL_PLAN"
+    cp "$TEMPLATE" "$IMPL_PLAN"
     echo "Copied plan template to $IMPL_PLAN"
 else
     echo "Warning: Plan template not found at $TEMPLATE"
@@ -63,3 +58,4 @@ else
     echo "BRANCH: $CURRENT_BRANCH"
     echo "HAS_GIT: $HAS_GIT"
 fi
+

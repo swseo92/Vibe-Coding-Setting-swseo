@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# Ensure UTF-8 encoding for all operations
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
 # Update agent context files with information from plan.md
 #
 # This script maintains AI agent context files by parsing feature specifications 
@@ -34,7 +30,7 @@ export LC_ALL=en_US.UTF-8
 #
 # 5. Multi-Agent Support
 #    - Handles agent-specific file paths and naming conventions
-#    - Supports: Claude, Gemini, Copilot, Cursor, Qwen, opencode, Codex, Windsurf, Kilo Code, Auggie CLI, or Amazon Q Developer CLI
+#    - Supports: Claude, Gemini, Copilot, Cursor, Qwen, opencode, Codex, Windsurf, Kilo Code, Auggie CLI, Roo Code, CodeBuddy CLI, Amp, or Amazon Q Developer CLI
 #    - Can update single agents or all existing agent files
 #    - Creates default Claude file if no agent files exist
 #
@@ -73,7 +69,8 @@ WINDSURF_FILE="$REPO_ROOT/.windsurf/rules/specify-rules.md"
 KILOCODE_FILE="$REPO_ROOT/.kilocode/rules/specify-rules.md"
 AUGGIE_FILE="$REPO_ROOT/.augment/rules/specify-rules.md"
 ROO_FILE="$REPO_ROOT/.roo/rules/specify-rules.md"
-CODEBUDDY_FILE="$REPO_ROOT/.codebuddy/rules/specify-rules.md"
+CODEBUDDY_FILE="$REPO_ROOT/CODEBUDDY.md"
+AMP_FILE="$REPO_ROOT/AGENTS.md"
 Q_FILE="$REPO_ROOT/AGENTS.md"
 
 # Template file
@@ -254,7 +251,7 @@ get_commands_for_language() {
             echo "cargo test && cargo clippy"
             ;;
         *"JavaScript"*|*"TypeScript"*)
-            echo "npm test && npm run lint"
+            echo "npm test \\&\\& npm run lint"
             ;;
         *)
             echo "# Add commands for $lang"
@@ -285,8 +282,7 @@ create_new_agent_file() {
     
     log_info "Creating new agent context file from template..."
     
-    # Use cat to ensure UTF-8 encoding is preserved
-    if ! cat "$TEMPLATE_FILE" > "$temp_file"; then
+    if ! cp "$TEMPLATE_FILE" "$temp_file"; then
         log_error "Failed to copy template file"
         return 1
     fi
@@ -395,12 +391,25 @@ update_existing_agent_file() {
         new_change_entry="- $CURRENT_BRANCH: Added $NEW_DB"
     fi
     
+    # Check if sections exist in the file
+    local has_active_technologies=0
+    local has_recent_changes=0
+    
+    if grep -q "^## Active Technologies" "$target_file" 2>/dev/null; then
+        has_active_technologies=1
+    fi
+    
+    if grep -q "^## Recent Changes" "$target_file" 2>/dev/null; then
+        has_recent_changes=1
+    fi
+    
     # Process file line by line
     local in_tech_section=false
     local in_changes_section=false
     local tech_entries_added=false
     local changes_entries_added=false
     local existing_changes_count=0
+    local file_ended=false
     
     while IFS= read -r line || [[ -n "$line" ]]; do
         # Handle Active Technologies section
@@ -461,6 +470,22 @@ update_existing_agent_file() {
     # Post-loop check: if we're still in the Active Technologies section and haven't added new entries
     if [[ $in_tech_section == true ]] && [[ $tech_entries_added == false ]] && [[ ${#new_tech_entries[@]} -gt 0 ]]; then
         printf '%s\n' "${new_tech_entries[@]}" >> "$temp_file"
+        tech_entries_added=true
+    fi
+    
+    # If sections don't exist, add them at the end of the file
+    if [[ $has_active_technologies -eq 0 ]] && [[ ${#new_tech_entries[@]} -gt 0 ]]; then
+        echo "" >> "$temp_file"
+        echo "## Active Technologies" >> "$temp_file"
+        printf '%s\n' "${new_tech_entries[@]}" >> "$temp_file"
+        tech_entries_added=true
+    fi
+    
+    if [[ $has_recent_changes -eq 0 ]] && [[ -n "$new_change_entry" ]]; then
+        echo "" >> "$temp_file"
+        echo "## Recent Changes" >> "$temp_file"
+        echo "$new_change_entry" >> "$temp_file"
+        changes_entries_added=true
     fi
     
     # Move temp file to target atomically
@@ -588,14 +613,17 @@ update_specific_agent() {
             update_agent_file "$ROO_FILE" "Roo Code"
             ;;
         codebuddy)
-            update_agent_file "$CODEBUDDY_FILE" "CodeBuddy"
+            update_agent_file "$CODEBUDDY_FILE" "CodeBuddy CLI"
+            ;;
+        amp)
+            update_agent_file "$AMP_FILE" "Amp"
             ;;
         q)
             update_agent_file "$Q_FILE" "Amazon Q Developer CLI"
             ;;
         *)
             log_error "Unknown agent type '$agent_type'"
-            log_error "Expected: claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|roo|q"
+            log_error "Expected: claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|roo|amp|q"
             exit 1
             ;;
     esac
@@ -656,7 +684,7 @@ update_all_existing_agents() {
     fi
 
     if [[ -f "$CODEBUDDY_FILE" ]]; then
-        update_agent_file "$CODEBUDDY_FILE" "CodeBuddy"
+        update_agent_file "$CODEBUDDY_FILE" "CodeBuddy CLI"
         found_agent=true
     fi
 
@@ -741,3 +769,4 @@ main() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
+
