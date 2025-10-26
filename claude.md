@@ -380,6 +380,53 @@ templates/
 
 ---
 
+## Playwright 브라우저 로그인 자동 유지
+
+**MCP Playwright에서 한 번 로그인하면 계속 유지되도록 설정할 수 있습니다.**
+
+### 기능
+
+- ✅ **한 번 로그인 → 영구 유지**
+- ✅ Claude Code 재시작 후에도 로그인 유지
+- ✅ GitHub, Google 등 모든 사이트 지원
+- ✅ 매번 로그인할 필요 없음
+
+### 자동 적용
+
+`/init-workspace`로 새 프로젝트를 만들면 **자동으로 적용**됩니다!
+
+템플릿에 이미 설정이 포함되어 있어서 별도 작업 불필요.
+
+### 기존 프로젝트에 적용
+
+기존 프로젝트의 `.mcp.json` 파일에 다음 옵션 추가:
+
+```json
+{
+  "mcpServers": {
+    "microsoft-playwright-mcp": {
+      "args": [
+        ...기존 args,
+        "--",
+        "--user-data-dir",
+        "C:\\Users\\EST\\.playwright-persistent"
+      ]
+    }
+  }
+}
+```
+
+**중요**:
+- 경로는 사용자 환경에 맞게 수정 (`C:\Users\[사용자이름]\...`)
+- 설정 변경 후 Claude Code 재시작 필수
+
+### 상세 가이드
+
+전체 설정 방법, 문제 해결, 보안 주의사항은 다음 문서 참조:
+- [`docs/playwright-persistent-login.md`](docs/playwright-persistent-login.md)
+
+---
+
 ## 커스텀 커맨드 추가
 
 1. `.claude/commands/` 폴더에 `.md` 파일 작성

@@ -10,7 +10,10 @@
         "run",
         "@microsoft/playwright-mcp",
         "--key",
-        "a457b5a4-cd03-4a13-b2ac-cf99c04f6fc4"
+        "a457b5a4-cd03-4a13-b2ac-cf99c04f6fc4",
+        "--",
+        "--user-data-dir",
+        "C:\\Users\\EST\\.playwright-persistent"
       ]
     }
   }
