@@ -61,13 +61,13 @@ Vibe-Coding-Setting-swseo/  ← 이 CLAUDE.md가 위치한 폴더 (저장소 루
 ```
 Vibe-Coding-Setting-swseo/
 ├── .claude/                      # Claude Code 설정 (전역에서 사용)
-│   ├── agents/                   # 커스텀 에이전트 (13개)
-│   ├── commands/                 # 슬래시 커맨드 (2개)
+│   ├── agents/                   # 커스텀 에이전트 (2개)
+│   ├── commands/                 # 슬래시 커맨드 (15개)
 │   ├── personas/                 # 페르소나 (2개)
 │   ├── scripts/                  # 유틸리티 스크립트
 │   │   ├── init-workspace.sh     # 프로젝트 초기화 (Unix)
 │   │   └── init-workspace.ps1    # 프로젝트 초기화 (Windows)
-│   ├── skills/                   # 스킬 (13개)
+│   ├── skills/                   # 스킬 (17개)
 │   └── settings.local.json       # 전역 설정 템플릿
 │
 ├── .specify/                     # Speckit 템플릿 & 스크립트 (전역)
