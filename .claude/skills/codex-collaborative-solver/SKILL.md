@@ -1,20 +1,20 @@
 ---
 name: codex-collaborative-solver
-description: Solve complex problems through collaboration between Claude and OpenAI Codex. Use when users request "codex와 토론", "claude랑 codex 협업", or need multi-perspective analysis for architecture decisions, bug investigation, algorithm optimization, or design patterns. Conducts 3-5 rounds of structured discussion to reach comprehensive solutions.
+description: Solve complex problems through collaborative debate between Claude and OpenAI Codex. Use when users request "codex와 토론", "claude랑 codex 협업", or need multi-perspective analysis for architecture decisions, bug investigation, algorithm optimization, or design patterns. Conducts 3-5 rounds of structured debate to reach consensus solutions.
 ---
 
 # Codex Collaborative Solver
 
 ## Overview
 
-Enable Claude and OpenAI Codex to engage in structured, multi-round discussions to solve complex technical problems. By leveraging two different AI perspectives (Anthropic's Claude and OpenAI's Codex), reach more robust solutions through collaborative problem-solving, complementary insights, and multi-angle analysis.
+Enable Claude and OpenAI Codex to engage in structured, multi-round debates to solve complex technical problems. By leveraging two different AI perspectives (Anthropic's Claude and OpenAI's Codex), reach more robust solutions through collaborative discussion, challenge assumptions, and cross-validate approaches.
 
 ## When to Use This Skill
 
 Activate when users request:
-- "codex와 토론해서 해결해줘" / "collaborate with codex to solve this"
-- "claude랑 codex 협업으로 답 찾아줘" / "claude and codex work together"
-- "두 AI의 의견을 들어보고 싶어" / "want perspectives from both AIs"
+- "codex와 토론해서 해결해줘" / "debate with codex to solve this"
+- "claude랑 codex 협업으로 답 찾아줘" / "claude and codex collaborate"
+- "두 AI의 의견을 들어보고 싶어" / "want opinions from both AIs"
 - Complex problems requiring multi-perspective analysis
 
 **Appropriate problem types:**
@@ -51,7 +51,27 @@ Activate when users request:
 codex --version
 ```
 
-## Discussion Workflow
+## Token Efficiency
+
+**NEW: Stateful Session Management**
+
+This skill now uses **stateful Codex sessions** to dramatically reduce token usage:
+
+**Token Savings:**
+- Traditional (stateless): ~6,500 tokens over 5 rounds
+- Stateful approach: ~2,100 tokens over 5 rounds
+- **67% reduction in token costs!** 🎉
+
+**How it works:**
+- Round 1: Full context sent (~3,300 tokens)
+- Round 2+: Only new messages (~400-800 tokens each)
+- Codex automatically maintains conversation history
+
+**Scripts location:** `.claude/scripts/codex-debate/`
+
+See [Scripts](#scripts) section for details.
+
+## Debate Workflow
 
 ### Phase 1: Problem Definition
 
@@ -79,156 +99,109 @@ Constraints:
 Context: [attaches relevant code]"
 ```
 
-### Phase 2: Claude's Opening Analysis
-
-**CRITICAL: Claude must OUTPUT to user first, BEFORE calling Codex.**
+### Phase 2: Initial Analysis (Claude)
 
 **Claude's role:**
-1. Analyze the problem thoroughly
-2. **OUTPUT to user:** Present your analysis and proposed approach
-3. Share your reasoning clearly
-4. THEN call Codex to get additional perspective
+1. Analyze the problem from multiple angles
+2. Propose initial approach with reasoning
+3. Identify potential weaknesses in own approach
+4. Frame questions for Codex
 
-**Output to User (clear and thoughtful):**
+**Template:**
 ```
-=== Round 1: My Analysis ===
+My Initial Analysis:
+[Problem understanding]
 
-My understanding of [problem]:
-[Deep analysis of the problem]
+Proposed Approach:
+[Detailed solution with reasoning]
 
-My proposed approach:
-[Specific solution with reasoning]
+Potential Concerns:
+[What could go wrong]
 
-Why I think this approach works:
-- [Reason 1 with explanation]
-- [Reason 2 with explanation]
-- [Reason 3 with explanation]
-
-Now let me get Codex's perspective to see if there are additional insights...
-[Call Codex via Bash]
+Questions for Codex:
+[Specific areas where Codex input valuable]
 ```
 
-**Guidelines:**
-- ✅ Share your analysis clearly and thoroughly
-- ✅ Explain your reasoning
-- ✅ Be open to additional insights and improvements
-- ✅ Focus on problem-solving, not being "right"
+### Phase 3: Codex Consultation (Round 1)
 
-### Phase 3: Codex Response (Round 1)
-
-Call Codex with **Claude's analysis** as the starting point:
+**Start a stateful Codex session** using the debate-start.sh script:
 
 ```bash
-codex exec "You are Codex (OpenAI) collaborating with Claude (Anthropic) to solve a technical problem.
+bash .claude/scripts/codex-debate/debate-start.sh "You are participating in a technical debate with Claude (Anthropic).
 
-Problem: [problem statement with context]
+Problem: [problem statement]
 
 Claude's Analysis:
-[Claude's full analysis and proposed approach]
+[Claude's full analysis]
 
-Your role: Provide your own perspective to help find the best solution.
+Please provide your perspective:
+1. Do you agree with Claude's approach? Why or why not?
+2. What alternatives or improvements do you suggest?
+3. What are the tradeoffs?
+4. What concerns should we address?
 
-1. Analyze the problem from your perspective
-2. Share YOUR approach (you may agree, have a different view, or suggest complementary ideas)
-3. If you have a different perspective, explain your reasoning
-4. If you agree with Claude, add any additional insights or considerations
-5. Identify any potential issues or improvements
-
-This is collaborative problem-solving. Build on good ideas and share alternative perspectives where valuable."
+Be critical and thorough. Challenge assumptions."
 ```
 
-### Phase 4: Claude's Response
+**What happens:**
+- Codex responds with analysis
+- Thread ID saved to `./debate-session/thread_id.txt`
+- Ready for subsequent rounds
 
-**CRITICAL: After receiving Codex response, OUTPUT to user again.**
+### Phase 4: Analysis & Response (Claude)
 
-**Claude's role:**
-1. Read Codex's perspective carefully
-2. **OUTPUT to user:** Share your thoughts and synthesis
-3. Identify valuable insights from Codex
-4. Integrate good ideas into the solution
-5. Clarify any remaining considerations
+**After receiving Codex response:**
 
-**Output to User:**
-```
-=== Round 1: After Hearing Codex ===
+1. **Identify Agreement Points**
+   - Where both perspectives align
+   - Shared concerns or validations
+   - Consensus on approach
 
-Codex's key insights:
-- [Key insight 1]
-- [Key insight 2]
+2. **Identify Disagreements**
+   - Where perspectives diverge
+   - Different priorities or assumptions
+   - Alternative approaches suggested
 
-Thoughts on Codex's perspective:
-[What resonates, what adds value, any different considerations]
+3. **Evaluate Arguments**
+   - Which arguments are stronger?
+   - What evidence supports each view?
+   - What's missing from either analysis?
 
-Integrated solution:
-[Combined approach incorporating the best ideas from both perspectives]
+4. **Formulate Response**
+   - Acknowledge valid points
+   - Defend or revise own position
+   - Raise new questions
+   - Propose synthesis if possible
 
-Additional considerations:
-[Any trade-offs, open questions, or refinements needed]
+### Phase 5: Iterative Debate (Rounds 2-5)
 
-[If more discussion would be valuable, continue to Phase 5]
-```
+**Continue debate rounds until:**
+- Both perspectives converge on solution
+- Tradeoffs clearly understood
+- No new insights emerging
+- 5 rounds completed (maximum)
 
-**Guidelines:**
-- ✅ Genuinely consider Codex's insights
-- ✅ Build on good ideas from both perspectives
-- ✅ Explain your reasoning when you have different views
-- ✅ Focus on finding the best solution, not "winning"
-- ✅ Synthesize ideas to create something better than either alone
-
-### Phase 5: Iterative Discussion (Rounds 2-5)
-
-**Each round follows same pattern:**
-
-1. **Claude OUTPUT to user first:**
-```
-=== Round X: Further Thoughts ===
-
-Based on our discussion so far:
-[Brief summary of what we've learned]
-
-My current thinking:
-[Refined approach with reasoning]
-
-[Then call Codex for additional input]
-```
-
-2. **Call Codex:**
+**Each round (using debate-continue.sh):**
 ```bash
-codex exec "Collaboration Round X of 5
+bash .claude/scripts/codex-debate/debate-continue.sh "Continuing debate on: [problem]
 
-Problem: [problem]
-
-Discussion so far:
-- Round 1: [Key insights from both perspectives]
-- Round 2: [Key insights from both perspectives]
-...
-
-Claude's latest thinking:
-[Claude's refined approach with reasoning]
+Claude's latest position:
+[Claude's updated analysis - NEW THOUGHTS ONLY]
 
 Your response:
-1. Share your thoughts on Claude's refinements
-2. Add any new insights or considerations
-3. Identify what we've converged on
-4. Suggest any remaining aspects to explore
+1. Address Claude's new points
+2. Refine your position
+3. Suggest compromises or synthesis
+4. Identify remaining gaps
 
-Continue the collaborative problem-solving."
+Round X of 5"
 ```
 
-3. **Claude OUTPUT synthesis to user:**
-```
-=== Round X: After Codex Input ===
-
-[Integration of Codex's latest insights]
-[Current state of the solution]
-[Progress toward final approach]
-```
-
-**Continue until:**
-- Strong solution emerges (perspectives converge or complement)
-- Key trade-offs clearly understood
-- No significant new insights (discussion naturally concludes)
-- 5 rounds completed (practical limit)
+**Token efficiency in action:**
+- ✅ NO need to re-send previous rounds
+- ✅ Codex remembers full conversation
+- ✅ Only send new analysis/questions
+- ✅ Saves ~70% tokens per round
 
 ### Phase 6: Consensus & Final Solution
 
@@ -254,41 +227,56 @@ Continue the collaborative problem-solving."
    - Why each AI holds their position
    - Let user decide
 
-### Phase 7: Generate Discussion Report
+### Phase 7: Generate Debate Report
 
 Use template from `assets/debate-report-template.md` to create comprehensive report:
 
 ```bash
-# Save report to .debate-reports/ (legacy path name)
+# Save report
 .debate-reports/YYYY-MM-DD-HH-MM-[problem-slug].md
 ```
 
 Report includes:
 - Problem statement
-- Full discussion transcript (all rounds)
+- Full debate transcript (all rounds)
 - Consensus solution
 - Tradeoff analysis
 - Implementation plan
-- Alternative perspectives (if any)
+- Dissenting opinions (if any)
 
-## Collaboration Guidelines
+### Phase 8: Cleanup Session
 
-For detailed collaboration practices, see `references/debate-protocol.md`.
+**Clean up Codex session** after debate completes:
+
+```bash
+bash .claude/scripts/codex-debate/debate-end.sh
+```
+
+**What happens:**
+- Removes `./debate-session/` directory
+- Cleans up thread_id and session files
+- Frees up storage
+
+**Important:** Always run cleanup after finishing a debate to avoid stale sessions.
+
+## Debate Protocol Guidelines
+
+For detailed debate rules and best practices, see `references/debate-protocol.md`.
 
 **Key principles:**
 
 1. **Intellectual Honesty**
    - Admit when uncertain
-   - Update views when evidence warrants
-   - Acknowledge valuable insights from others
+   - Change position when evidence warrants
+   - Acknowledge valid counterarguments
 
-2. **Constructive Contribution**
-   - Share different perspectives thoughtfully
-   - Seek to understand before responding
-   - Focus on finding the best solution
+2. **Constructive Challenge**
+   - Question assumptions respectfully
+   - Seek understanding before disagreeing
+   - Focus on ideas, not winning
 
 3. **Evidence-Based**
-   - Support suggestions with reasoning
+   - Support claims with reasoning
    - Reference documentation when possible
    - Distinguish opinion from fact
 
@@ -297,184 +285,102 @@ For detailed collaboration practices, see `references/debate-protocol.md`.
    - Prioritize practical solutions
    - Consider user's skill level
 
-## Example Collaboration Session
+## Example Debate Session
 
 **User Request:**
 "codex와 토론해서 이 성능 문제 해결법 찾아줘. 데이터베이스 쿼리가 너무 느려."
 
-**Collaboration Flow:**
+**Debate Flow (with Stateful Scripts):**
 
 ```
 === Phase 1: Problem Definition ===
-Claude analyzes code and frames the problem:
-"I've identified N+1 query pattern in your Django API.
-100+ queries per request, causing 3s response time.
+Claude: "Analyzing slow query issue...
+[Examines code, identifies N+1 query pattern]
 
-Let me analyze this and propose a solution..."
+Question: How should we optimize database queries in this Django API?
+Context: 100+ queries per request, causing 3s response time"
 
-=== Phase 2: Claude's Opening Analysis (OUTPUT TO USER) ===
-Claude: "=== Round 1: My Analysis ===
+=== Phase 2: Claude Initial Analysis ===
+Claude: "My analysis suggests eager loading with select_related()
+and prefetch_related() to eliminate N+1 queries.
 
-My understanding: The core issue is N+1 queries where we're fetching
-related objects in a loop instead of eager loading.
+Proposed: Refactor views to use optimized querysets.
 
-My proposed approach:
-Use Django's select_related() for ForeignKey relationships and
-prefetch_related() for ManyToMany relationships. This should
-reduce 100+ queries to 2-3 optimized queries.
+Concerns: May increase memory usage for large datasets."
 
-Why I think this approach works:
-- Should dramatically reduce query count (100+ → ~3)
-- No infrastructure changes needed
-- Django ORM handles optimization automatically
-- Well-established pattern for N+1 problems
+=== Phase 3: Codex Round 1 (START SESSION) ===
+bash .claude/scripts/codex-debate/debate-start.sh "Problem: Django query optimization...
+Claude's analysis: [eager loading approach]
+Your perspective?"
 
-Implementation:
-queryset = Model.objects.select_related('user', 'category')
-                        .prefetch_related('tags')
+✓ Thread ID: 019a2d18-c64a-7ef3-aae3-71e536186462
+✓ Tokens used: 3,320
 
-Let me get Codex's perspective to see if there are other considerations...
-[Calls Codex via Bash]"
+Codex: "Eager loading is good for predictable relations, but
+I see you're dealing with dynamic filtering. Consider:
 
-=== Phase 3: Codex Response ===
-Codex (via codex exec): "Good thinking on eager loading! That will definitely help.
-I'd like to add another important consideration:
+1. Database indexing first (missing indexes on foreign keys)
+2. Query result caching (Redis)
+3. Database connection pooling
+4. Then eager loading where applicable
 
-My analysis: I noticed in your schema that several foreign keys and
-filter fields don't have indexes:
-- Foreign keys WITHOUT indexes
-- Filter fields (created_at, status) WITHOUT indexes
+Eager loading alone won't solve if queries aren't indexed."
 
-My suggested approach:
-1. Add database indexes first (can give immediate 10-20x speedup)
-2. Enable Django's query logging to measure impact
-3. Then apply eager loading as you suggested
-4. Consider query result caching (Django cache framework)
+=== Phase 4: Claude Response ===
+Claude: "Excellent point about indexes. I assumed they existed.
+Let me verify... [checks schema]
 
-Why I suggest indexes first:
-- Quick win with no code changes
-- Benefits all existing queries immediately
-- Complements your eager loading approach
-- Without indexes, even optimized queries can be slow
+You're right - foreign keys aren't indexed! This explains
+the slowness. Revised approach:
 
-Your eager loading approach is solid - I'm just suggesting we add
-indexes as a first step to maximize the improvement."
+1. Add indexes (immediate win)
+2. Implement eager loading (eliminates N+1)
+3. Add Redis caching (for frequently accessed data)
 
-=== Phase 4: Claude's Response (OUTPUT TO USER) ===
-Claude: "=== Round 1: After Hearing Codex ===
+Let me ask Codex about implementation priority..."
 
-Codex's key insights:
-- Foreign keys are missing indexes
-- Indexes should be added first for quick wins
-- Query logging to measure improvements
-- Approach should combine indexes + eager loading
+=== Phase 5: Codex Round 2 (CONTINUE SESSION) ===
+bash .claude/scripts/codex-debate/debate-continue.sh "Claude's updated position:
+Indexes first, then eager loading, then Redis.
+Do you agree with this priority?"
 
-Thoughts on Codex's perspective:
-This is a really good catch! I should have checked the schema for
-indexes first. Let me verify... [checks schema]
+✓ Resuming: 019a2d18-c64a-7ef3-aae3-71e536186462
+✓ Tokens used: 768 (only new message!)
+✓ Token savings: 77% vs re-sending full context
 
-You're right - several foreign keys don't have indexes. That's
-definitely limiting performance even before we consider the N+1 issue.
+Codex: "Yes, that's the right priority order. One addition:
+before Redis caching, use Django's query cache
+(simpler, no new infrastructure).
 
-Integrated solution:
-Let's combine both approaches in the right order:
-1. Add indexes on foreign keys (Codex's insight - quick win)
-2. Implement eager loading (my original suggestion - fixes N+1)
-3. Add query logging to validate improvements
-4. Consider caching for frequently accessed data
+For Redis later: cache invalidation strategy is critical.
+Consider using cache-aside pattern with TTL."
 
-This gives us the best of both: indexes speed up individual queries,
-and eager loading eliminates redundant queries. Together they should
-give us much better results than either alone.
+=== Phase 6: Consensus ===
+Both agree on:
+1. Add database indexes (highest impact)
+2. Implement eager loading (eliminate N+1)
+3. Start with Django query cache
+4. Upgrade to Redis when needed
 
-Let me continue the discussion to refine the implementation...
-[Calls Codex for Round 2]"
+Report generated: .debate-reports/2025-10-29-15-30-db-query-optimization.md
 
-=== Phase 5: Round 2 - Claude's Further Thoughts (OUTPUT TO USER) ===
-Claude: "=== Round 2: Further Thoughts ===
+=== Phase 8: Cleanup ===
+bash .claude/scripts/codex-debate/debate-end.sh
+✓ Session cleaned up
 
-Based on our discussion so far:
-- Indexes + eager loading is the core approach
-- Both complement each other well
-
-My current thinking:
-Let's implement in this order:
-1. Indexes (immediate win, no code changes)
-2. Eager loading (eliminates N+1 pattern)
-3. Django's built-in query cache (before considering Redis)
-
-I'm wondering about the caching layer - do you think Django's
-cache framework is sufficient initially, or should we plan
-for Redis from the start?
-
-[Calls Codex for Round 2]"
-
-=== Phase 5: Round 2 - Codex Response ===
-Codex (via codex exec): "I think your approach is solid!
-
-On the caching question:
-I'd definitely start with Django's cache framework:
-- No new infrastructure to set up
-- Simpler cache invalidation
-- Good enough for most cases
-- Easy to upgrade to Redis later if needed
-
-Only move to Redis if:
-- Django cache can't handle the load
-- You need cross-server cache sharing
-- You need advanced features (pub/sub, etc.)
-
-So the complete approach looks good:
-1. Add indexes (immediate 10-20x improvement)
-2. Apply eager loading (eliminate N+1)
-3. Django query cache (simple and effective)
-4. Monitor performance metrics
-5. Consider Redis later only if needed
-
-This gives you a clear path forward with minimal risk."
-
-=== Phase 5: Round 2 - Claude's Synthesis (OUTPUT TO USER) ===
-Claude: "=== Round 2: After Codex Input ===
-
-Great - we're aligned on the full approach!
-
-Final integrated solution:
-1. ✅ Add database indexes on all foreign keys
-2. ✅ Implement select_related() and prefetch_related()
-3. ✅ Use Django's cache framework (not Redis yet)
-4. ✅ Monitor with query logging
-5. ✅ Upgrade to Redis only if Django cache proves insufficient
-
-Why this solution works:
-- Indexes: Immediate performance boost (Codex's key insight)
-- Eager loading: Eliminates redundant queries (my initial suggestion)
-- Django cache: Simple, effective, no infrastructure overhead (both agreed)
-- Monitoring: Validates improvements and guides next steps (both agreed)
-
-Discussion complete. Generating implementation plan...
-
-Report saved: .debate-reports/2025-01-27-15-30-db-query-optimization.md"
-
-=== Phase 6: Solution Summary ===
-Claude and Codex converged on a comprehensive solution:
-1. Add database indexes (immediate impact - Codex's contribution)
-2. Implement eager loading (eliminates N+1 - Claude's contribution)
-3. Start with Django query cache (both agreed on simplicity-first)
-4. Monitor and iterate based on real metrics
-
-Estimated improvement: 3s → <300ms response time
+**Total tokens: ~5,000 (vs ~8,000 without stateful sessions)**
 ```
 
 ## Advanced Usage
 
-### Focused Discussions
+### Focused Debates
 
-For specific aspects, direct the discussion:
+For specific aspects, direct the debate:
 
 ```
 "codex랑 security 관점에서만 토론해줘"
-"focus discussion on performance only"
-"discuss different architectures, not implementation details"
+"focus debate on performance only"
+"debate different architectures, not implementation details"
 ```
 
 ### Pre-existing Solutions
@@ -499,14 +405,14 @@ codex와 토론해서 각 접근법의 장단점 분석해줘"
 
 ## Output Structure
 
-Each discussion session produces:
+Each debate session produces:
 
 1. **Console Summary** (Real-time)
    - Round-by-round highlights
-   - Key convergences and complementary insights
-   - Emerging solution
+   - Key agreements/disagreements
+   - Emerging consensus
 
-2. **Discussion Report** (`.debate-reports/` - legacy folder name)
+2. **Debate Report** (`.debate-reports/`)
    - Full transcript
    - Analysis and synthesis
    - Implementation recommendations
@@ -526,22 +432,22 @@ Each discussion session produces:
    - Explain constraints clearly
    - Include error messages/logs
 
-2. **Let Discussion Develop**
+2. **Let Debate Evolve**
    - Allow multiple rounds
-   - Let insights emerge naturally
-   - Value different perspectives
+   - Don't rush to consensus
+   - Embrace disagreement initially
 
 3. **Guide, Don't Dictate**
    - Frame good questions
    - Let AIs explore freely
    - Intervene only if stuck
 
-4. **Save Discussion Reports**
+4. **Save Debate Reports**
    - Keep `.debate-reports/` in git
-   - Learn from past collaborations
+   - Learn from past debates
    - Share with team
 
-5. **Thoughtfully Evaluate**
+5. **Critically Evaluate**
    - Both AIs can be wrong
    - Use your judgment
    - Test solutions thoroughly
@@ -552,10 +458,10 @@ Each discussion session produces:
    - Vague problems → vague solutions
    - Missing constraints → impractical advice
 
-2. **Don't Expect Identical Views**
-   - Some problems have multiple valid approaches
+2. **Don't Expect Perfect Agreement**
+   - Some problems have no "right" answer
    - Tradeoffs are real
-   - Different perspectives add value
+   - Disagreement can be valuable
 
 3. **Don't Automate Blindly**
    - Review all suggestions
@@ -563,7 +469,7 @@ Each discussion session produces:
    - Validate against requirements
 
 4. **Don't Overuse**
-   - Simple problems don't need multi-AI collaboration
+   - Simple problems don't need debate
    - Save for complex decisions
    - Consider time investment
 
@@ -582,13 +488,13 @@ npm i -g @openai/codex
 codex  # Run once to authenticate
 ```
 
-### "Discussion isn't making progress"
+### "Debate isn't converging"
 
-After 5 rounds without clear solution:
-- Identify what's still unclear
-- Research any disputed technical points
+After 5 rounds without consensus:
+- Identify core disagreement
+- Research the disputed point
 - Get human expert opinion
-- Let user decide based on tradeoffs presented
+- Let user decide based on tradeoffs
 
 ### "Responses are too generic"
 
@@ -598,15 +504,15 @@ Provide more specific context:
 - Specify concrete constraints
 - Ask targeted questions
 
-### "Responses are too similar"
+### "Codex keeps agreeing with Claude"
 
-If both AIs are converging too quickly, prompt for deeper exploration:
+Prompt Codex to be more critical:
 ```bash
 codex exec "...
 
-Please provide a thorough analysis from your perspective.
-Consider potential issues, edge cases, and alternative approaches
-that might not be immediately obvious."
+IMPORTANT: Your role is to challenge Claude's thinking.
+Even if the approach seems reasonable, identify potential
+issues, edge cases, or alternatives. Be the devil's advocate."
 ```
 
 ## Comparison to Other Approaches
@@ -615,8 +521,8 @@ that might not be immediately obvious."
 |----------|------|------|
 | **Claude Only** | Fast, integrated | Single perspective |
 | **Codex Only** | Autonomous, can execute | Limited by one model |
-| **Claude-Codex Collaboration** | Multi-perspective, complementary insights | Slower, requires both subscriptions |
-| **Human Team Discussion** | Real experience, domain knowledge | Time-intensive, scheduling challenges |
+| **Claude-Codex Debate** | Multi-perspective, validated | Slower, requires both subscriptions |
+| **Human Team Debate** | Real experience, domain knowledge | Time-intensive, scheduling challenges |
 
 **Best for:** Complex, high-stakes decisions where multiple perspectives add value.
 
@@ -624,15 +530,45 @@ that might not be immediately obvious."
 
 ### Scripts
 
-- None required (uses Codex CLI directly via bash)
+**Stateful Session Management (NEW!):**
+
+Located in `.claude/scripts/codex-debate/`:
+
+1. **debate-start.sh** - Start new Codex debate session
+   - Captures thread ID
+   - Saves session state
+   - Returns Codex's first response
+
+2. **debate-continue.sh** - Continue existing session
+   - Loads thread ID automatically
+   - Sends only new messages (token efficient!)
+   - Maintains conversation context
+
+3. **debate-end.sh** - Clean up session
+   - Removes session files
+   - Frees up storage
+
+**Full documentation:** `.claude/scripts/codex-debate/README.md`
+
+**Quick example:**
+```bash
+# Round 1
+bash .claude/scripts/codex-debate/debate-start.sh "Your question"
+
+# Round 2
+bash .claude/scripts/codex-debate/debate-continue.sh "Follow-up"
+
+# Cleanup
+bash .claude/scripts/codex-debate/debate-end.sh
+```
 
 ### References
 
-- `references/debate-protocol.md` - Detailed guidelines for effective AI collaboration
+- `references/debate-protocol.md` - Detailed rules and guidelines for conducting effective debates
 
 ### Assets
 
-- `assets/debate-report-template.md` - Markdown template for generating final discussion reports (legacy filename)
+- `assets/debate-report-template.md` - Markdown template for generating final debate reports
 
 ## Limitations
 
@@ -644,10 +580,14 @@ This skill cannot:
 - Work without Codex CLI installed
 - Work offline (requires OpenAI API access)
 
-**Remember:** AI collaboration is a tool for exploration and validation, not a replacement for human decision-making.
+**Remember:** AI debate is a tool for exploration and validation, not a replacement for human decision-making.
 
 ---
 
-**Version:** 1.0
-**Last Updated:** 2025-01-27
-**Models:** Claude 3.5 Sonnet (Anthropic) + GPT-4/o3 via Codex CLI (OpenAI)
+**Version:** 2.0 (Stateful)
+**Last Updated:** 2025-10-29
+**Models:** Claude 3.5 Sonnet (Anthropic) + GPT-5 Codex via Codex CLI (OpenAI)
+
+**Changelog:**
+- v2.0 (2025-10-29): Added stateful session management with 67% token savings
+- v1.0 (2025-01-27): Initial release with stateless approach
