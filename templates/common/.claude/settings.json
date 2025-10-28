@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/scripts/run-notify.sh \"작업 완료\""
+            "command": ".claude/scripts/run-notify.cmd \"작업 완료\""
           }
         ]
       }
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/scripts/run-notify.sh \"작업 완료\""
+            "command": ".claude/scripts/run-notify.cmd \"작업 완료\""
           }
         ]
       }

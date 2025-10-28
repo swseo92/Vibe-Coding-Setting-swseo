@@ -324,7 +324,7 @@ templates/
 
 ### 작동 방식
 
-1. **상대경로 기반**: `.claude/scripts/run-notify.sh` (크로스 플랫폼)
+1. **상대경로 기반**: `.claude/scripts/run-notify.cmd` (Windows 기본)
 2. **자동 트리거**: Claude Code 세션 종료 또는 알림 이벤트 시 자동 실행
 3. **폴더 이름 인식**: 현재 작업 중인 폴더 이름을 음성으로 알려줌
 
@@ -338,13 +338,13 @@ templates/
       "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": ".claude/scripts/run-notify.sh \"작업 완료\""
+        "command": ".claude/scripts/run-notify.cmd \"작업 완료\""
       }]
     }],
     "Stop": [{
       "hooks": [{
         "type": "command",
-        "command": ".claude/scripts/run-notify.sh \"작업 완료\""
+        "command": ".claude/scripts/run-notify.cmd \"작업 완료\""
       }]
     }]
   }
@@ -354,26 +354,26 @@ templates/
 ### Hook 스크립트
 
 - **`notify.py`**: 크로스 플랫폼 TTS 알림 (Windows/Mac/Linux)
-- **`run-notify.cmd`**: Windows wrapper (순수 Windows 환경용)
-- **`run-notify.sh`**: Unix/Linux/Mac wrapper (기본 설정)
+- **`run-notify.cmd`**: Windows wrapper (기본 설정)
+- **`run-notify.sh`**: Unix/Linux/Mac wrapper
 
 **참고:**
-- 기본적으로 `.sh` 스크립트를 사용합니다 (Windows에서도 Git Bash가 있으면 작동)
-- 순수 Windows 환경 (Git Bash 없음)에서는 `.claude/settings.json`의 command를 `.cmd`로 수정하세요
+- 기본적으로 `.cmd` 스크립트를 사용합니다 (Windows 환경 기준)
+- Unix/Mac 환경에서는 `.claude/settings.json`의 command를 `.sh`로 수정하세요
 
 ### 플랫폼별 수정 (필요시)
 
-**Windows (Git Bash 없음):**
+**Unix/Mac 환경:**
 프로젝트의 `.claude/settings.json`에서:
 ```json
-"command": ".claude/scripts/run-notify.cmd \"작업 완료\""
+"command": ".claude/scripts/run-notify.sh \"작업 완료\""
 ```
 
 ### 커스터마이징
 
 알림 메시지를 변경하려면:
 ```json
-"command": ".claude/scripts/run-notify.sh \"원하는 메시지\""
+"command": ".claude/scripts/run-notify.cmd \"원하는 메시지\""
 ```
 
 알림을 비활성화하려면 `.claude/settings.json`에서 `hooks` 섹션을 제거하세요.
