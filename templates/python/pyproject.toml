@@ -13,6 +13,8 @@ dev = [
     "pytest-mock>=3.12.0",
     "pytest-asyncio>=0.23.0",
     "pytest-xdist>=3.5.0",
+    "pytest-vcr>=1.0.0",  # VCR: 실제 API 호출 녹음/재생
+    "python-dotenv>=1.0.0",  # dotenv: .env 파일에서 환경변수 로드
     "ruff>=0.1.0",
     "mypy>=1.11.0",
     "bandit[toml]>=1.7.0",
@@ -36,6 +38,8 @@ dev-dependencies = [
     "pytest-mock>=3.12.0",
     "pytest-asyncio>=0.23.0",
     "pytest-xdist>=3.5.0",
+    "pytest-vcr>=1.0.0",  # VCR: 실제 API 호출 녹음/재생
+    "python-dotenv>=1.0.0",  # dotenv: .env 파일에서 환경변수 로드
     "ruff>=0.1.0",
     "mypy>=1.11.0",
     "bandit[toml]>=1.7.0",
@@ -64,6 +68,7 @@ markers = [
     "e2e: 종단간 테스트",
     "api: API 테스트",
     "database: 데이터베이스 테스트",
+    "vcr: VCR 녹음/재생 테스트 (실제 API 호출)",
 ]
 filterwarnings = [
     "error",

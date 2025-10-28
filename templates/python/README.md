@@ -172,28 +172,46 @@ def test_double(input, expected):
     assert double(input) == expected
 ```
 
-## 환경 변수
+## 환경 변수 & .env 설정
 
-테스트 실행 시 자동으로 `TEST_MODE=true`가 설정됩니다.
-
-### 환경 변수 설정
+### 셋업
 
 1. `.env.example`을 `.env`로 복사:
 ```bash
 cp .env.example .env
 ```
 
-2. `.env` 파일 수정하여 실제 값 입력
-
-3. python-dotenv 사용:
+2. `.env` 파일 수정하여 실제 API 키 입력:
 ```bash
-uv add python-dotenv
+# .env (git-ignored)
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-```python
-from dotenv import load_dotenv
-load_dotenv()
+### 자동 로드 (conftest.py)
+
+- `conftest.py`에서 자동으로 `.env` 파일을 로드합니다
+- `export` 명령어를 사용할 필요가 없습니다
+- 테스트 실행 시 자동으로 `TEST_MODE=true`가 설정됩니다
+
+```bash
+# 환경 변수 설정 없이 바로 테스트 실행 가능
+uv run pytest
+# .env 파일에서 자동으로 API 키를 로드합니다
 ```
+
+### 우선순위
+
+1. `.env.local` (로컬 환경, git-ignored)
+2. `.env` (기본 환경, git-ignored)
+
+로컬만의 환경변수가 필요하면 `.env.local`을 사용하세요.
+
+### 주의사항
+
+- **절대로 `.env` 파일을 git에 커밋하지 마세요!**
+- `.env`는 이미 `.gitignore`에 포함되어 있습니다
+- 팀원들과 공유할 때는 `.env.example`을 사용하세요
 
 ## CI/CD 파이프라인
 
