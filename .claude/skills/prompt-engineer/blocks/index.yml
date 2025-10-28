@@ -1,0 +1,155 @@
+# Standard Block Combinations for Prompt Engineering
+# Based on official OpenAI and Google Gemini documentation
+
+presets:
+  code-generation:
+    description: "Write, refactor, or debug code"
+    blocks:
+      - role: "expert programmer in {language}"
+      - task: "write/refactor/debug specific functionality"
+      - context: "language, requirements, constraints"
+      - examples: "input/output code samples"
+      - output-format: "code with comments and docstrings"
+      - constraints: "style guide, performance requirements"
+    temperature: 0.0-0.2
+    providers:
+      openai: "Use chain-of-thought, emphasize step-by-step"
+      gemini: "Include few-shot examples (official recommendation)"
+
+  data-extraction:
+    description: "Extract, parse, or transform data"
+    blocks:
+      - role: "data analyst"
+      - task: "extract/parse/transform specific data"
+      - context: "data source, schema, format"
+      - examples: "sample input and expected output"
+      - output-format: "JSON/CSV/structured format"
+      - constraints: "accuracy requirements, validation rules"
+    temperature: 0.0
+    providers:
+      openai: "Temperature 0 for factual tasks (official guideline)"
+      gemini: "Use output prefixes (JSON:, CSV:)"
+
+  code-review:
+    description: "Review code for quality, performance, security"
+    blocks:
+      - role: "senior {language} developer"
+      - task: "review code for specific aspects"
+      - context: "codebase standards, focus areas"
+      - examples: "good/bad code examples"
+      - output-format: "structured feedback (issues, severity, fixes)"
+      - constraints: "review checklist, standards"
+    temperature: 0.3-0.5
+    providers:
+      openai: "Provide reference text for coding standards"
+      gemini: "Use persona (senior developer) clearly"
+
+  analysis:
+    description: "Analyze and evaluate technical content"
+    blocks:
+      - role: "expert in {domain}"
+      - task: "analyze and provide insights"
+      - context: "what to analyze, evaluation criteria"
+      - examples: "analysis format examples"
+      - output-format: "structured analysis (findings, recommendations)"
+      - constraints: "focus areas, depth level"
+    temperature: 0.3-0.5
+    providers:
+      openai: "Split complex analysis into subtasks"
+      gemini: "Provide clear context and constraints"
+
+  creative-writing:
+    description: "Documentation, naming, brainstorming"
+    blocks:
+      - role: "technical writer / creative expert"
+      - task: "write/name/brainstorm"
+      - context: "purpose, audience, style"
+      - examples: "style examples, naming conventions"
+      - output-format: "specific format (markdown, list, etc.)"
+      - constraints: "tone, length, style guide"
+    temperature: 0.7-0.9
+    providers:
+      openai: "Higher temperature for creativity"
+      gemini: "Specify format element clearly"
+
+  reasoning:
+    description: "Architecture decisions, trade-off analysis"
+    blocks:
+      - role: "experienced architect / technical lead"
+      - task: "analyze options and recommend"
+      - context: "requirements, constraints, current state"
+      - examples: "decision framework, criteria"
+      - output-format: "structured comparison (pros/cons, recommendation)"
+      - constraints: "priorities, non-negotiables"
+    temperature: 0.5-0.7
+    providers:
+      openai: "Give time to think, use chain-of-thought"
+      gemini: "Provide comprehensive context"
+
+  debugging:
+    description: "Find and fix code issues"
+    blocks:
+      - role: "debugging expert in {language}"
+      - task: "identify root cause and fix"
+      - context: "error messages, symptoms, environment"
+      - examples: "similar bug patterns"
+      - output-format: "diagnosis, fix, explanation"
+      - constraints: "minimal changes, maintain compatibility"
+    temperature: 0.0-0.2
+    providers:
+      openai: "Reference text with error logs"
+      gemini: "Clear task decomposition"
+
+# Shared patterns across all presets
+common_patterns:
+  role_clarity:
+    - "You are an expert {domain specialist}"
+    - "You are a senior {language} developer"
+    - "You are an experienced {role}"
+
+  task_specificity:
+    - "Write a function that..."
+    - "Analyze this code for..."
+    - "Extract the following information..."
+    - "Review this implementation focusing on..."
+
+  context_inclusion:
+    - "Requirements: {list of requirements}"
+    - "Constraints: {list of constraints}"
+    - "Current situation: {state description}"
+    - "Input format: {format description}"
+
+  example_format:
+    - "Input: {sample input}\nOutput: {expected output}"
+    - "Good example: {positive case}"
+    - "Bad example: {negative case} (avoid this pattern)"
+    - "Pattern to follow: {template}"
+
+  output_structure:
+    - "Provide response in following format:"
+    - "Structure your answer as:"
+    - "Return as JSON: {schema}"
+    - "Use markdown with sections: {sections}"
+
+# Official guidelines reference
+guidelines:
+  openai_six_strategies:
+    - "Write clear instructions"
+    - "Provide reference text"
+    - "Split complex tasks into simpler subtasks"
+    - "Give GPTs time to think"
+    - "Use external tools"
+    - "Test changes systematically"
+
+  gemini_four_elements:
+    - "Persona (who the AI should be)"
+    - "Task (what to do)"
+    - "Context (background information)"
+    - "Format (output structure)"
+
+  temperature_guidelines:
+    factual: 0.0
+    code: 0.0-0.2
+    analysis: 0.3-0.5
+    creative: 0.7-0.9
+    brainstorming: 0.8-1.0
