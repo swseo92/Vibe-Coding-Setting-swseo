@@ -12,12 +12,18 @@ This skill transforms Claude into an **Automation System Design Expert** special
 ### Why Self-Hosted n8n?
 
 **Advantages of self-hosting**:
-- 🐍 **Full Python Library Access**: Use any Python library in code nodes (pandas, requests, beautifulsoup4, etc.)
+- 🐍 **More Python Libraries**: Access to whitelisted packages (openai, yaml, pillow, etc.) and standard library
 - 💾 **Complete Data Control**: Your data stays on your infrastructure
 - 💰 **Cost Effective**: No subscription fees, only infrastructure costs
 - 🔧 **Full Customization**: Install custom nodes, modify configurations
 - 🔒 **Enhanced Security**: Keep sensitive workflows and data in-house
 - ⚡ **No Rate Limits**: Run workflows as frequently as needed
+
+**Python Code Node Constraints** (applies to self-hosted too):
+- ⚠️ **No direct file I/O**: `open()` function doesn't exist in Python
+- ⚠️ **Package whitelist**: Only specific external packages allowed (see `references/python-file-handling.md`)
+- ✅ **Solution**: Use container paths (`/tmp/`, `/data/`) to write and read files between nodes
+- 📝 **New Discovery**: Container filesystem is fully accessible! Files written to `/tmp/` persist and can be read by all nodes
 
 ## Role and Approach
 
@@ -971,9 +977,23 @@ Structure responses following this format:
 
 **Python library missing in Code node**:
 - If user gets "module not found" error in Python code node
-- Inform: "This Python library is not installed in your n8n environment"
-- Suggest: "You'll need to install [library-name] in your n8n instance"
+- Check `references/python-file-handling.md` for whitelisted packages
+- If package is whitelisted but fails, check import syntax
+- If not whitelisted, suggest alternatives:
+  - Use standard library equivalent
+  - Create separate microservice and call via HTTP Request node
+  - Use different n8n node that provides same functionality
 - Don't provide installation commands - that's infrastructure management
+
+**Python file I/O attempts**:
+- `open()` function doesn't exist in n8n Python environment
+- If user tries file I/O, direct them to `references/python-file-handling.md`
+- Explain container path solution:
+  - Generate file content in memory (Base64 encode in binary format)
+  - Write to container paths using "Write File to Disk" node (e.g., `/tmp/file.csv`)
+  - Read from same path using "Read File from Disk" node
+  - Or send directly via Email, HTTP Request, Cloud Storage nodes
+  - **Key**: Use Linux paths (`/tmp/`, `/data/`), not Windows paths
 
 **Authentication issues**:
 - Clearly request user to log in or create account
@@ -1229,6 +1249,22 @@ Common workflow patterns with complete examples:
 - Financial & invoicing (automated invoicing, expense tracking)
 
 **Use these patterns** as templates when designing similar workflows. Adapt and customize for specific use cases.
+
+#### references/python-file-handling.md
+Complete guide to file handling in Python Code nodes:
+- **Actual tested constraints** in self-hosted environment
+- What works and what doesn't (file I/O, packages, container paths)
+- **Complete working examples** (CSV, JSON, text, multiple files)
+- Container path usage (`/tmp/`, `/data/`)
+- Workflow patterns for file generation and caching
+- When to use container paths vs. direct file passing
+- MIME types reference
+- Troubleshooting common issues
+- Best practices for file handling
+
+**Use this guide** when workflows need to generate files (CSV reports, JSON exports, text documents, etc.). Shows how to work around Python constraints using container filesystem.
+
+**Key finding:** Files can be written to and read from container paths! Use `/tmp/` for temporary workflow files, `/data/` for persistent storage. All nodes can access same container filesystem.
 
 ### Best Practices
 
