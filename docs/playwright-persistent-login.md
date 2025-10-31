@@ -50,43 +50,15 @@ ls -la .mcp.json
 
 파일을 열어서 다음과 같이 수정:
 
-**변경 전:**
+**올바른 설정:**
 ```json
 {
   "mcpServers": {
-    "microsoft-playwright-mcp": {
-      "command": "cmd",
+    "playwright-mcp": {
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
-        "@smithery/cli@latest",
-        "run",
-        "@microsoft/playwright-mcp",
-        "--key",
-        "a457b5a4-cd03-4a13-b2ac-cf99c04f6fc4"
-      ]
-    }
-  }
-}
-```
-
-**변경 후:**
-```json
-{
-  "mcpServers": {
-    "microsoft-playwright-mcp": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@smithery/cli@latest",
-        "run",
-        "@microsoft/playwright-mcp",
-        "--key",
-        "a457b5a4-cd03-4a13-b2ac-cf99c04f6fc4",
-        "--",
+        "@playwright/mcp",
         "--user-data-dir",
         "C:\\Users\\EST\\.playwright-persistent"
       ]
@@ -95,12 +67,11 @@ ls -la .mcp.json
 }
 ```
 
-**추가된 부분:**
-```json
-"--",
-"--user-data-dir",
-"C:\\Users\\EST\\.playwright-persistent"
-```
+**주요 포인트:**
+- ✅ `npx`로 직접 실행 (Smithery wrapper 불필요)
+- ✅ `@playwright/mcp` 패키지 사용 (올바른 패키지명)
+- ✅ `--user-data-dir` 옵션으로 persistent login 활성화
+- ✅ 간단하고 깔끔한 설정
 
 #### 2-3. Claude Code 재시작
 

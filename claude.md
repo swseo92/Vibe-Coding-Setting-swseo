@@ -399,15 +399,16 @@ templates/
 
 ### 기존 프로젝트에 적용
 
-기존 프로젝트의 `.mcp.json` 파일에 다음 옵션 추가:
+기존 프로젝트의 `.mcp.json` 파일을 다음과 같이 작성:
 
 ```json
 {
   "mcpServers": {
-    "microsoft-playwright-mcp": {
+    "playwright-mcp": {
+      "command": "npx",
       "args": [
-        ...기존 args,
-        "--",
+        "-y",
+        "@playwright/mcp",
         "--user-data-dir",
         "C:\\Users\\EST\\.playwright-persistent"
       ]
@@ -417,6 +418,8 @@ templates/
 ```
 
 **중요**:
+- `npx`로 직접 실행 (Smithery wrapper 불필요)
+- `@playwright/mcp` 패키지 사용 (올바른 패키지명)
 - 경로는 사용자 환경에 맞게 수정 (`C:\Users\[사용자이름]\...`)
 - 설정 변경 후 Claude Code 재시작 필수
 
