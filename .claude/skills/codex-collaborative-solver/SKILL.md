@@ -324,6 +324,138 @@ Evidence unavailable?
    - Sets mode-specific thresholds
    - **Enhancement**: Uses clarification answers to set expected evidence tiers
 
+### Mid-Debate User Input 🆕
+
+**Purpose:** Intelligent, agent-driven user engagement during debate when clarification or decision input would significantly improve the solution.
+
+**Philosophy:** Hybrid approach combining Smart Prompting (default) with Manual Flag (power users).
+
+#### When Claude Asks for Input
+
+**4 Trigger Conditions:**
+
+1. **Information Deficit** - Both Claude and Codex express low confidence (<50%) due to missing information
+2. **Preference Fork** - Clear trade-off requires user priority judgment (e.g., performance vs maintainability)
+3. **New Constraint Discovery** - Debate reveals constraint not mentioned in pre-clarification
+4. **Long-Running Deadlock** - 3+ rounds without convergence, user needed as tie-breaker
+
+**NOT Asked When:**
+- High confidence (>70%) and converging
+- Asked user within last 5 minutes
+- Trivial implementation details
+- Pre-clarification already covered topic
+
+#### User Control Options
+
+**CLI Flags:**
+```bash
+# Disable mid-debate input (fully automatic)
+codex와 토론해줘 --no-mid-input
+
+# Force interactive mode (ask after every round)
+codex와 토론해줘 --interactive
+
+# Tune frequency
+codex와 토론해줘 --mid-input-frequency=minimal  # Rarely ask
+codex와 토론해줘 --mid-input-frequency=balanced  # Default
+codex와 토론해줘 --mid-input-frequency=frequent  # Proactive
+```
+
+**Global Settings:**
+```json
+// ~/.claude/settings.json
+{
+  "codex_debate": {
+    "mid_debate_input": {
+      "enabled": true,
+      "default_frequency": "balanced",
+      "min_interval": 300
+    }
+  }
+}
+```
+
+#### Example Flow
+
+```markdown
+## Round 2 Complete
+
+Heuristic evaluation:
+- Condition: Preference Fork detected (performance vs flexibility)
+- Confidence: Claude 55%, Codex 60%
+- Decision: Ask user
+
+╔════════════════════════════════════════╗
+║ 🤔 Mid-Debate User Input Required     ║
+╠════════════════════════════════════════╣
+║ **Round:** 2 / 5                       ║
+║ **Type:** Preference Needed            ║
+║                                        ║
+║ **Current Discussion:**                ║
+║ We're evaluating eager loading vs      ║
+║ lazy+caching for Django ORM.           ║
+║                                        ║
+║ **Why We're Asking:**                  ║
+║ Both valid, but optimize for different ║
+║ goals. Need your priority.             ║
+║                                        ║
+║ **Question:** What's most important?   ║
+║                                        ║
+║ **Options:**                           ║
+║ 1. Performance (faster, simpler)       ║
+║ 2. Flexibility (more complex)          ║
+║ 3. Balanced approach                   ║
+║ 4. Skip (we'll decide)                 ║
+╚════════════════════════════════════════╝
+
+User: "1 - Performance"
+
+✓ Thank you! Based on your priority (Performance),
+  we'll proceed with eager loading approach.
+
+Continuing debate with this context...
+```
+
+#### Integration with Workflow
+
+**User response is:**
+1. **Captured** - Question + answer logged
+2. **Injected** - Next Codex round includes user input
+3. **Tracked** - Prevents re-asking same question
+4. **Referenced** - Included in final debate report
+
+**Example injection to Codex (Round 3):**
+```
+User clarified (Round 2): Performance is the priority.
+
+Given this preference, please re-evaluate your position...
+```
+
+#### Resources
+
+- **Heuristic Guide:** `facilitator/mid-debate-heuristic.md`
+- **Prompt Templates:** `facilitator/prompts/mid-debate-user-input.md`
+- **CLI Flags:** `facilitator/cli-flags.md`
+- **Integration:** `facilitator/reasoning-log-integration.md`
+
+#### Benefits
+
+- **Fewer Assumptions:** Fill gaps discovered during debate
+- **Better Alignment:** Solutions match actual priorities
+- **Faster Convergence:** Break deadlocks immediately
+- **Higher Confidence:** User validation reduces uncertainty
+
+#### Relationship to Pre-Clarification
+
+**Complementary roles:**
+- **Pre-clarification:** Initial context (tech stack, goals, constraints)
+- **Mid-debate input:** Dynamic adjustments (priorities, trade-offs, new constraints)
+
+**Synergy:**
+- Good pre-clarification → Less mid-debate input needed
+- Mid-debate fills gaps that pre-clarification missed
+- Both use agent-driven judgment (V3.0 philosophy)
+
 ### Round Loop (1-7 rounds, or until convergence)
 
 **Each Round:**
