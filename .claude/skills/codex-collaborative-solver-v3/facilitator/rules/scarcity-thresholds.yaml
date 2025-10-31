@@ -1,0 +1,113 @@
+# Information Scarcity Thresholds
+
+# Determines when to abort debate due to insufficient information
+
+scarcity_detection:
+  unknown_count:
+    description: "Number of critical unknowns after exploration"
+    threshold: 2  # Abort if ≥2 critical unknowns remain
+    phase: "after_exploration"  # Check after exploration phase (round 2)
+
+    critical_axes:
+      - "user requirements"
+      - "technical constraints"
+      - "scale/performance requirements"
+      - "security requirements"
+      - "budget/cost constraints"
+      - "timeline"
+      - "team capabilities"
+      - "existing infrastructure"
+
+  assumption_ratio:
+    description: "Ratio of assumptions to verified facts"
+    threshold: 2.0  # Abort if assumptions > 2× facts
+    calculation: "count(assumptions) / count(facts)"
+
+    # What counts as assumption
+    assumption_markers:
+      - "assuming"
+      - "probably"
+      - "likely"
+      - "might"
+      - "could be"
+      - "estimated"
+      - "roughly"
+      - "if we assume"
+
+    # What counts as fact
+    fact_markers:
+      - "according to"
+      - "measured"
+      - "documented"
+      - "verified"
+      - "code shows"
+      - "logs indicate"
+      - "benchmark demonstrates"
+
+  confidence_floor:
+    description: "Minimum aggregate confidence to proceed"
+    threshold: 0.4  # Abort if overall confidence <40%
+    calculation: "weighted_average(evidence_tier_confidences)"
+
+# Abort conditions
+abort_triggers:
+  - condition: "unknown_count >= 2"
+    priority: "high"
+
+  - condition: "assumption_ratio > 2.0"
+    priority: "high"
+
+  - condition: "confidence_floor < 0.4"
+    priority: "medium"
+
+  - condition: "critical_unknown AND no_exploration_done"
+    priority: "critical"
+
+# Re-engagement protocol
+re_engagement:
+  log_missing_facts: true
+  specify_why_needed: true  # Explain why each fact blocks risk evaluation
+
+  prompt_template: |
+    Debate paused due to insufficient information.
+
+    Missing facts that block risk evaluation:
+    {missing_facts_list}
+
+    Please provide:
+    {specific_questions}
+
+    OR acknowledge that decision must be made under uncertainty.
+
+# Fallback chain (try before aborting)
+fallback_chain:
+  - step: "first_principles"
+    question: "Can we derive this from first principles or fundamental constraints?"
+
+  - step: "user_clarification"
+    question: "Is this information the user can provide?"
+
+  - step: "quick_experiment"
+    question: "Can we prototype/test quickly to gather data?"
+
+  - step: "explicit_assumption"
+    question: "Can we make an explicit assumption with clear confidence penalty?"
+    accepted_confidence: 0.3  # Only if resulting confidence ≥30%
+
+# What never to do
+prohibitions:
+  - action: "fabricate_data"
+    description: "Never invent benchmarks, statistics, or metrics"
+
+  - action: "present_speculation_as_fact"
+    description: "Never state assumptions without marking them as such"
+
+  - action: "ignore_critical_unknowns"
+    description: "Never proceed with <2 critical unknowns without user acknowledgment"
+
+# Telemetry
+track:
+  abort_frequency: true  # How often are debates aborted
+  abort_reasons: true    # What triggers aborts most
+  successful_re_engagements: true  # Do users provide info after abort
+  confidence_calibration: true  # Are our confidence levels accurate

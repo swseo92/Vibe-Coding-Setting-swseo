@@ -1,0 +1,117 @@
+# Execution Mode
+
+purpose: "Fast, actionable answers with implementation focus"
+
+# When to use
+triggers:
+  keywords:
+    - "fix"
+    - "implement"
+    - "quick"
+    - "how to"
+    - "urgent"
+    - "asap"
+
+  problem_characteristics:
+    - clear_problem: true
+    - urgent: true
+    - implementation_focused: true
+    - user_wants_action: true
+
+# Debate configuration
+rounds:
+  minimum: 1
+  recommended: 2-3
+  maximum: 3
+
+exploration_phase:
+  rounds: "1"
+  focus: "Quick problem analysis, 1-2 solutions"
+
+convergence_phase:
+  rounds: "2-3"
+  focus: "Validate approach, detailed implementation"
+
+# Agent weighting
+claude:
+  breadth: 0.7  # Lower weight on breadth
+  creativity: 0.5  # Much lower weight on creativity
+  user_alignment: 1.5  # Higher weight on solving actual problem
+
+codex:
+  feasibility_checks: 1.5  # Higher weight on feasibility
+  implementation_detail: 2.0  # 2x weight on implementation
+  validation: 1.5  # Higher validation priority
+
+# Facilitator adjustments
+facilitator:
+  coverage:
+    minimum_dimensions: 3  # Reduced requirement (normally 5)
+    focus_dimensions: ["implementation", "testing", "risks"]
+    allow_skipping: ["ux", "cost", "compliance"]  # Unless critical
+
+  anti_patterns:
+    premature_convergence:
+      disabled: true  # Quick consensus is OK in execution mode
+
+    circular_reasoning:
+      threshold: 0.85  # Standard
+      # Still catch actual loops
+
+    dominance:
+      disabled: true  # If one agent has clear answer, accept it
+
+  scarcity:
+    assumption_ratio: 1.5  # Stricter (normally 2.0)
+    # Execution needs more certainty
+
+# Output expectations
+output:
+  format: "Single solution with step-by-step implementation"
+  single_recommendation: true
+  confidence_levels: "Overall (should be High)"
+
+  structure:
+    - section: "Solution"
+      include: ["What to do", "Why this works"]
+    - section: "Implementation Steps"
+      include: ["Detailed steps", "Code examples", "Commands"]
+    - section: "Validation"
+      include: ["How to test", "Success criteria"]
+    - section: "Quick Wins"
+      include: ["Immediate actions", "Expected impact"]
+
+# Quality gate adjustments
+quality_gate:
+  stress_test:
+    required: true
+    simplified: true  # Focus on "what could break"
+
+  concrete_actions:
+    requirement: "VERY detailed, copy-pasteable if possible"
+
+  confidence:
+    expectation: "High (75-95%)"
+    reason: "Execution mode for clear problems"
+    fallback: "If confidence <75%, recommend escalating to balanced mode"
+
+# Example prompts
+example_initial_prompts:
+  - "How do I fix {specific error}?"
+  - "Quick way to implement {feature}?"
+  - "Steps to deploy {component}?"
+  - "Urgent: {problem} broken, how to fix?"
+
+# Success metrics
+success:
+  time_to_solution: "< 15 minutes"
+  actionability: "Very High (ready to copy-paste)"
+  implementation_success_rate: "> 85%"
+  user_satisfaction: "Problem solved quickly"
+
+# Warnings
+warnings:
+  - "If problem ambiguous, switch to balanced mode"
+  - "If confidence < 75%, recommend more exploration"
+  - "If multiple approaches valid, switch to exploration mode"
+  - "Execution mode sacrifices breadth for speed"
