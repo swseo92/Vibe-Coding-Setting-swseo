@@ -3,6 +3,7 @@ name: agent-name
 description: Use this agent when [specific use case]. Examples:\n\n<example>\nContext: [Situation when agent should be used]\nuser: "[User request that should trigger this agent]"\nassistant: "I'll use the [agent-name] agent to [what it will do]."\n<commentary>\n[Why this agent is appropriate for this request]\n</commentary>\n</example>\n\n<example>\nContext: [Another situation]\nuser: "[Another user request]"\nassistant: "[Agent response]"\n<commentary>\n[Reasoning]\n</commentary>\n</example>
 tools: Read, Write  # Optional: specify only tools needed
 model: haiku  # Optional: haiku (fast/cheap) or sonnet (powerful)
+color: blue  # Choose based on purpose: green(test), blue(code), purple(analysis), red(debug), yellow(docs), orange(meta), pink(design), gray(automation)
 ---
 
 You are [role description - who this agent is and what expertise it has].

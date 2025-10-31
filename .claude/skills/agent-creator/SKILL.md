@@ -59,6 +59,15 @@ Ask the user:
 Based on user input, design:
 - **Name**: `task-domain-agent` (e.g., `api-doc-reviewer`, `test-generator`)
 - **Description**: Natural language explanation of purpose and when to use
+- **Color**: Choose based on primary purpose:
+  - Testing/QA → green
+  - Code generation → blue
+  - Analysis/Review → purple
+  - Debugging/Fixes → red
+  - Documentation → yellow
+  - Meta/Testing infrastructure → orange
+  - Design/UI → pink
+  - Automation/Utilities → gray
 - **System Prompt**: Detailed instructions following proven patterns:
   - Role definition
   - Core responsibilities
@@ -76,7 +85,7 @@ name: agent-name
 description: Clear explanation of what this agent does and when to use it. Include examples showing typical usage patterns.
 tools: Tool1, Tool2, Tool3  # Optional: omit to inherit all tools
 model: haiku  # Optional: haiku (cheap/fast) or sonnet (powerful)
-color: blue  # Optional: green, blue, purple, etc.
+color: blue  # Required: Choose based on agent purpose (see Color Guidelines below)
 ---
 
 # Role and Purpose
@@ -118,6 +127,7 @@ Use for agents that create new code files or modules.
 
 **Characteristics:**
 - Model: sonnet (complex reasoning)
+- Color: blue (code generation)
 - Tools: Read, Write, Edit, Glob, Grep
 - Focus: Code structure, best practices, testing
 
@@ -128,6 +138,7 @@ Use for agents that review, analyze, or critique existing code.
 
 **Characteristics:**
 - Model: sonnet (deep analysis)
+- Color: purple (analysis/review)
 - Tools: Read, Glob, Grep (no Write/Edit)
 - Focus: Patterns, issues, recommendations
 
@@ -138,6 +149,7 @@ Use for agents that generate test code.
 
 **Characteristics:**
 - Model: sonnet (comprehensive coverage)
+- Color: green (testing/QA)
 - Tools: Read, Write, Edit, Glob
 - Focus: Test coverage, edge cases, assertions
 
@@ -148,6 +160,7 @@ Use for agents that create or maintain documentation.
 
 **Characteristics:**
 - Model: haiku or sonnet (depends on complexity)
+- Color: yellow (documentation)
 - Tools: Read, Write, Edit
 - Focus: Clarity, completeness, examples
 
@@ -158,6 +171,7 @@ Use for agents that perform automated tasks or workflows.
 
 **Characteristics:**
 - Model: haiku (fast execution)
+- Color: gray (automation/utilities)
 - Tools: Bash, Read, Write
 - Focus: Reliability, error handling, idempotency
 
@@ -207,6 +221,51 @@ Use for agents that perform automated tasks or workflows.
   - Complex test generation
   - Multi-step workflows
 
+### Color Selection
+Choose appropriate colors based on the agent's primary purpose to provide visual cues:
+
+- **green**: Testing, validation, quality assurance
+  - Test writers, test runners
+  - Code validators, linters
+  - Quality checkers
+
+- **blue**: Code generation, building, creation
+  - Component generators
+  - File creators, scaffolding
+  - Template generators
+
+- **purple**: Analysis, review, inspection
+  - Code reviewers
+  - Security auditors
+  - Performance analyzers
+
+- **red**: Error handling, debugging, fixes
+  - Bug fixers
+  - Error reporters
+  - Debugging assistants
+
+- **yellow**: Documentation, explanation, learning
+  - Doc writers
+  - Tutorial generators
+  - Code explainers
+
+- **orange**: Testing infrastructure, meta-operations
+  - Meta testers
+  - System validators
+  - Integration testers
+
+- **pink**: Design, UI/UX, user-facing
+  - UI component creators
+  - Design system agents
+  - User flow designers
+
+- **gray**: Automation, utilities, helpers
+  - Deployment helpers
+  - Migration runners
+  - Utility scripts
+
+**Default**: If uncertain, use **blue** for general-purpose agents.
+
 ## Validation Checklist
 
 Before finalizing an agent, verify:
@@ -218,6 +277,7 @@ Before finalizing an agent, verify:
 - [ ] System prompt has all key sections
 - [ ] Tool list is minimal and appropriate
 - [ ] Model choice matches task complexity
+- [ ] Color is set and matches agent purpose
 - [ ] Examples show realistic usage patterns
 - [ ] No sensitive information or hardcoded values
 - [ ] Instructions are actionable and specific
@@ -266,6 +326,7 @@ When helping users create agents, follow this dialogue pattern:
 
    I'll configure it with:
    - Model: [haiku/sonnet] because [reason]
+   - Color: [color] (for [purpose type])
    - Tools: [list] for [purpose]
 
    Does this match your vision?"
@@ -306,6 +367,7 @@ name: postgres-migration-writer
 description: Use this agent when you need to create PostgreSQL migration scripts. It specializes in writing safe, reversible migrations with proper constraints and indexes. Triggers when user mentions "migration", "schema change", or "database update". Examples:\n\nuser: "I need to add a users table with email and password fields"\nassistant: "I'll use the postgres-migration-writer agent to create a migration with proper constraints."
 tools: Read, Write, Grep, Glob
 model: sonnet
+color: blue
 ---
 
 You are an expert PostgreSQL migration specialist...
