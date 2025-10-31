@@ -148,6 +148,38 @@ PSEOF
     echo "These settings are now available across all projects."
     ;;
 esac
+
+# Step 2: Transform MCP configurations for OS-independence
+echo ""
+echo "🔧 Transforming MCP configurations for OS-independence..."
+
+# Check if templates/common/.mcp.json exists with transform metadata
+if [ -f "templates/common/.mcp.json" ]; then
+  echo "   Found MCP template with transform metadata"
+  echo "   Claude will now analyze and apply transformations to ~/.claude.json"
+  echo ""
+fi
+```
+
+**IMPORTANT**: After file sync completes, you MUST:
+
+1. Read `templates/common/.mcp.json`
+2. Look for `_transform` metadata in mcpServers entries
+3. For each server with `_transform: "home-relative-path"`:
+   - Extract `_targetPath` (e.g., ".playwright-persistent")
+   - Extract `_pathOption` (e.g., "--user-data-dir")
+   - Generate `node --eval` code using Codex's recommendation
+4. Update `~/.claude.json` mcpServers section with transformed config
+5. Remove `_transform`, `_targetPath`, `_pathOption` metadata from final config
+
+**Transformation template**:
+```javascript
+const os=require('os');
+const path=require('path');
+const {spawn}=require('child_process');
+const dir=path.join(os.homedir(),'{{TARGET_PATH}}');
+const child=spawn('npx',['-y','{{PACKAGE}}','{{PATH_OPTION}}',dir],{stdio:'inherit'});
+child.on('exit',code=>process.exit(code));
 ```
 
 Provide a summary including:
@@ -157,3 +189,4 @@ Provide a summary including:
 - Whether settings were synced (settings.local.json → settings.json)
 - Whether speckit templates and scripts were synced
 - Path to global configuration directory (~/.claude/ and ~/.specify/)
+- **MCP configurations transformed** (list which servers were transformed)
