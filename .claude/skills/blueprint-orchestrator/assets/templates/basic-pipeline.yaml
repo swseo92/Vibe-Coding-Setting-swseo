@@ -1,0 +1,21 @@
+name: "Basic Pipeline Template"
+description: "Template for creating new blueprints"
+
+inputs:
+  - name: input_name
+    type: string
+    required: true
+    description: "Describe what this input is for"
+
+pipeline:
+  - id: step-1
+    skill: skill-name
+    inputs:
+      param: ${{ inputs.input_name }}
+    outputs:
+      result: any
+
+  - id: step-2
+    skill: another-skill
+    inputs:
+      data: ${{ steps.step-1.outputs.result }}

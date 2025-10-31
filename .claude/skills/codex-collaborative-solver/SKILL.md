@@ -1,13 +1,12 @@
----
-name: codex-collaborative-solver
-description: Solve complex problems through collaborative debate between Claude and OpenAI Codex. Use when users request "codex와 토론", "claude랑 codex 협업", or need multi-perspective analysis for architecture decisions, bug investigation, algorithm optimization, or design patterns. Conducts 3-5 rounds of structured debate to reach consensus solutions.
----
+# Codex Collaborative Solver V3.0
 
-# Codex Collaborative Solver
+**Quality-First Debate Architecture with Self-Improving Facilitator**
 
 ## Overview
 
-Enable Claude and OpenAI Codex to engage in structured, multi-round debates to solve complex technical problems. By leveraging two different AI perspectives (Anthropic's Claude and OpenAI's Codex), reach more robust solutions through collaborative discussion, challenge assumptions, and cross-validate approaches.
+V3.0 introduces a fundamental paradigm shift: from "facilitating debates" to "ensuring quality outcomes through intelligent facilitation." This version features a 3-layer hybrid facilitator system, automated knowledge extraction via playbooks, and adaptive quality modes.
+
+**Key Innovation:** Meta-monitoring layer that detects coverage gaps, anti-patterns, and information scarcity, automatically improving debate quality over time.
 
 ## When to Use This Skill
 
@@ -19,25 +18,10 @@ Activate when users request:
 
 **Appropriate problem types:**
 
-1. **Architecture Decisions**
-   - "Should we use microservices or monolith?"
-   - "Which database fits this use case?"
-   - "REST vs GraphQL for our API?"
-
-2. **Bug Investigation**
-   - "What's causing this memory leak?"
-   - "Where's the performance bottleneck?"
-   - "Why does this race condition occur?"
-
-3. **Algorithm Optimization**
-   - "Can we improve from O(n²) to O(n log n)?"
-   - "What's a better data structure here?"
-   - "How to parallelize this computation?"
-
-4. **Design Pattern Selection**
-   - "Which design pattern fits this scenario?"
-   - "How should we refactor this code?"
-   - "What's the best error handling strategy?"
+1. **Architecture Decisions** - "Should we use microservices or monolith?"
+2. **Bug Investigation** - "What's causing this memory leak?"
+3. **Algorithm Optimization** - "Can we improve from O(n²) to O(n log n)?"
+4. **Design Pattern Selection** - "Which design pattern fits this scenario?"
 
 ## Prerequisites
 
@@ -51,543 +35,584 @@ Activate when users request:
 codex --version
 ```
 
-## Token Efficiency
+## What's New in V3.0
 
-**NEW: Stateful Session Management**
+### 🎯 Core Improvements
 
-This skill now uses **stateful Codex sessions** to dramatically reduce token usage:
+| Feature | V2.0 | V3.0 |
+|---------|------|------|
+| **Quality Assurance** | Manual | 3-layer Facilitator (auto) |
+| **Knowledge Reuse** | None | Automated Playbook Pipeline |
+| **Adaptability** | Fixed process | 3 Quality Modes |
+| **Evidence** | Implicit | Tiered (with confidence) |
+| **Coverage** | Ad-hoc | 8-dimension monitoring |
+| **Failure Detection** | None | 10 explicit mechanisms |
 
-**Token Savings:**
-- Traditional (stateless): ~6,500 tokens over 5 rounds
-- Stateful approach: ~2,100 tokens over 5 rounds
-- **67% reduction in token costs!** 🎉
+### 📊 Expected Quality Gains
 
-**How it works:**
-- Round 1: Full context sent (~3,300 tokens)
-- Round 2+: Only new messages (~400-800 tokens each)
-- Codex automatically maintains conversation history
+- **Actionability**: 60% → 90%
+- **Confidence Clarity**: 10% → 100%
+- **Coverage Completeness**: 4/8 → 7/8 dimensions
+- **Appropriate Pauses**: 0% → 20-30% (when info missing)
 
-**Scripts location:** `.claude/scripts/codex-debate/`
+## V3.0 Architecture
 
-See [Scripts](#scripts) section for details.
+### 1. Hybrid Facilitator System (THE KEYSTONE)
 
-## Debate Workflow
+**Why it matters:** Without meta-monitoring, all other improvements fail. The facilitator is the quality control layer.
 
-### Phase 1: Problem Definition
+#### Layer 1: Rule-Based Monitor (Every Round)
 
-1. **Collect Context**
-   - Understand user's problem thoroughly
-   - Ask clarifying questions if needed
-   - Gather relevant code/files/context
+**Coverage Tracker**
+- Monitors 8 dimensions: {architecture, security, performance, UX, testing, ops, cost, compliance}
+- After each round, flags uncovered areas
+- Example: "Neither agent addressed testing strategy - should we explore this?"
 
-2. **Frame the Question**
-   - Distill into clear, debatable question
-   - Identify key constraints and requirements
-   - Set success criteria
+**Anti-Pattern Detector**
+- Circular reasoning (same point repeated 2+ times)
+- Premature convergence (agreement in <2 rounds without exploring alternatives)
+- Information starvation (agents guessing instead of asking user)
+- Dominance (one agent's view accepted without challenge)
 
-**Example:**
-```
-User: "우리 앱이 느려. 어떻게 개선할까?"
+**Scarcity Detector**
+- Tracks assumption:fact ratio
+- Counts critical unknowns
+- **Abort Thresholds:**
+  - ≥2 critical decision axes unknown after exploration pass
+  - OR assumption:fact ratio > 2:1
+  - Logs specific missing facts for re-engagement
 
-Claude frames:
-"Question: What's the most effective approach to improve application performance?
-Constraints:
-- Current stack: Django + PostgreSQL
-- 10k daily active users
-- Response time currently 2-3 seconds
-- Target: <500ms response time
-Context: [attaches relevant code]"
-```
+**Mode Validator**
+- Re-scores debate intent after each round
+- Auto-switches modes if confidence drops
+- Prevents mode misclassification
 
-### Phase 2: Initial Analysis (Claude)
+Configuration: `facilitator/rules/`
 
-**Claude's role:**
-1. Analyze the problem from multiple angles
-2. Propose initial approach with reasoning
-3. Identify potential weaknesses in own approach
-4. Frame questions for Codex
+#### Layer 2: AI Escalation (On Flags)
 
-**Template:**
-```
-My Initial Analysis:
-[Problem understanding]
+Lightweight third AI agent handles non-trivial situations:
+- "Circular reasoning detected between rounds 2-3" → Suggests pivot to unexplored aspect
+- "Neither agent addressed compliance" → Prompts regulatory exploration
+- High-friction patterns (rapid-turn, high disagreement, policy triggers) → Escalates to user
 
-Proposed Approach:
-[Detailed solution with reasoning]
+Prompts: `facilitator/prompts/ai-escalation.md`
 
-Potential Concerns:
-[What could go wrong]
+#### Layer 3: Quality Gate (Pre-Finalization)
 
-Questions for Codex:
-[Specific areas where Codex input valuable]
-```
+Mandatory checklist before finalizing:
+- [ ] Verified assumptions or marked as assumptions?
+- [ ] User constraints honored?
+- [ ] Risks surfaced with mitigation?
+- [ ] Next actions concrete and executable?
+- [ ] Confidence level explicit?
 
-### Phase 3: Codex Consultation (Round 1)
+Template: `facilitator/quality-gate.md`
 
-**Start a stateful Codex session** using the debate-start.sh script:
+### 2. Quality Mode System
 
-```bash
-bash .claude/scripts/codex-debate/debate-start.sh "You are participating in a technical debate with Claude (Anthropic).
+Users can specify (or auto-detected from keywords):
 
-Problem: [problem statement]
+```yaml
+Mode: exploration
+  Purpose: Creative idea generation
+  Claude weighting: Breadth + creativity (high)
+  Codex weighting: Feasibility checks (soft)
+  Rounds: 5-7
+  Use when: "Explore architecture options", "Brainstorm approaches"
 
-Claude's Analysis:
-[Claude's full analysis]
+Mode: balanced (default)
+  Purpose: Balanced decision-making
+  Claude weighting: Standard
+  Codex weighting: Standard
+  Rounds: 3-5
+  Use when: "Choose technology stack", "Architecture decision"
 
-Please provide your perspective:
-1. Do you agree with Claude's approach? Why or why not?
-2. What alternatives or improvements do you suggest?
-3. What are the tradeoffs?
-4. What concerns should we address?
-
-Be critical and thorough. Challenge assumptions."
-```
-
-**What happens:**
-- Codex responds with analysis
-- Thread ID saved to `./debate-session/thread_id.txt`
-- Ready for subsequent rounds
-
-### Phase 4: Analysis & Response (Claude)
-
-**After receiving Codex response:**
-
-1. **Identify Agreement Points**
-   - Where both perspectives align
-   - Shared concerns or validations
-   - Consensus on approach
-
-2. **Identify Disagreements**
-   - Where perspectives diverge
-   - Different priorities or assumptions
-   - Alternative approaches suggested
-
-3. **Evaluate Arguments**
-   - Which arguments are stronger?
-   - What evidence supports each view?
-   - What's missing from either analysis?
-
-4. **Formulate Response**
-   - Acknowledge valid points
-   - Defend or revise own position
-   - Raise new questions
-   - Propose synthesis if possible
-
-### Phase 5: Iterative Debate (Rounds 2-5)
-
-**Continue debate rounds until:**
-- Both perspectives converge on solution
-- Tradeoffs clearly understood
-- No new insights emerging
-- 5 rounds completed (maximum)
-
-**Each round (using debate-continue.sh):**
-```bash
-bash .claude/scripts/codex-debate/debate-continue.sh "Continuing debate on: [problem]
-
-Claude's latest position:
-[Claude's updated analysis - NEW THOUGHTS ONLY]
-
-Your response:
-1. Address Claude's new points
-2. Refine your position
-3. Suggest compromises or synthesis
-4. Identify remaining gaps
-
-Round X of 5"
+Mode: execution
+  Purpose: Fast, actionable answers
+  Claude weighting: User alignment
+  Codex weighting: Implementation detail (high)
+  Rounds: 2-3
+  Use when: "Fix this bug", "Quick implementation approach"
 ```
 
-**Token efficiency in action:**
-- ✅ NO need to re-send previous rounds
-- ✅ Codex remembers full conversation
-- ✅ Only send new analysis/questions
-- ✅ Saves ~70% tokens per round
+Mode definitions: `modes/`
 
-### Phase 6: Consensus & Final Solution
+### 3. Automated Playbook Pipeline
 
-**Synthesize final solution:**
-
-1. **Agreed Approach**
-   - What both perspectives support
-   - Consensus on implementation
-   - Validated by both AIs
-
-2. **Acknowledged Tradeoffs**
-   - Limitations of chosen approach
-   - Alternative paths not taken
-   - When to reconsider
-
-3. **Implementation Guidance**
-   - Step-by-step plan
-   - Risk mitigation strategies
-   - Success metrics
-
-4. **Dissenting Views**
-   - Where disagreement remains
-   - Why each AI holds their position
-   - Let user decide
-
-### Phase 7: Generate Debate Report
-
-Use template from `assets/debate-report-template.md` to create comprehensive report:
-
-```bash
-# Save report
-.debate-reports/YYYY-MM-DD-HH-MM-[problem-slug].md
-```
-
-Report includes:
-- Problem statement
-- Full debate transcript (all rounds)
-- Consensus solution
-- Tradeoff analysis
-- Implementation plan
-- Dissenting opinions (if any)
-
-### Phase 8: Cleanup Session
-
-**Clean up Codex session** after debate completes:
-
-```bash
-bash .claude/scripts/codex-debate/debate-end.sh
-```
-
-**What happens:**
-- Removes `./debate-session/` directory
-- Cleans up thread_id and session files
-- Frees up storage
-
-**Important:** Always run cleanup after finishing a debate to avoid stale sessions.
-
-## Debate Protocol Guidelines
-
-For detailed debate rules and best practices, see `references/debate-protocol.md`.
-
-**Key principles:**
-
-1. **Intellectual Honesty**
-   - Admit when uncertain
-   - Change position when evidence warrants
-   - Acknowledge valid counterarguments
-
-2. **Constructive Challenge**
-   - Question assumptions respectfully
-   - Seek understanding before disagreeing
-   - Focus on ideas, not winning
-
-3. **Evidence-Based**
-   - Support claims with reasoning
-   - Reference documentation when possible
-   - Distinguish opinion from fact
-
-4. **User-Centric**
-   - Keep user's constraints in mind
-   - Prioritize practical solutions
-   - Consider user's skill level
-
-## Example Debate Session
-
-**User Request:**
-"codex와 토론해서 이 성능 문제 해결법 찾아줘. 데이터베이스 쿼리가 너무 느려."
-
-**Debate Flow (with Stateful Scripts):**
+**Turning Debates into Organizational Knowledge**
 
 ```
-=== Phase 1: Problem Definition ===
-Claude: "Analyzing slow query issue...
-[Examines code, identifies N+1 query pattern]
-
-Question: How should we optimize database queries in this Django API?
-Context: 100+ queries per request, causing 3s response time"
-
-=== Phase 2: Claude Initial Analysis ===
-Claude: "My analysis suggests eager loading with select_related()
-and prefetch_related() to eliminate N+1 queries.
-
-Proposed: Refactor views to use optimized querysets.
-
-Concerns: May increase memory usage for large datasets."
-
-=== Phase 3: Codex Round 1 (START SESSION) ===
-bash .claude/scripts/codex-debate/debate-start.sh "Problem: Django query optimization...
-Claude's analysis: [eager loading approach]
-Your perspective?"
-
-✓ Thread ID: 019a2d18-c64a-7ef3-aae3-71e536186462
-✓ Tokens used: 3,320
-
-Codex: "Eager loading is good for predictable relations, but
-I see you're dealing with dynamic filtering. Consider:
-
-1. Database indexing first (missing indexes on foreign keys)
-2. Query result caching (Redis)
-3. Database connection pooling
-4. Then eager loading where applicable
-
-Eager loading alone won't solve if queries aren't indexed."
-
-=== Phase 4: Claude Response ===
-Claude: "Excellent point about indexes. I assumed they existed.
-Let me verify... [checks schema]
-
-You're right - foreign keys aren't indexed! This explains
-the slowness. Revised approach:
-
-1. Add indexes (immediate win)
-2. Implement eager loading (eliminates N+1)
-3. Add Redis caching (for frequently accessed data)
-
-Let me ask Codex about implementation priority..."
-
-=== Phase 5: Codex Round 2 (CONTINUE SESSION) ===
-bash .claude/scripts/codex-debate/debate-continue.sh "Claude's updated position:
-Indexes first, then eager loading, then Redis.
-Do you agree with this priority?"
-
-✓ Resuming: 019a2d18-c64a-7ef3-aae3-71e536186462
-✓ Tokens used: 768 (only new message!)
-✓ Token savings: 77% vs re-sending full context
-
-Codex: "Yes, that's the right priority order. One addition:
-before Redis caching, use Django's query cache
-(simpler, no new infrastructure).
-
-For Redis later: cache invalidation strategy is critical.
-Consider using cache-aside pattern with TTL."
-
-=== Phase 6: Consensus ===
-Both agree on:
-1. Add database indexes (highest impact)
-2. Implement eager loading (eliminate N+1)
-3. Start with Django query cache
-4. Upgrade to Redis when needed
-
-Report generated: .debate-reports/2025-10-29-15-30-db-query-optimization.md
-
-=== Phase 8: Cleanup ===
-bash .claude/scripts/codex-debate/debate-end.sh
-✓ Session cleaned up
-
-**Total tokens: ~5,000 (vs ~8,000 without stateful sessions)**
+Debate Session
+    ↓
+Structured Logs (problem, assumptions, options, decisions)
+    ↓
+Auto-Tagging (shallow NLP, taxonomy labels)
+    ↓
+Nightly Clustering (similar problem signatures)
+    ↓
+Success Metrics Promotion (repeated patterns)
+    ↓
+LLM Summarizer (drafts playbook, cites sources)
+    ↓
+Human/Agent Validation (spot-check)
+    ↓
+Canonical Playbooks (60-day validity)
 ```
 
-## Advanced Usage
+**Playbook Structure:**
+- Problem signature (when to apply)
+- Key questions to explore
+- Common tradeoffs
+- Evidence sources
+- Past debate references
+- Success metrics
+- Expiration date
 
-### Focused Debates
+Examples: `playbooks/`
+Template: `playbooks/_template.md`
 
-For specific aspects, direct the debate:
+### 4. Role Division
+
+**Exploration Phase (Rounds 1-2):**
+- **Claude**: Generate 3-5 diverse approaches (including wild ones)
+- **Codex**: Reality-check feasibility ("This won't work because...")
+- **Facilitator**: Ensure edge cases explored
+
+**Convergence Phase (Rounds 3-5):**
+- **Claude**: User alignment verification ("Solves actual problem?")
+- **Codex**: Implementation feasibility ("Can we build this?")
+- **Facilitator**: Force stress test before consensus
+
+**Stress Pass (Before Consensus):**
+- Last endorsing agent must enumerate failure modes
+- No rubber-stamp escapes allowed
+
+### 5. Tiered Evidence System
+
+**Tier 1: Direct Evidence (High Confidence 90-100%)**
+- Repo artifacts, actual code examples
+- Real benchmarks, metrics
+- Documented case studies
+- Verifiable facts
+
+**Tier 2: Reasoned Analogies (Medium Confidence 60-80%)**
+- Similar problems, extrapolated patterns
+- Industry best practices
+- Documented tradeoffs
+- Expert consensus
+
+**Tier 3: Explicit Assumptions (Low Confidence 30-50%)**
+- Clearly marked as assumptions
+- Justified reasoning provided
+- Confidence penalty applied
+- Requires validation
+
+**Never:** Fabricate data or present speculation as fact
+
+### 6. Information Scarcity Protocol
+
+**Fallback Chain:**
+```
+Evidence unavailable?
+  ↓
+1. Derivable from first principles? → Reasoned analogy (Tier 2)
+  ↓
+2. User can answer? → Ask clarifying question (PAUSE)
+  ↓
+3. Quick prototype/test possible? → Suggest experiment
+  ↓
+4. Last resort: Make assumption + mark clearly + Tier 3 + confidence penalty
+```
+
+**When to ABORT and query user:**
+- ≥2 critical decision axes unknown after exploration pass
+- OR assumption:fact ratio > 2:1
+- Facilitator logs which missing facts block risk evaluation
+- Re-engagement prompt is specific
+
+### 7. Edge Case Mitigations (10 Failure Modes)
+
+1. **Circular Reasoning** → Anti-pattern detector flags → AI facilitator suggests pivot
+2. **Premature Convergence** → Requires 2+ rounds + alternative exploration
+3. **Information Starvation** → Scarcity detector → abort and query user
+4. **Dominance** → Balance checker → prompt underrepresented agent
+5. **Mode Misclassification** → Post-round re-scoring → auto-switch
+6. **Coverage Drift** → Nightly telemetry → propose new dimensions
+7. **Playbook Staleness** → 60-day expiry → re-validation required
+8. **Facilitator Myopia** → High-friction patterns → escalate to user
+9. **Log Integrity** → Heartbeat + replay buffer → graceful pause
+10. **Facilitator Failure** → 7-round limit, 2-ignore threshold → user override
+
+## V3.0 Workflow
+
+### Pre-Debate
+
+1. **Clarification Stage** 🆕
+   - **Purpose**: Reduce assumptions, establish constraints, align on goals
+   - **When**: Always (unless `--skip-clarify`)
+   - **Process**:
+     ```
+     User request → Claude analyzes complexity → Generate 1-3 questions → User answers → Debate starts
+     ```
+
+   **Complexity Judgment (Agent-Driven)**:
+   - Claude reads the user's question
+   - Assesses: Are constraints mentioned? Is goal clear? Single or multi-dimensional?
+   - Decides: How many clarification questions needed (0-3)
+
+   **Question Categories**:
+   - **Essential** (always ask if missing):
+     - Constraints (tech stack, budget, timeline, team capability)
+     - Goals & Success Criteria (what defines "solved"?)
+     - Context (current system, why this problem matters)
+
+   - **Conditional** (based on problem type):
+     - Performance: Target metrics, current profiling data
+     - Architecture: Existing system, integration concerns
+     - Security: Compliance requirements, threat model
+     - Bug: Reproduction steps, error logs
+
+   **Example Flow**:
+   ```
+   User: "Django API 응답이 너무 느려"
+
+   Claude (internal judgment):
+   - No constraints mentioned → Ask
+   - No target metrics → Ask
+   - Context unclear → Ask
+   → Generate 3 questions
+
+   Claude: "명확화 질문:
+   1. 현재 응답 시간과 목표 응답 시간은?
+   2. 사용 중인 Django 버전, DB, 캐시 스택은?
+   3. 예산/시간/팀 제약사항은?"
+
+   User: "현재 2초, 목표 500ms. Django 4.2, PostgreSQL, Redis 없음. 1주일 내 개선."
+
+   → Now debate with full context
+   ```
+
+   **Skip Option**:
+   ```
+   User: "Django API 성능 개선 (현재 2초 → 목표 500ms, Django 4.2/PostgreSQL, 1주일)"
+   → Claude: (모든 정보 있음) → Skip clarify, start debate
+
+   Or explicitly:
+   User: "--skip-clarify Django API 성능 개선"
+   → Claude: Debate immediately
+   ```
+
+   **Philosophy Alignment**:
+   - ✅ "Scripts Assist, Agents Judge": Agent decides if/what to ask
+   - ✅ No keyword matching: Natural language understanding
+   - ✅ No rigid templates: Dynamic question generation
+   - ✅ User control preserved: `--skip-clarify` flag
+
+2. **Mode Selection**
+   - User specifies: "Use exploration mode"
+   - OR auto-detect from keywords
+   - Default: balanced
+
+3. **Playbook Loading**
+   - Facilitator checks if relevant playbook exists
+   - Loads playbook if available
+   - Example: "database-migration.md" for DB questions
+
+4. **Coverage Initialization**
+   - Coverage monitor initializes 8-dimension checklist
+   - Sets mode-specific thresholds
+   - **Enhancement**: Uses clarification answers to set expected evidence tiers
+
+### Round Loop (1-7 rounds, or until convergence)
+
+**Each Round:**
+
+A. **Role-Based Work**
+   - Rounds 1-2 (Exploration): Claude diverges → Codex reality-checks
+   - Rounds 3+ (Convergence): Claude aligns → Codex validates
+
+B. **Facilitator Checks (Every Round)**
+   - Anti-pattern detection → AI escalates if needed
+   - Scarcity check → Abort if thresholds crossed
+   - Coverage gaps → Prompt agents
+   - Mode re-evaluation → Auto-switch if mismatch
+
+C. **Stress Pass (Before Consensus)**
+   - Last endorsing agent enumerates failure modes
+   - Prevents rubber-stamping
+
+D. **Escalation Conditions**
+   - 7 rounds exceeded → Flag to user
+   - Facilitator prompts ignored 2+ times → Hand control to user
+   - High-friction patterns → Immediate user escalation
+
+### Post-Debate
+
+1. **Quality Gate** (Mandatory)
+   - Run checklist from `facilitator/quality-gate.md`
+   - Block finalization if criteria not met
+
+2. **Structured Logging**
+   - Generate debate log (schema: `schemas/debate-log.json`)
+   - Store for playbook pipeline
+   - Include metrics: confidence, evidence tiers, coverage
+
+3. **Report Generation**
+   - Use template from V2.0 (still valid)
+   - Add V3.0 enhancements:
+     - Confidence levels
+     - Coverage matrix
+     - Evidence tier breakdown
+     - Facilitator interventions log
+
+4. **Cleanup**
+   - Run debate-end.sh
+   - Archive session
+
+### Async (Background)
+
+- **Nightly**: Playbook extraction from debate logs
+- **Weekly**: User feedback integration → heuristic tuning
+- **Monthly**: Playbook validity re-validation
+
+## Usage Examples
+
+### Basic Usage with Clarification 🆕
 
 ```
-"codex랑 security 관점에서만 토론해줘"
-"focus debate on performance only"
-"debate different architectures, not implementation details"
+User: "codex와 토론해서 이 성능 문제 해결해줘. DB 쿼리가 느려."
+
+Claude (Clarification Stage):
+- Analyzes: No tech stack, no target metrics, no constraints
+- Generates 3 questions:
+
+"명확화 질문:
+1. 현재 응답 시간과 목표 응답 시간은?
+2. 사용 중인 프레임워크와 데이터베이스는?
+3. 예산/시간/팀 제약사항은?"
+
+User: "현재 평균 2초, 목표 500ms 이하. Django 4.2 + PostgreSQL 14.
+       1주일 내 개선해야 하고, 팀에 DBA 없음."
+
+Claude (Now with full context):
+1. Auto-detects mode: execution (urgent timeline)
+2. Loads playbook: database-optimization.md
+3. Initializes coverage with known constraints
+4. Sets evidence tiers: High expectations (stack known)
+5. Starts debate...
+
+Round 1: Claude explores 3 approaches → Codex reality-checks
+Facilitator: Checks coverage - all critical dimensions addressed
+
+Round 2: Solution converges (fast due to clear constraints)
+Stress pass: Codex enumerates failure modes
+
+Facilitator: Quality gate passes
+- Clarification: ✓ Complete
+- Constraints: ✓ Honored (no DBA, 1 week)
+- Confidence: 85% (Tier 1 evidence from known stack)
+
+Output: "1. Add B-tree index on users.email (immediate, no DBA needed)
+         2. Use select_related() for N+1 queries (Django builtin)
+         3. Connection pooling config (PgBouncer, 2 hours setup)
+         Confidence: 85%. Can achieve 500ms target in 3 days."
 ```
 
-### Pre-existing Solutions
-
-When comparing existing solutions:
+### With Skip Clarify
 
 ```
-"Option A: [approach 1]
-Option B: [approach 2]
+User: "Django 4.2 + PostgreSQL 14 성능 개선 (2초→500ms, 1주일, DBA 없음)"
 
-codex랑 토론해서 어느게 나은지 결정해줘"
+Claude:
+- Analyzes: All constraints present
+- Skips clarification automatically
+- Proceeds directly to debate
+
+(Same outcome as above, faster start)
 ```
 
-### Team Decision Support
-
-For team discussions, get AI perspectives first:
+### Explicit Mode Selection
 
 ```
-"팀에서 이 문제로 의견이 갈려.
-codex와 토론해서 각 접근법의 장단점 분석해줘"
+User: "Use exploration mode - codex와 함께 새로운 아키텍처 패턴 탐색해줘"
+
+Claude:
+1. Mode: exploration (5-7 rounds, creativity weighted)
+2. No playbook (novel exploration)
+3. Rounds 1-3: Divergent ideation
+4. Rounds 4-5: Reality-check + synthesis
+5. Output: Multiple options with tradeoffs, no single recommendation
 ```
 
-## Output Structure
+### User Override
 
-Each debate session produces:
+```
+During debate:
 
-1. **Console Summary** (Real-time)
-   - Round-by-round highlights
-   - Key agreements/disagreements
-   - Emerging consensus
+User: "/debate-override Skip security discussion, focus on performance only"
 
-2. **Debate Report** (`.debate-reports/`)
-   - Full transcript
-   - Analysis and synthesis
-   - Implementation recommendations
-   - Timestamp and context
+Facilitator: Acknowledges override, updates coverage monitor
+Debate continues with adjusted focus
+```
 
-3. **Implementation Plan** (If requested)
-   - Step-by-step execution
-   - Code changes needed
-   - Testing strategy
+## Scripts Location
+
+V3.0 **reuses V2.0 scripts** for Codex interaction:
+- `.claude/scripts/codex-debate/debate-start.sh`
+- `.claude/scripts/codex-debate/debate-continue.sh`
+- `.claude/scripts/codex-debate/debate-end.sh`
+
+**New V3.0 scripts** (facilitator automation):
+- `scripts/facilitator/check-coverage.py` (planned)
+- `scripts/facilitator/detect-anti-patterns.py` (planned)
+- `scripts/facilitator/generate-playbook.py` (planned)
+
+## Configuration Files
+
+### Facilitator Rules
+
+- `facilitator/rules/coverage-monitor.yaml` - 8-dimension checklist
+- `facilitator/rules/anti-patterns.yaml` - Detection patterns
+- `facilitator/rules/scarcity-thresholds.yaml` - Abort conditions
+
+### Mode Definitions
+
+- `modes/exploration.yaml` - Creative mode settings
+- `modes/balanced.yaml` - Default mode settings
+- `modes/execution.yaml` - Fast execution settings
+
+### Schemas
+
+- `schemas/debate-log.json` - Structured log format
+- `schemas/playbook-schema.json` - Playbook structure
+- `schemas/metrics.json` - Quality metrics
+
+## Comparison: V2.0 vs V3.0
+
+See `references/v2-vs-v3-comparison.md` for detailed comparison.
+
+**Quick Summary:**
+
+| Aspect | V2.0 | V3.0 |
+|--------|------|------|
+| **Philosophy** | Facilitate debates | Ensure quality outcomes |
+| **Quality Control** | Manual | Automated (3-layer facilitator) |
+| **Adaptability** | One-size-fits-all | 3 modes (exploration/balanced/execution) |
+| **Knowledge Reuse** | None | Automated playbook pipeline |
+| **Failure Handling** | Hope for the best | 10 explicit mechanisms |
+| **Evidence** | Implicit | Tiered with confidence levels |
+| **Coverage** | Ad-hoc | 8-dimension systematic monitoring |
+| **Consensus** | Accept at face value | Stress pass required |
 
 ## Best Practices
 
 ### Do's ✅
 
-1. **Provide Rich Context**
-   - Share relevant code files
-   - Explain constraints clearly
-   - Include error messages/logs
-
-2. **Let Debate Evolve**
-   - Allow multiple rounds
-   - Don't rush to consensus
-   - Embrace disagreement initially
-
-3. **Guide, Don't Dictate**
-   - Frame good questions
-   - Let AIs explore freely
-   - Intervene only if stuck
-
-4. **Save Debate Reports**
-   - Keep `.debate-reports/` in git
-   - Learn from past debates
-   - Share with team
-
-5. **Critically Evaluate**
-   - Both AIs can be wrong
-   - Use your judgment
-   - Test solutions thoroughly
+1. **Answer Clarification Questions** 🆕 - Better info = better solutions
+2. **Provide Complete Context Upfront** 🆕 - Skip clarify stage by being thorough initially
+3. **Trust the Facilitator** - If it aborts for missing info, provide the info
+4. **Specify Mode When Needed** - Exploration for novel problems, execution for urgent fixes
+5. **Review Playbooks** - If loaded, verify it matches your context
+6. **Check Confidence Levels** - Low confidence = validate before implementing
+7. **Save Debate Reports** - Future playbooks depend on this data
 
 ### Don'ts ❌
 
-1. **Don't Skip Context**
-   - Vague problems → vague solutions
-   - Missing constraints → impractical advice
+1. **Don't Rush Past Clarification** 🆕 - 2 minutes clarifying saves hours debugging
+2. **Don't Say "I Don't Know" Without Details** 🆕 - "Don't know budget" vs "Budget TBD but likely <$10k"
+3. **Don't Skip Quality Gate** - If it flags issues, address them
+4. **Don't Ignore Facilitator Warnings** - They catch real problems
+5. **Don't Expect Perfection** - V3.0 is designed to be explicit about uncertainty
+6. **Don't Override Lightly** - Facilitator has reasons for its checks
+7. **Don't Implement Low-Confidence Solutions** - Validate first
 
-2. **Don't Expect Perfect Agreement**
-   - Some problems have no "right" answer
-   - Tradeoffs are real
-   - Disagreement can be valuable
+### Clarification Pro Tips 🆕
 
-3. **Don't Automate Blindly**
-   - Review all suggestions
-   - Understand the reasoning
-   - Validate against requirements
+**Good Initial Requests** (Auto-skip clarify):
+- ✅ "Django 4.2 API 성능 개선 (2초→500ms, PostgreSQL 14, 1주일, DBA 없음)"
+- ✅ "Microservices vs Monolith (팀 5명, 신규 프로젝트, Node.js, AWS, 3개월)"
 
-4. **Don't Overuse**
-   - Simple problems don't need debate
-   - Save for complex decisions
-   - Consider time investment
+**Vague Requests** (Will trigger clarify):
+- ❌ "API 빠르게 해줘"
+- ❌ "어떤 아키텍처가 좋을까?"
 
-5. **Don't Ignore Implementation**
-   - Great ideas need execution
-   - Test the consensus solution
-   - Iterate based on results
+**Clarification Responses**:
+- ✅ "Django 4.2, PostgreSQL 14, AWS t3.medium, 1주일 내, DBA 없음"
+- ❌ "Django 쓰고 있어요" (Which version? DB? Constraints?)
 
 ## Troubleshooting
 
-### "Codex CLI not found"
+### "Facilitator keeps aborting"
 
-Install and authenticate:
-```bash
-npm i -g @openai/codex
-codex  # Run once to authenticate
-```
+Check scarcity detector output - you likely have insufficient information. Provide the requested data or acknowledge the decision must be made under uncertainty.
 
-### "Debate isn't converging"
+### "Debate stuck in exploration"
 
-After 5 rounds without consensus:
-- Identify core disagreement
-- Research the disputed point
-- Get human expert opinion
-- Let user decide based on tradeoffs
+Mode might be misclassified. Use `/debate-override Switch to execution mode` to force convergence.
 
-### "Responses are too generic"
+### "Playbook doesn't match my problem"
 
-Provide more specific context:
-- Share actual code, not descriptions
-- Include exact error messages
-- Specify concrete constraints
-- Ask targeted questions
+Playbooks are templates, not straitjackets. If mismatch is severe, use `/debate-override Ignore playbook` to proceed without it.
 
-### "Codex keeps agreeing with Claude"
+### "Quality gate blocking finalization"
 
-Prompt Codex to be more critical:
-```bash
-codex exec "...
-
-IMPORTANT: Your role is to challenge Claude's thinking.
-Even if the approach seems reasonable, identify potential
-issues, edge cases, or alternatives. Be the devil's advocate."
-```
-
-## Comparison to Other Approaches
-
-| Approach | Pros | Cons |
-|----------|------|------|
-| **Claude Only** | Fast, integrated | Single perspective |
-| **Codex Only** | Autonomous, can execute | Limited by one model |
-| **Claude-Codex Debate** | Multi-perspective, validated | Slower, requires both subscriptions |
-| **Human Team Debate** | Real experience, domain knowledge | Time-intensive, scheduling challenges |
-
-**Best for:** Complex, high-stakes decisions where multiple perspectives add value.
-
-## Resources
-
-### Scripts
-
-**Stateful Session Management (NEW!):**
-
-Located in `.claude/scripts/codex-debate/`:
-
-1. **debate-start.sh** - Start new Codex debate session
-   - Captures thread ID
-   - Saves session state
-   - Returns Codex's first response
-
-2. **debate-continue.sh** - Continue existing session
-   - Loads thread ID automatically
-   - Sends only new messages (token efficient!)
-   - Maintains conversation context
-
-3. **debate-end.sh** - Clean up session
-   - Removes session files
-   - Frees up storage
-
-**Full documentation:** `.claude/scripts/codex-debate/README.md`
-
-**Quick example:**
-```bash
-# Round 1
-bash .claude/scripts/codex-debate/debate-start.sh "Your question"
-
-# Round 2
-bash .claude/scripts/codex-debate/debate-continue.sh "Follow-up"
-
-# Cleanup
-bash .claude/scripts/codex-debate/debate-end.sh
-```
-
-### References
-
-- `references/debate-protocol.md` - Detailed rules and guidelines for conducting effective debates
-
-### Assets
-
-- `assets/debate-report-template.md` - Markdown template for generating final debate reports
+Review checklist - one or more criteria not met. Either address the issue or document why it's acceptable to proceed without meeting it.
 
 ## Limitations
 
-This skill cannot:
-- Replace human judgment and domain expertise
-- Execute code or run tests (use separately)
+V3.0 Cannot:
+- Replace human judgment (AI recommendation requires approval)
+- Execute code or run tests (propose solutions, don't implement)
 - Access external APIs or databases
-- Guarantee "correct" answer (provides perspectives)
-- Work without Codex CLI installed
+- Guarantee "correct" answer (provides perspectives + confidence)
 - Work offline (requires OpenAI API access)
+- Function without Codex CLI installed
 
-**Remember:** AI debate is a tool for exploration and validation, not a replacement for human decision-making.
+**Remember:** V3.0 is a tool for quality assurance and exploration, not a replacement for human decision-making.
+
+## Meta-Learning
+
+V3.0 improves itself through:
+1. **Playbook accumulation** - Each debate potentially creates new playbooks
+2. **Heuristic tuning** - User feedback adjusts facilitator thresholds
+3. **Coverage expansion** - Telemetry discovers missing dimensions
+4. **Mode calibration** - Success metrics refine mode selection
+
+**Review cycle**: After 50 debates (~3-6 months), analyze metrics and update facilitator rules.
+
+## References
+
+- V2.0 Documentation: `~/.claude/skills/codex-collaborative-solver/skill.md`
+- V3.0 Design Debate: `references/v3-design-debate.md`
+- Comparison Guide: `references/v2-vs-v3-comparison.md`
+- Facilitator Protocol: `facilitator/README.md`
+- Playbook Guide: `playbooks/README.md`
+
+## Appendix: Quick Start Checklist
+
+**First Time Using V3.0:**
+- [ ] Codex CLI installed and authenticated
+- [ ] Read `references/v2-vs-v3-comparison.md`
+- [ ] Understand 3 quality modes
+- [ ] Know when facilitator will abort (scarcity thresholds)
+- [ ] Aware of 8 coverage dimensions
+
+**Before Each Debate:**
+- [ ] Choose mode (or let auto-detect)
+- [ ] Check if playbook exists for problem type
+- [ ] Prepare to provide missing info if facilitator aborts
+
+**After Each Debate:**
+- [ ] Review confidence levels
+- [ ] Validate low-confidence recommendations
+- [ ] Check coverage matrix - any gaps?
+- [ ] Provide feedback if quality unexpected
 
 ---
 
-**Version:** 2.0 (Stateful)
-**Last Updated:** 2025-10-29
+**Version:** 3.0.0
+**Status:** Experimental (Test vs V2.0)
+**Last Updated:** 2025-10-31
+**Based On:** Meta-debate design session (Session ID: 019a37e1-6dc5-7d91-824e-52cae43772eb)
 **Models:** Claude 3.5 Sonnet (Anthropic) + GPT-5 Codex via Codex CLI (OpenAI)
-
-**Changelog:**
-- v2.0 (2025-10-29): Added stateful session management with 67% token savings
-- v1.0 (2025-01-27): Initial release with stateless approach

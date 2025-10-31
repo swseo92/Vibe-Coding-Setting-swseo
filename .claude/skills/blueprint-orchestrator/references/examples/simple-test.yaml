@@ -1,0 +1,13 @@
+name: "Simple Test Blueprint"
+description: "Minimal example showing basic blueprint structure"
+
+inputs:
+  - name: message
+    type: string
+    required: true
+
+pipeline:
+  - id: echo
+    skill: echo-skill
+    inputs:
+      text: ${{ inputs.message }}
