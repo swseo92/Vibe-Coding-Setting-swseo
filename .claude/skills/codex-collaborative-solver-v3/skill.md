@@ -248,19 +248,81 @@ Evidence unavailable?
 
 ### Pre-Debate
 
-1. **Mode Selection**
+1. **Clarification Stage** 🆕
+   - **Purpose**: Reduce assumptions, establish constraints, align on goals
+   - **When**: Always (unless `--skip-clarify`)
+   - **Process**:
+     ```
+     User request → Claude analyzes complexity → Generate 1-3 questions → User answers → Debate starts
+     ```
+
+   **Complexity Judgment (Agent-Driven)**:
+   - Claude reads the user's question
+   - Assesses: Are constraints mentioned? Is goal clear? Single or multi-dimensional?
+   - Decides: How many clarification questions needed (0-3)
+
+   **Question Categories**:
+   - **Essential** (always ask if missing):
+     - Constraints (tech stack, budget, timeline, team capability)
+     - Goals & Success Criteria (what defines "solved"?)
+     - Context (current system, why this problem matters)
+
+   - **Conditional** (based on problem type):
+     - Performance: Target metrics, current profiling data
+     - Architecture: Existing system, integration concerns
+     - Security: Compliance requirements, threat model
+     - Bug: Reproduction steps, error logs
+
+   **Example Flow**:
+   ```
+   User: "Django API 응답이 너무 느려"
+
+   Claude (internal judgment):
+   - No constraints mentioned → Ask
+   - No target metrics → Ask
+   - Context unclear → Ask
+   → Generate 3 questions
+
+   Claude: "명확화 질문:
+   1. 현재 응답 시간과 목표 응답 시간은?
+   2. 사용 중인 Django 버전, DB, 캐시 스택은?
+   3. 예산/시간/팀 제약사항은?"
+
+   User: "현재 2초, 목표 500ms. Django 4.2, PostgreSQL, Redis 없음. 1주일 내 개선."
+
+   → Now debate with full context
+   ```
+
+   **Skip Option**:
+   ```
+   User: "Django API 성능 개선 (현재 2초 → 목표 500ms, Django 4.2/PostgreSQL, 1주일)"
+   → Claude: (모든 정보 있음) → Skip clarify, start debate
+
+   Or explicitly:
+   User: "--skip-clarify Django API 성능 개선"
+   → Claude: Debate immediately
+   ```
+
+   **Philosophy Alignment**:
+   - ✅ "Scripts Assist, Agents Judge": Agent decides if/what to ask
+   - ✅ No keyword matching: Natural language understanding
+   - ✅ No rigid templates: Dynamic question generation
+   - ✅ User control preserved: `--skip-clarify` flag
+
+2. **Mode Selection**
    - User specifies: "Use exploration mode"
    - OR auto-detect from keywords
    - Default: balanced
 
-2. **Playbook Loading**
+3. **Playbook Loading**
    - Facilitator checks if relevant playbook exists
    - Loads playbook if available
    - Example: "database-migration.md" for DB questions
 
-3. **Coverage Initialization**
+4. **Coverage Initialization**
    - Coverage monitor initializes 8-dimension checklist
    - Sets mode-specific thresholds
+   - **Enhancement**: Uses clarification answers to set expected evidence tiers
 
 ### Round Loop (1-7 rounds, or until convergence)
 
@@ -316,30 +378,58 @@ D. **Escalation Conditions**
 
 ## Usage Examples
 
-### Basic Usage (Auto-Mode)
+### Basic Usage with Clarification 🆕
 
 ```
 User: "codex와 토론해서 이 성능 문제 해결해줘. DB 쿼리가 느려."
 
-Claude:
-1. Auto-detects mode: balanced (tech decision)
+Claude (Clarification Stage):
+- Analyzes: No tech stack, no target metrics, no constraints
+- Generates 3 questions:
+
+"명확화 질문:
+1. 현재 응답 시간과 목표 응답 시간은?
+2. 사용 중인 프레임워크와 데이터베이스는?
+3. 예산/시간/팀 제약사항은?"
+
+User: "현재 평균 2초, 목표 500ms 이하. Django 4.2 + PostgreSQL 14.
+       1주일 내 개선해야 하고, 팀에 DBA 없음."
+
+Claude (Now with full context):
+1. Auto-detects mode: execution (urgent timeline)
 2. Loads playbook: database-optimization.md
-3. Initializes coverage: {query patterns, indexing, caching, schema, ...}
-4. Starts debate...
+3. Initializes coverage with known constraints
+4. Sets evidence tiers: High expectations (stack known)
+5. Starts debate...
 
 Round 1: Claude explores 3 approaches → Codex reality-checks
-Facilitator: Flags "compliance not addressed"
+Facilitator: Checks coverage - all critical dimensions addressed
 
-Round 2: Compliance explored → Scarcity detector finds 2 unknowns
-Facilitator: ABORTS - "Need: 1) Current query patterns 2) Expected scale"
+Round 2: Solution converges (fast due to clear constraints)
+Stress pass: Codex enumerates failure modes
 
-User provides data...
-
-Round 3: Solution converges → Stress pass
 Facilitator: Quality gate passes
+- Clarification: ✓ Complete
+- Constraints: ✓ Honored (no DBA, 1 week)
+- Confidence: 85% (Tier 1 evidence from known stack)
 
-Output: "Add indexes (immediate), eager loading (eliminates N+1),
-        Django cache (before Redis). Confidence: 85%"
+Output: "1. Add B-tree index on users.email (immediate, no DBA needed)
+         2. Use select_related() for N+1 queries (Django builtin)
+         3. Connection pooling config (PgBouncer, 2 hours setup)
+         Confidence: 85%. Can achieve 500ms target in 3 days."
+```
+
+### With Skip Clarify
+
+```
+User: "Django 4.2 + PostgreSQL 14 성능 개선 (2초→500ms, 1주일, DBA 없음)"
+
+Claude:
+- Analyzes: All constraints present
+- Skips clarification automatically
+- Proceeds directly to debate
+
+(Same outcome as above, faster start)
 ```
 
 ### Explicit Mode Selection
@@ -419,19 +509,37 @@ See `references/v2-vs-v3-comparison.md` for detailed comparison.
 
 ### Do's ✅
 
-1. **Trust the Facilitator** - If it aborts for missing info, provide the info
-2. **Specify Mode When Needed** - Exploration for novel problems, execution for urgent fixes
-3. **Review Playbooks** - If loaded, verify it matches your context
-4. **Check Confidence Levels** - Low confidence = validate before implementing
-5. **Save Debate Reports** - Future playbooks depend on this data
+1. **Answer Clarification Questions** 🆕 - Better info = better solutions
+2. **Provide Complete Context Upfront** 🆕 - Skip clarify stage by being thorough initially
+3. **Trust the Facilitator** - If it aborts for missing info, provide the info
+4. **Specify Mode When Needed** - Exploration for novel problems, execution for urgent fixes
+5. **Review Playbooks** - If loaded, verify it matches your context
+6. **Check Confidence Levels** - Low confidence = validate before implementing
+7. **Save Debate Reports** - Future playbooks depend on this data
 
 ### Don'ts ❌
 
-1. **Don't Skip Quality Gate** - If it flags issues, address them
-2. **Don't Ignore Facilitator Warnings** - They catch real problems
-3. **Don't Expect Perfection** - V3.0 is designed to be explicit about uncertainty
-4. **Don't Override Lightly** - Facilitator has reasons for its checks
-5. **Don't Implement Low-Confidence Solutions** - Validate first
+1. **Don't Rush Past Clarification** 🆕 - 2 minutes clarifying saves hours debugging
+2. **Don't Say "I Don't Know" Without Details** 🆕 - "Don't know budget" vs "Budget TBD but likely <$10k"
+3. **Don't Skip Quality Gate** - If it flags issues, address them
+4. **Don't Ignore Facilitator Warnings** - They catch real problems
+5. **Don't Expect Perfection** - V3.0 is designed to be explicit about uncertainty
+6. **Don't Override Lightly** - Facilitator has reasons for its checks
+7. **Don't Implement Low-Confidence Solutions** - Validate first
+
+### Clarification Pro Tips 🆕
+
+**Good Initial Requests** (Auto-skip clarify):
+- ✅ "Django 4.2 API 성능 개선 (2초→500ms, PostgreSQL 14, 1주일, DBA 없음)"
+- ✅ "Microservices vs Monolith (팀 5명, 신규 프로젝트, Node.js, AWS, 3개월)"
+
+**Vague Requests** (Will trigger clarify):
+- ❌ "API 빠르게 해줘"
+- ❌ "어떤 아키텍처가 좋을까?"
+
+**Clarification Responses**:
+- ✅ "Django 4.2, PostgreSQL 14, AWS t3.medium, 1주일 내, DBA 없음"
+- ❌ "Django 쓰고 있어요" (Which version? DB? Constraints?)
 
 ## Troubleshooting
 
