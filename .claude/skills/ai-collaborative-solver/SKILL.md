@@ -288,6 +288,8 @@ Automatically choose the best model based on keywords (13 rules in registry):
 
 **Recommendation:** Use `--auto` to enable automatic model selection based on the problem type.
 
+**For detailed model specifications, pricing, and performance benchmarks, see:** [`references/model-comparison.md`](references/model-comparison.md)
+
 ---
 
 ## Examples
@@ -305,80 +307,7 @@ Automatically choose the best model based on keywords (13 rules in registry):
 3. Codex analyzes code-level details
 4. Report saved to `.debate-reports/`
 
----
-
-### Example 2: Specify Gemini (Latest Trends)
-
-**Input:**
-```bash
-./ai-debate.sh "2025년 Next.js 최신 베스트 프랙티스" --model gemini --search
-```
-
-**What happens:**
-1. Gemini selected (specified)
-2. Google Search enabled (--search)
-3. Finds latest Next.js 15 documentation
-4. Cites sources in report
-
----
-
-### Example 3: Claude for Writing
-
-**Input:**
-```bash
-./ai-debate.sh "Write API documentation for payment endpoint" --model claude --mode balanced
-```
-
-**What happens:**
-1. Keywords detected: "write" + "documentation" → Claude
-2. Claude excels at clear, structured writing
-3. Produces well-organized documentation
-4. Multiple refinement rounds improve clarity
-
----
-
-### Example 4: Hybrid (Critical Decision)
-
-**Input:**
-```bash
-./ai-debate.sh "Microservices vs Monolith for e-commerce" --models codex,claude,gemini --mode deep
-```
-
-**What happens:**
-1. All three models analyze in parallel:
-   - **Codex**: Technical implementation details
-   - **Claude**: Reasoning about trade-offs
-   - **Gemini**: Latest industry trends (2025)
-2. **Codex perspective:** Code/architecture focus
-3. **Gemini perspective:** Current trends (2025)
-4. Synthesis compares both views
-5. Report shows consensus and differences
-
-2. Hybrid orchestrator combines perspectives
-3. Generates synthesis report
-
-**Output:**
-```markdown
-## Codex Analysis
-Recommendation: Start with modular monolith
-Confidence: 80%
-Reasoning: Team size, faster development...
-
-## Claude Analysis
-Recommendation: Modular monolith with migration plan
-Confidence: 85%
-Reasoning: Balanced approach, clear trade-offs...
-
-## Gemini Analysis
-Recommendation: Microservices with service mesh
-Confidence: 75%
-Reasoning: 2025 trend, cloud-native...
-
-## Synthesis
-Consensus: Phased approach (monolith → microservices)
-All three agree: Start simple, plan for migration
-Key difference: Timeline (Claude suggests 18mo, others 12mo)
-```
+**For more detailed examples, see:** [`references/examples.md`](references/examples.md)
 
 ---
 
@@ -420,47 +349,9 @@ Codex 토론 결과:
 
 ## Advanced Usage
 
-### Custom Mode Configuration
-
-Edit mode files in `.claude/skills/ai-collaborative-solver/modes/`:
-
-```yaml
-# modes/custom.yaml
-name: custom
-rounds: 5
-agents:
-  - explorer
-  - critic
-  - security
-  - performance
-  - synthesizer
-```
-
----
-
-### Registry Configuration
-
-Define all models in the capability registry (`config/registry.yaml`):
-
-```yaml
-models:
-  - id: openai.codex
-    capabilities: [chat, json, tool, debate, code_execution]
-    cost: {prompt_per_1k: 0.005, completion_per_1k: 0.015}
-
-  - id: anthropic.claude-sonnet
-    capabilities: [chat, json, tool, debate, long_context]
-    cost: {prompt_per_1k: 0.003, completion_per_1k: 0.015}
-
-  - id: google.gemini-pro
-    capabilities: [chat, json, debate, grounding]
-    cost: {prompt_per_1k: 0.001, completion_per_1k: 0.005, free_tier: true}
-```
-
-**To add a new model:**
-1. Add to `registry.yaml`
-2. Create adapter in `models/{name}/adapter.sh`
-3. Model selector will automatically recognize it
+For advanced features including custom mode configuration, registry customization, and adding new models, see:
+- [`references/advanced-usage.md`](references/advanced-usage.md) - Custom modes, CI/CD integration, performance optimization
+- [`references/registry-config.md`](references/registry-config.md) - Model registry configuration, adding new models
 
 ---
 
