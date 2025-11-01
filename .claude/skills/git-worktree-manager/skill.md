@@ -1,6 +1,6 @@
 ---
 name: git-worktree-manager
-description: Manage parallel development workflows using git worktree for Python projects in PyCharm on Windows. Use this skill when users need to create independent development environments for multiple features, handle merge conflicts, or manage worktree lifecycle (create/merge/cleanup). Optimized for solo developers working on Python projects with pytest test suites.
+description: Manage parallel development workflows using git worktree for Python projects in PyCharm on Windows. Use this skill when users need to create independent development environments for multiple features, handle merge conflicts, or manage worktree lifecycle (create/merge/cleanup). Supports Korean commands (워크트리 생성, 브랜치 병합, 충돌 해결). Optimized for solo developers working on Python projects with pytest test suites.
 ---
 
 # Git Worktree Manager
@@ -11,6 +11,7 @@ This skill provides a complete workflow for managing parallel development using 
 
 Activate this skill when users request:
 
+**English triggers:**
 - **"Create a new worktree for feature development"** - Set up independent development environment
 - **"Merge my feature branch to main"** - Rebase-first merge workflow
 - **"Deploy a hotfix urgently"** - Fast-track emergency fixes
@@ -18,6 +19,15 @@ Activate this skill when users request:
 - **"Clean up worktrees"** - Safe worktree management
 - **"Setup PyCharm for worktree"** - IDE integration help
 - **"What's the best merge strategy?"** - Workflow guidance
+
+**Korean triggers (한글 트리거):**
+- **"워크트리 생성"** / **"worktree 생성"** - 독립 개발 환경 구성
+- **"브랜치로 worktree 만들어줘"** - 새 worktree 생성
+- **"feature 브랜치 merge"** / **"기능 브랜치 병합"** - Rebase-first 병합
+- **"hotfix 배포"** / **"긴급 수정"** - 빠른 배포 워크플로우
+- **"conflict 해결"** / **"충돌 해결"** - 충돌 해결 가이드
+- **"워크트리 정리"** / **"worktree cleanup"** - 안전한 정리
+- **"PyCharm 설정"** / **"파이참 설정"** - IDE 통합 도움
 
 **Appropriate scenarios:**
 1. **Parallel feature development** - Multiple features in progress simultaneously
