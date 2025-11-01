@@ -353,6 +353,132 @@ Before we proceed, please consider:
 EOF
 }
 
+# =============================================================================
+# Phase 3.3: Anti-pattern Detection Functions
+# =============================================================================
+
+# Function: Detect information starvation (too many assumptions/hedging words)
+# Returns 0 if pattern detected, 1 otherwise
+detect_information_starvation() {
+    local response_content="$1"
+
+    # Hedging language patterns (from anti-patterns.yaml)
+    local hedging_words=$(echo "$response_content" | grep -Eio "probably|might be|could be|perhaps|assuming|maybe|possibly|likely|uncertain|unclear|depends on" | wc -l)
+
+    # Assumption markers
+    local assumption_words=$(echo "$response_content" | grep -Eio "assume|assumption|supposing|guessing|estimate" | wc -l)
+
+    # Threshold: ≥5 hedging words OR ≥3 assumptions in single round (from anti-patterns.yaml)
+    if [[ $hedging_words -ge 5 ]] || [[ $assumption_words -ge 3 ]]; then
+        echo "  [Information Starvation] Hedging: $hedging_words, Assumptions: $assumption_words (thresholds: 5, 3)" >&2
+        return 0
+    fi
+
+    return 1
+}
+
+# Function: Detect rapid turn (very short rounds indicating shallow exploration)
+# Returns 0 if pattern detected, 1 otherwise
+detect_rapid_turn() {
+    local round_num="$1"
+    local state_dir="$2"
+
+    # Skip if Round < 2 (need history to check consecutive rounds)
+    if [[ $round_num -lt 2 ]]; then
+        return 1
+    fi
+
+    # Check last 2 rounds for short responses
+    local min_words=50  # From anti-patterns.yaml
+    local short_count=0
+
+    # Check current and previous round
+    for check_round in $(seq $((round_num - 1)) $round_num); do
+        for model in "${MODEL_LIST[@]}"; do
+            local response_file="$state_dir/rounds/round${check_round}_${model}_response.txt"
+
+            if [[ -f "$response_file" ]]; then
+                local word_count=$(cat "$response_file" | wc -w)
+
+                if [[ $word_count -lt $min_words ]]; then
+                    ((short_count++))
+                fi
+            fi
+        done
+    done
+
+    # Rapid turn if ≥2 consecutive short responses (from anti-patterns.yaml)
+    if [[ $short_count -ge 2 ]]; then
+        echo "  [Rapid Turn] $short_count consecutive short responses (<$min_words words)" >&2
+        return 0
+    fi
+
+    return 1
+}
+
+# Function: Detect policy/ethical considerations
+# Returns 0 if pattern detected, 1 otherwise
+detect_policy_trigger() {
+    local response_content="$1"
+
+    # Policy keywords (from anti-patterns.yaml)
+    local policy_count=$(echo "$response_content" | grep -Eio "ethics|ethical|legal|policy|regulation|regulatory|moral|compliance|privacy|gdpr|hipaa" | wc -l)
+
+    # Trigger if any policy keyword detected
+    if [[ $policy_count -gt 0 ]]; then
+        echo "  [Policy Trigger] $policy_count policy/ethical keywords detected" >&2
+        return 0
+    fi
+
+    return 1
+}
+
+# Function: Detect premature convergence (agreement too quickly)
+# Returns 0 if pattern detected, 1 otherwise
+detect_premature_convergence() {
+    local round_num="$1"
+    local state_dir="$2"
+
+    # Only check in Round 2 or earlier (from anti-patterns.yaml: max_rounds: 2)
+    if [[ $round_num -gt 2 ]]; then
+        return 1
+    fi
+
+    # Count agreement patterns in all rounds up to current
+    local agree_count=0
+    local total_responses=0
+
+    for check_round in $(seq 1 $round_num); do
+        for model in "${MODEL_LIST[@]}"; do
+            local response_file="$state_dir/rounds/round${check_round}_${model}_response.txt"
+
+            if [[ -f "$response_file" ]]; then
+                local pattern=$(detect_agreement_pattern "$(cat "$response_file")")
+
+                if [[ "$pattern" == "agree" ]]; then
+                    ((agree_count++))
+                fi
+                ((total_responses++))
+            fi
+        done
+    done
+
+    # Calculate agreement rate
+    if [[ $total_responses -eq 0 ]]; then
+        return 1
+    fi
+
+    local agreement_rate=$((agree_count * 100 / total_responses))
+
+    # Premature convergence if >70% agreement in ≤2 rounds
+    if [[ $round_num -le 2 ]] && [[ $agreement_rate -gt 70 ]]; then
+        echo "  [Premature Convergence] Agreement rate: ${agreement_rate}% in Round $round_num (threshold: 70% in ≤2 rounds)" >&2
+        return 0
+    fi
+
+    return 1
+}
+
 # Save session info
 cat > "$STATE_DIR/session_info.txt" <<EOF
 Original Problem: $PROBLEM
@@ -471,6 +597,43 @@ $USER_INPUT
 $DEVILS_ADVOCATE
 "
         echo "  💡 Devil's Advocate challenge added to next round"
+    fi
+
+    # =================================================================
+    # Phase 3.3: Anti-pattern Detection
+    # =================================================================
+
+    # Check all responses in this round for anti-patterns
+    for model in "${MODEL_LIST[@]}"; do
+        response_file="$STATE_DIR/rounds/round${round}_${model}_response.txt"
+
+        if [[ -f "$response_file" ]]; then
+            response_content=$(cat "$response_file")
+
+            # Check for information starvation (too many assumptions)
+            if detect_information_starvation "$response_content"; then
+                echo "  ⚠️  Information Starvation detected in $model response"
+                # Future: Could prompt user for clarification
+            fi
+
+            # Check for policy/ethical considerations
+            if detect_policy_trigger "$response_content"; then
+                echo "  📋 Policy/Ethical considerations detected in $model response"
+                # Future: Could escalate to user for decision
+            fi
+        fi
+    done
+
+    # Check for rapid turn (shallow exploration)
+    if detect_rapid_turn "$round" "$STATE_DIR"; then
+        echo "  ⏱️  Rapid Turn detected - debate may need more depth"
+        # Future: Could suggest extending rounds
+    fi
+
+    # Check for premature convergence (agreement too quickly)
+    if detect_premature_convergence "$round" "$STATE_DIR"; then
+        echo "  🚨 Premature Convergence detected - consider exploring alternatives"
+        # Future: Could inject alternative exploration prompt
     fi
 done
 
