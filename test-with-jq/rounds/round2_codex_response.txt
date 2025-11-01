@@ -1,0 +1,6 @@
+  Running codex adapter...
+Error: codex CLI not found
+Install: npm install -g @openai/codex
+Requires: ChatGPT Plus subscription (simple0/month)
+Model: GPT-5-Codex (best agentic coding model)
+[No response from codex]

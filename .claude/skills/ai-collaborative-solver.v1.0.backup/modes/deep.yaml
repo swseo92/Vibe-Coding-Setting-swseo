@@ -1,0 +1,46 @@
+# Deep Mode - Comprehensive Analysis
+# For complex, high-stakes problems requiring thorough exploration
+
+name: deep
+description: Comprehensive analysis for complex problems
+rounds: 6
+duration_estimate: "15-25 minutes"
+
+# Agent sequence
+agents:
+  - explorer    # Round 1: Generate diverse approaches
+  - critic      # Round 2: Reality-check ideas
+  - synthesizer # Round 3: Recommend solution
+  - security    # Round 4: Security & risk analysis
+  - performance # Round 5: Performance & scalability
+  - integrator  # Round 6: Final integration & summary
+
+# Quality checks
+quality:
+  coverage_required: true          # Mandatory coverage check
+  anti_pattern_detection: advanced # Advanced checks
+  stress_pass_required: true       # Require stress testing
+  information_scarcity_check: true # Check for missing info
+
+  # Coverage dimensions to check (full 8 dimensions)
+  coverage_dimensions:
+    - architecture
+    - security
+    - performance
+    - ux
+    - testing
+    - operations
+    - cost
+    - compliance
+
+# Use cases
+use_cases:
+  - "Complex system architecture"
+  - "High-stakes technical decisions"
+  - "Complete system design"
+  - "Security-critical systems"
+  - "Performance-critical systems"
+  - "Regulatory compliance required"
+
+# Example
+example: "Design complete payment processing system with PCI compliance"

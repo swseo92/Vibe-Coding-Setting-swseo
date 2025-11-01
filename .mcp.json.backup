@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "playwright-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp",
+        "--user-data-dir",
+        "C:\\Users\\EST\\.playwright-persistent"
+      ]
+    }
+  }
+}

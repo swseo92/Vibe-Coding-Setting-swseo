@@ -1,0 +1,5 @@
+Problem: PostgreSQL vs MongoDB 어떤 경우에 선택?
+Models: mock
+Mode: simple
+Rounds: 3
+Started: 2025년 11월  1일 토 오전 11:59:15

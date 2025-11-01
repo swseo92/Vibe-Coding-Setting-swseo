@@ -1,0 +1,15 @@
+{
+  "success": false,
+  "exit_code": 0,
+  "duration": 345.0488142967224,
+  "session_dir": "C:\\Users\\EST\\PycharmProjects\\my agents\\Vibe-Coding-Setting-swseo\\.claude\\skills\\ai-collaborative-solver\\sessions\\20251101-141638",
+  "criteria": {
+    "Exit code 0": true,
+    "Session directory created": true,
+    "Output files present": true,
+    "Round 2 analyzed": false,
+    "Heuristic keywords found": false,
+    "Debate completed": true
+  },
+  "heuristic_triggered": null
+}
