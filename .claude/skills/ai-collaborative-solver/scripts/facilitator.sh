@@ -247,6 +247,112 @@ request_user_input() {
     echo ""
 }
 
+# ==============================================================
+# Devil's Advocate Functions (Phase 3.2: Stress-pass Questions)
+# ==============================================================
+
+# Function: Detect agreement/disagreement pattern in response
+# Returns: "agree" | "disagree" | "mixed"
+detect_agreement_pattern() {
+    local response_content="$1"
+
+    # Agreement markers (case insensitive)
+    local agree_count=$(echo "$response_content" | grep -Eio "agree|동의|맞습니다|correct|right|yes|exactly|precisely" | wc -l)
+
+    # Disagreement markers
+    local disagree_count=$(echo "$response_content" | grep -Eio "however|but|disagree|alternatively|대신|반대|instead|different|challenge" | wc -l)
+
+    # Determine pattern
+    if [[ $agree_count -gt $((disagree_count * 2)) ]]; then
+        echo "agree"
+    elif [[ $disagree_count -gt $((agree_count * 2)) ]]; then
+        echo "disagree"
+    else
+        echo "mixed"
+    fi
+}
+
+# Function: Check for dominance pattern (one agent dominating without challenge)
+# Returns 0 if dominance detected, 1 otherwise
+check_dominance_pattern() {
+    local round_num="$1"
+    local state_dir="$2"
+
+    # Skip if Round < 3 (need at least 2 previous rounds to check pattern)
+    if [[ $round_num -lt 3 ]]; then
+        return 1
+    fi
+
+    # Check last 2 rounds for agreement imbalance
+    local window_start=$((round_num - 1))
+    local agree_rounds=0
+    local total_checked=0
+
+    # Count agreement patterns in recent rounds
+    for check_round in $(seq $window_start $((round_num - 1))); do
+        # Check both models' responses
+        for model in "${MODEL_LIST[@]}"; do
+            local response_file="$state_dir/rounds/round${check_round}_${model}_response.txt"
+
+            if [[ -f "$response_file" ]]; then
+                local pattern=$(detect_agreement_pattern "$(cat "$response_file")")
+
+                if [[ "$pattern" == "agree" ]]; then
+                    ((agree_rounds++))
+                fi
+                ((total_checked++))
+            fi
+        done
+    done
+
+    # Calculate agreement rate
+    if [[ $total_checked -eq 0 ]]; then
+        return 1
+    fi
+
+    local agreement_rate=$((agree_rounds * 100 / total_checked))
+
+    # Dominance threshold: >80% agreement
+    if [[ $agreement_rate -gt 80 ]]; then
+        echo "  [Dominance Pattern] Agreement rate: ${agreement_rate}% (threshold: 80%)" >&2
+        return 0
+    fi
+
+    return 1
+}
+
+# Function: Generate devil's advocate prompt
+inject_devils_advocate() {
+    local round_num="$1"
+    local models_string="$2"
+
+    # Devil's advocate prompt (from ai-escalation.md template)
+    cat <<EOF
+
+### 🎯 Devil's Advocate Challenge (Round $round_num)
+
+**Pattern Detected:** High agreement rate in recent rounds. Before finalizing, let's ensure thorough critical evaluation.
+
+**To All Participants:**
+
+Before we proceed, please consider:
+
+1. **Potential Issues or Edge Cases**: Are there any scenarios we haven't fully explored where this approach might fail?
+
+2. **What Could Go Wrong**: What are the risks, downsides, or unintended consequences of this recommendation?
+
+3. **Alternative Approaches**: Have we sufficiently explored other viable options? What might we be overlooking?
+
+4. **Hidden Assumptions**: Are we making any assumptions that could be incorrect? What if those assumptions don't hold?
+
+5. **Trade-offs**: What are we giving up by choosing this approach? Are those trade-offs acceptable?
+
+**Note:** It's perfectly acceptable to maintain your position if you believe it's sound, but please demonstrate critical evaluation of these questions.
+
+---
+EOF
+}
+
 # Save session info
 cat > "$STATE_DIR/session_info.txt" <<EOF
 Original Problem: $PROBLEM
@@ -354,6 +460,17 @@ $USER_INPUT
 ---
 "
         fi
+    fi
+
+    # Check for dominance pattern and inject devil's advocate (Phase 3.2)
+    if check_dominance_pattern "$round" "$STATE_DIR"; then
+        DEVILS_ADVOCATE=$(inject_devils_advocate "$round" "${MODEL_LIST[*]}")
+
+        # Add devil's advocate challenge to context
+        CONTEXT="$CONTEXT
+$DEVILS_ADVOCATE
+"
+        echo "  💡 Devil's Advocate challenge added to next round"
     fi
 done
 
