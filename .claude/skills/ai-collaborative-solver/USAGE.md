@@ -197,4 +197,126 @@ Mid-debate User Input을 테스트해보셨다면:
 
 ---
 
+## Devil's Advocate (Phase 3.2)
+
+**Phase 3.2: Stress-pass Questions / Devil's Advocate**가 토론 품질을 자동으로 향상시킵니다.
+
+### 작동 방식
+
+**Round 2 이후 자동 감지:**
+- 합의율 >80% 감지
+- 지배적 패턴 감지 (한쪽이 너무 쉽게 동의)
+
+**자동 개입:**
+```
+💡 Devil's Advocate challenge added to next round
+
+### 🎯 Devil's Advocate Challenge (Round 3)
+
+**Pattern Detected:** High agreement rate in recent rounds.
+
+Before we proceed, please consider:
+
+1. **Potential Issues or Edge Cases**: Are there any scenarios we haven't fully explored?
+2. **What Could Go Wrong**: What are the risks or unintended consequences?
+3. **Alternative Approaches**: Have we sufficiently explored other viable options?
+4. **Hidden Assumptions**: Are we making incorrect assumptions?
+5. **Trade-offs**: What are we giving up by choosing this approach?
+```
+
+**사용 예시:**
+```bash
+cd .claude/skills/ai-collaborative-solver
+bash scripts/facilitator.sh "Docker vs Kubernetes" claude simple ./test-session
+```
+
+**결과 확인:**
+```bash
+cat ./test-session/rounds/round3_claude_response.txt
+# Devil's Advocate 질문에 대한 답변 포함
+```
+
+---
+
+## Anti-pattern Detection (Phase 3.3)
+
+**Phase 3.3**는 4가지 토론 품질 문제를 자동 감지합니다.
+
+### 1. Information Starvation (정보 결핍) ⚠️
+
+**감지 조건:**
+- 불확실성 단어 ≥5개 (probably, might be, could be, perhaps, assuming...)
+- 가정 단어 ≥3개 (assume, assumption, guessing, estimate...)
+
+**출력 예시:**
+```
+⚠️  Information Starvation detected in claude response
+[Information Starvation] Hedging: 7, Assumptions: 4 (thresholds: 5, 3)
+```
+
+**의미:** AI가 너무 많은 추측을 하고 있음 → 사용자에게 명확한 정보 요청 필요
+
+### 2. Rapid Turn (빠른 턴) ⏱️
+
+**감지 조건:**
+- 2개 연속 라운드에서 <50 단어
+
+**출력 예시:**
+```
+⏱️  Rapid Turn detected - debate may need more depth
+[Rapid Turn] 3 consecutive short responses (<50 words)
+```
+
+**의미:** 토론이 너무 얕음 → 더 깊은 탐색 필요
+
+### 3. Policy Trigger (정책/윤리 트리거) 📋
+
+**감지 조건:**
+- 정책/윤리 키워드 감지 (ethics, legal, policy, regulation, privacy, GDPR, HIPAA...)
+
+**출력 예시:**
+```
+📋 Policy/Ethical considerations detected in claude response
+[Policy Trigger] 3 policy/ethical keywords detected
+```
+
+**의미:** 윤리적/법적 고려사항 발견 → 인간 판단 필요
+
+### 4. Premature Convergence (조기 합의) 🚨
+
+**감지 조건:**
+- 라운드 ≤2에서 합의율 >70%
+
+**출력 예시:**
+```
+🚨 Premature Convergence detected - consider exploring alternatives
+[Premature Convergence] Agreement rate: 85% in Round 2 (threshold: 70% in ≤2 rounds)
+```
+
+**의미:** 대안 탐색 없이 너무 빠른 합의 → 더 많은 옵션 검토 필요
+
+### 통합 사용 예시
+
+모든 패턴은 자동으로 감지되어 터미널에 출력됩니다:
+
+```bash
+cd .claude/skills/ai-collaborative-solver
+bash scripts/facilitator.sh "우리 팀 프로젝트에 적합한 데이터베이스는?" claude simple ./test-session
+
+# 출력 예시:
+## Round 2: Cross-Examination & Refinement
+
+### claude
+⚠️  Information Starvation detected in claude response
+  [Information Starvation] Hedging: 6, Assumptions: 4 (thresholds: 5, 3)
+
+## Round 3: Cross-Examination & Refinement
+
+### claude
+🚨 Premature Convergence detected - consider exploring alternatives
+  [Premature Convergence] Agreement rate: 75% in Round 2 (threshold: 70% in ≤2 rounds)
+```
+
+---
+
 **Happy Debating! 🎯**

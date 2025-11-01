@@ -26,6 +26,15 @@ One interface, multiple AI models (Codex + Gemini + more)
 
 ## What's New?
 
+### Phase 3: Advanced Debate Quality (2025-11-01)
+- **🤔 Mid-debate User Input**: AI detects uncertainty and asks for clarification
+- **💡 Devil's Advocate**: Automatic critical challenges when consensus is too easy
+- **⚠️ Anti-pattern Detection**: 4 automated quality checks
+  - Information Starvation (excessive assumptions)
+  - Rapid Turn (shallow exploration)
+  - Policy Trigger (ethical/legal issues)
+  - Premature Convergence (quick agreement without alternatives)
+
 ### Unified Interface
 - One command for all AI models
 - Auto-select best model for problem
@@ -47,6 +56,7 @@ One interface, multiple AI models (Codex + Gemini + more)
 
 ## Features
 
+### Core Features
 | Feature | Description |
 |---------|-------------|
 | **Auto Model Selection** | Keywords → Best model |
@@ -54,6 +64,17 @@ One interface, multiple AI models (Codex + Gemini + more)
 | **Hybrid Debates** | Multiple models in parallel |
 | **Free Option** | Gemini = FREE (1000 req/day) |
 | **Codex V3.0 Quality** | Proven framework from V3.0 |
+
+### Phase 3: Advanced Debate Quality (NEW)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Mid-debate User Input** 🤔 | Interactive clarification when AI detects uncertainty | ✅ Implemented |
+| **Devil's Advocate** 💡 | Automatic critical challenges when agreement dominates | ✅ Implemented |
+| **Anti-pattern Detection** ⚠️ | Detects 4 debate quality issues automatically | ✅ Implemented |
+| **Information Starvation** | Flags excessive assumptions/hedging (≥5 hedging words) | ✅ Implemented |
+| **Rapid Turn Detection** | Identifies shallow exploration (<50 words) | ✅ Implemented |
+| **Policy Trigger** | Escalates ethical/legal considerations to user | ✅ Implemented |
+| **Premature Convergence** | Warns when agreement happens too quickly (>70% in ≤2 rounds) | ✅ Implemented |
 
 ---
 
@@ -187,6 +208,7 @@ A: Override with `--model codex` or `--model gemini`
 
 ---
 
-**Version:** 1.0.0
+**Version:** 2.0.0 (Phase 3 완료)
 **Status:** Stable
 **Created:** 2025-10-31
+**Last Updated:** 2025-11-01
