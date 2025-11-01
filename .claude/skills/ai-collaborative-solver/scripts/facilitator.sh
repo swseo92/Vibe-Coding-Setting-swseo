@@ -172,6 +172,81 @@ $response_summary
     echo "$responses"
 }
 
+# Function: Check if user input is needed (Mid-debate heuristic)
+# Returns 0 if user input needed, 1 otherwise
+check_need_user_input() {
+    local round_num="$1"
+    local context="$2"
+
+    # Skip for Round 1 (too early)
+    if [[ $round_num -le 1 ]]; then
+        return 1
+    fi
+
+    # Skip if non-interactive mode
+    if [[ ! -t 0 ]]; then
+        return 1
+    fi
+
+    # Heuristic 1: Check for deadlock (Round 3+)
+    if [[ $round_num -ge 3 ]]; then
+        # Simple heuristic: if responses contain conflicting keywords
+        if echo "$context" | grep -qi "however\|disagree\|alternatively" > /dev/null 2>&1; then
+            echo "  [Mid-debate Heuristic] Detected potential deadlock - multiple perspectives diverging" >&2
+            return 0
+        fi
+    fi
+
+    # Heuristic 2: Check for low confidence markers
+    if echo "$context" | grep -Eqi "unclear|uncertain|depends on|need.*information|assume" > /dev/null 2>&1; then
+        echo "  [Mid-debate Heuristic] Detected low confidence or missing information" >&2
+        return 0
+    fi
+
+    # Default: no user input needed
+    return 1
+}
+
+# Function: Request user input during debate
+request_user_input() {
+    local round_num="$1"
+    local context="$2"
+
+    echo ""
+    echo "=================================================="
+    echo "🤔 Mid-Debate User Input Opportunity"
+    echo "=================================================="
+    echo "Round: $round_num / $ROUNDS"
+    echo ""
+    echo "The debate has identified areas where your input could help:"
+    echo ""
+    echo "Options:"
+    echo "  1) Provide additional context or clarification"
+    echo "  2) Skip and let the debate continue"
+    echo ""
+    read -p "Your choice (1-2, default: 2): " choice
+
+    case "$choice" in
+        1)
+            echo ""
+            echo "Please provide your input (press Ctrl+D when done):"
+            echo "---"
+            local user_input=$(cat)
+            echo "---"
+            echo ""
+            echo "Thank you! Incorporating your input into the next round..."
+            echo "$user_input"
+            ;;
+        *)
+            echo ""
+            echo "Skipping user input. Debate will continue with AI judgment."
+            echo "[User skipped mid-debate input]"
+            ;;
+    esac
+
+    echo ""
+}
+
 # Save session info
 cat > "$STATE_DIR/session_info.txt" <<EOF
 Original Problem: $PROBLEM
@@ -260,6 +335,26 @@ Be direct and specific. Reference other models' points when relevant."
         echo "---"
         echo ""
     done
+
+    # Check if user input is needed (Mid-debate heuristic)
+    if check_need_user_input "$round" "$CONTEXT"; then
+        USER_INPUT=$(request_user_input "$round" "$CONTEXT")
+
+        # Save user input for next round
+        if [[ -n "$USER_INPUT" ]] && [[ "$USER_INPUT" != *"[User skipped"* ]]; then
+            echo "$USER_INPUT" > "$STATE_DIR/rounds/round${round}_user_input.txt"
+
+            # Add to context for next round
+            CONTEXT="$CONTEXT
+
+### User Input (After Round $round):
+
+$USER_INPUT
+
+---
+"
+        fi
+    fi
 done
 
 # ============================================================
