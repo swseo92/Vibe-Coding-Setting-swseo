@@ -1,3 +1,8 @@
+---
+name: ai-collaborative-solver
+description: This skill should be used when users request technical comparisons ("X vs Y"), architecture decisions, or AI-assisted problem solving. Triggers: "Should I use", "AI debate", or decision requests.
+---
+
 # AI Collaborative Solver
 
 **Unified Multi-Model Debate System**
@@ -8,29 +13,30 @@
 
 ## Overview
 
-AI Collaborative Solver is a unified framework that enables debate and collaboration across three leading AI models: **Codex, Claude, and Gemini**. Built on Codex V3.0's proven architecture, it provides intelligent auto-selection, hybrid multi-model debates, and consistent quality standards through a single interface.
+Orchestrate multi-model debates across three leading AI engines: **Codex, Claude, and Gemini**. Built on Codex V3.0's proven architecture, automatically select models, run hybrid debates, and maintain consistent quality standards through a unified interface.
 
-**Key Innovation:** Model-agnostic orchestration with registry-based auto-selection, allowing you to leverage the best AI for each specific problem type while maintaining quality standards from Codex V3.0.
+**Key Innovation:** Model-agnostic orchestration with registry-based auto-selection to leverage the best AI for each problem type while maintaining Codex V3.0 quality standards.
 
 ---
 
 ## When to Use This Skill
 
-**Automatically activate when users request:**
-- Technical comparisons: "X vs Y 어떤 걸 써야할까?" / "Should I use X or Y?"
-- Architecture decisions: "Django vs FastAPI", "PostgreSQL vs MongoDB"
-- Technology selection: "어느 프레임워크를 선택할까?" / "Which framework should I choose?"
-- "AI 토론해서 해결해줘" / "AI debate to solve this"
-- "Codex로 분석해줘" / "analyze with Codex"
-- "Claude로 작성해줘" / "write with Claude"
-- "Gemini로 조사해줘" / "research with Gemini"
-- "여러 AI로 비교해줘" / "compare with multiple AIs"
-- Complex problems requiring multi-perspective analysis
-- Performance/scalability analysis
-- Security evaluation
+Use this skill for:
+
+- **Technical Stack Decisions:** Choose between frameworks, databases, architectures, or tools
+- **Performance Analysis:** Evaluate scalability, optimization strategies, caching approaches
+- **Security Evaluation:** Assess security trade-offs, compliance requirements
+- **Multi-Perspective Problems:** Resolve complex decisions requiring diverse AI reasoning
+
+**Common Scenarios:**
+- Technology selection (language, framework, database)
+- System design and architecture planning
+- Migration planning (monolith to microservices, database changes)
+- Performance optimization strategies
+- Security and compliance decisions
 
 **How to activate:**
-You MUST use the Bash tool to execute `.claude/skills/ai-collaborative-solver/scripts/ai-debate.sh` directly.
+To activate this skill, execute `.claude/skills/ai-collaborative-solver/scripts/ai-debate.sh` using the Bash tool.
 
 ---
 
@@ -184,7 +190,7 @@ AI Collaborative Solver (V1.0)
 ./.claude/skills/ai-collaborative-solver/scripts/ai-debate.sh "Problem description" --auto
 ```
 
-The system automatically selects the best AI model based on problem type.
+Automatically selects the best AI model based on problem type.
 
 ---
 
@@ -225,24 +231,20 @@ The system automatically selects the best AI model based on problem type.
 
 ### Through Claude Code
 
-Just ask Claude:
+**Activation via Claude Code:**
 
-```
-User: "AI 토론해서 Django vs FastAPI 비교해줘"
-Claude: (Automatically activates this skill)
-```
+When activated through a user request like "AI 토론해서 Django vs FastAPI 비교해줘", the skill automatically:
 
-Claude will:
-1. Analyze problem type
-2. Auto-select best model (or ask if uncertain)
-3. Run debate
-4. Summarize results
+1. Analyzes problem type
+2. Auto-selects best model (or prompts for clarification if uncertain)
+3. Runs the debate
+4. Summarizes results
 
 ---
 
 ## Auto Model Selection Rules
 
-The system automatically chooses the best model based on keywords (13 rules in registry):
+Automatically choose the best model based on keywords (13 rules in registry):
 
 | Problem Type | Keywords | Selected Model | Reason |
 |--------------|----------|----------------|--------|
@@ -284,7 +286,7 @@ The system automatically chooses the best model based on keywords (13 rules in r
 | **Quality Framework** | V3.0 (Enhanced) | V3.0 (Enhanced) | V3.0 (Enhanced) |
 | **Best Use Case** | Code/Architecture | Writing/Reasoning | Trends/Research |
 
-**Recommendation:** Use `--auto` and let the system choose based on your problem type!
+**Recommendation:** Use `--auto` to enable automatic model selection based on the problem type.
 
 ---
 
@@ -438,7 +440,7 @@ agents:
 
 ### Registry Configuration
 
-The capability registry (`config/registry.yaml`) defines all models:
+Define all models in the capability registry (`config/registry.yaml`):
 
 ```yaml
 models:
@@ -464,7 +466,7 @@ models:
 
 ## Output Format
 
-Reports saved to `.debate-reports/` with structure:
+Save reports to `.debate-reports/` with structure:
 
 ```markdown
 # AI Collaborative Debate Report
@@ -512,7 +514,7 @@ Reports saved to `.debate-reports/` with structure:
    ```bash
    ./ai-debate.sh "Problem" --auto
    ```
-   Let the system choose the best model
+   Enable automatic model selection
 
 2. **Provide Full Context**
    ```bash
@@ -556,76 +558,7 @@ Reports saved to `.debate-reports/` with structure:
 
 ## Troubleshooting
 
-### Issue: "codex CLI not found"
-
-**Solution:**
-```bash
-npm install -g @openai/codex
-codex  # Authenticate (requires ChatGPT Plus)
-```
-
----
-
-### Issue: "gemini-cli not found"
-
-**Solution:**
-```bash
-npm install -g @google/gemini-cli
-gemini-cli  # Authenticate (free Google account)
-```
-
----
-
-### Issue: "Claude Code CLI not found"
-
-**Solution:**
-
-Install and authenticate Claude Code:
-
-```bash
-# 1. Install Claude Code
-# Download from: https://claude.ai/download
-
-# 2. Run claude to authenticate
-claude
-
-# 3. Login with your Claude account
-# Follow the authentication prompts
-
-# 4. Verify authentication
-claude --version
-```
-
-**Requirements:**
-- Claude account (free)
-- Claude Pro/Max subscription (recommended for unlimited usage)
-
----
-
-### Issue: Auto-select chose wrong model
-
-**Solution:**
-```bash
-# Override with specific model
-./ai-debate.sh "Problem" --model codex
-# OR add keywords to problem description
-./ai-debate.sh "코드 리뷰: Problem" --auto  # Will select Codex
-```
-
----
-
-### Issue: Hybrid mode too slow
-
-**Solution:**
-```bash
-# Use simple mode (faster)
-./ai-debate.sh "Problem" --models codex,gemini --mode simple
-
-# Or run models sequentially
-./ai-debate.sh "Problem" --model codex
-./ai-debate.sh "Problem" --model gemini
-# Compare manually
-```
+For solutions to common issues (CLI installation, authentication, model selection, performance), see: [`references/troubleshooting.md`](references/troubleshooting.md)
 
 ---
 
