@@ -380,16 +380,9 @@ templates/
 
 ---
 
-## Playwright 브라우저 로그인 자동 유지
+## Playwright MCP 설정
 
-**MCP Playwright에서 한 번 로그인하면 계속 유지되도록 설정할 수 있습니다.**
-
-### 기능
-
-- ✅ **한 번 로그인 → 영구 유지**
-- ✅ Claude Code 재시작 후에도 로그인 유지
-- ✅ GitHub, Google 등 모든 사이트 지원
-- ✅ 매번 로그인할 필요 없음
+**MCP Playwright를 사용하여 브라우저 자동화를 수행할 수 있습니다.**
 
 ### 자동 적용
 
@@ -404,13 +397,17 @@ templates/
 ```json
 {
   "mcpServers": {
-    "playwright-mcp": {
-      "command": "npx",
+    "microsoft-playwright-mcp": {
+      "command": "cmd",
       "args": [
+        "/c",
+        "npx",
         "-y",
-        "@playwright/mcp",
-        "--user-data-dir",
-        "C:\\Users\\EST\\.playwright-persistent"
+        "@smithery/cli@latest",
+        "run",
+        "@microsoft/playwright-mcp",
+        "--key",
+        "a457b5a4-cd03-4a13-b2ac-cf99c04f6fc4"
       ]
     }
   }
@@ -418,10 +415,10 @@ templates/
 ```
 
 **중요**:
-- `npx`로 직접 실행 (Smithery wrapper 불필요)
-- `@playwright/mcp` 패키지 사용 (올바른 패키지명)
-- 경로는 사용자 환경에 맞게 수정 (`C:\Users\[사용자이름]\...`)
+- Smithery CLI wrapper를 통해 실행
+- `@microsoft/playwright-mcp` 패키지 사용
 - 설정 변경 후 Claude Code 재시작 필수
+- **주의**: `--user-data-dir` 옵션은 Smithery wrapper와 호환되지 않으므로 사용하지 마세요
 
 ### 상세 가이드
 

@@ -1,16 +1,16 @@
 {
-  "_comment": "This template will be automatically transformed by /apply-settings to use OS-independent paths",
   "mcpServers": {
-    "playwright-mcp": {
-      "_transform": "home-relative-path",
-      "_targetPath": ".playwright-persistent",
-      "_pathOption": "--user-data-dir",
-      "command": "npx",
+    "microsoft-playwright-mcp": {
+      "command": "cmd",
       "args": [
+        "/c",
+        "npx",
         "-y",
-        "@playwright/mcp",
-        "--user-data-dir",
-        "{{HOME}}/.playwright-persistent"
+        "@smithery/cli@latest",
+        "run",
+        "@microsoft/playwright-mcp",
+        "--key",
+        "a457b5a4-cd03-4a13-b2ac-cf99c04f6fc4"
       ]
     }
   }
