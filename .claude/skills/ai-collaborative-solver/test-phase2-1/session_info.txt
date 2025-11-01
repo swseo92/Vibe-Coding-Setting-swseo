@@ -1,0 +1,6 @@
+Original Problem: Which database is better for a social media app?
+Clarified Problem: Which database is better for a social media app?
+Models: mock
+Mode: simple
+Rounds: 3
+Started: 2025년 11월  1일 토 오후 12:15:30

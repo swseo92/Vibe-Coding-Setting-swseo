@@ -1,0 +1,20 @@
+{
+    "round": 1,
+    "agent": "explorer",
+    "confidence": 0,
+    "search": {
+        "enabled": false,
+        "used": false,
+        "sources_found": 0
+0
+    },
+    "evidence": {
+        "t1_present": true,
+        "t2_present": true,
+        "t3_present": false
+    },
+    "metrics": {
+        "citations": 5
+    },
+    "timestamp": "2025-10-31T12:14:38Z"
+}

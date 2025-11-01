@@ -1,0 +1,6 @@
+Original Problem: FastAPI vs Flask: 신규 프로젝트에 적합한 프레임워크
+Clarified Problem: FastAPI vs Flask: 신규 프로젝트에 적합한 프레임워크
+Models: claude
+Mode: simple
+Rounds: 3
+Started: 2025년 11월  1일 토 오후  1:12:52

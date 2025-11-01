@@ -1,0 +1,5 @@
+Problem: Redis vs Memcached (fixed test)
+Models: mock
+Mode: simple
+Rounds: 3
+Started: 2025년 10월 31일 금 오후 10:21:34

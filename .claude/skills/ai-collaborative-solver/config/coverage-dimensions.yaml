@@ -1,0 +1,119 @@
+# Coverage Dimensions for Quality Monitoring
+# Tracks 8 key dimensions that should be addressed in technical debates
+
+dimensions:
+  - name: performance
+    keywords:
+      - performance
+      - latency
+      - throughput
+      - scalability
+      - speed
+      - optimization
+      - bottleneck
+      - response time
+    description: "Performance implications (latency, throughput, scalability)"
+
+  - name: security
+    keywords:
+      - security
+      - authentication
+      - authorization
+      - encryption
+      - vulnerability
+      - attack
+      - threat
+      - compliance
+      - privacy
+      - GDPR
+      - auth
+    description: "Security considerations (vulnerabilities, auth, compliance)"
+
+  - name: cost
+    keywords:
+      - cost
+      - price
+      - budget
+      - expense
+      - pricing
+      - TCO
+      - ROI
+      - license
+      - subscription
+    description: "Cost analysis (infrastructure, licenses, maintenance)"
+
+  - name: operations
+    keywords:
+      - ops
+      - operations
+      - deployment
+      - monitoring
+      - maintenance
+      - DevOps
+      - observability
+      - logging
+      - metrics
+      - alerts
+      - debugging
+    description: "Operational complexity (deployment, monitoring, maintenance)"
+
+  - name: team_capability
+    keywords:
+      - team
+      - skill
+      - expertise
+      - learning curve
+      - training
+      - experience
+      - knowledge
+      - developer experience
+      - DX
+    description: "Team capability requirements (skills, learning curve)"
+
+  - name: migration
+    keywords:
+      - migration
+      - transition
+      - upgrade
+      - backward compatibility
+      - legacy
+      - integration
+      - adoption
+      - rollout
+    description: "Migration path (from current system, integration)"
+
+  - name: edge_cases
+    keywords:
+      - edge case
+      - corner case
+      - failure mode
+      - error handling
+      - exception
+      - fallback
+      - resilience
+      - fault tolerance
+      - degradation
+    description: "Edge cases and failure modes"
+
+  - name: long_term
+    keywords:
+      - long term
+      - sustainability
+      - maintainability
+      - extensibility
+      - technical debt
+      - future
+      - roadmap
+      - evolution
+      - deprecation
+    description: "Long-term maintainability and sustainability"
+
+# Coverage thresholds
+thresholds:
+  minimum_dimensions: 5  # At least 5/8 dimensions should be covered
+  ideal_dimensions: 7    # Ideally 7/8 or more
+
+# Reporting
+report_format: markdown
+show_missing: true
+show_covered: true

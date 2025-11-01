@@ -1,0 +1,102 @@
+# Balanced Mode (Default)
+
+purpose: "Balanced decision-making with exploration and pragmatism"
+
+# When to use
+triggers:
+  keywords:
+    - "decide"
+    - "choose"
+    - "should we"
+    - "recommend"
+    - "best approach"
+
+  problem_characteristics:
+    - technical_decision: true
+    - moderate_complexity: true
+    - default: true  # Use when no other mode specified
+
+# Debate configuration
+rounds:
+  minimum: 2
+  recommended: 3-5
+  maximum: 5
+
+exploration_phase:
+  rounds: "1-2"
+  focus: "Understand problem, explore 2-3 alternatives"
+
+convergence_phase:
+  rounds: "3-5"
+  focus: "Evaluate tradeoffs, converge on recommendation"
+
+# Agent weighting
+claude:
+  breadth: 1.0  # Standard
+  creativity: 1.0  # Standard
+  user_alignment: 1.0  # Standard
+
+codex:
+  feasibility_checks: 1.0  # Standard
+  implementation_detail: 1.0  # Standard
+  validation: 1.0  # Standard
+
+# Facilitator adjustments
+facilitator:
+  coverage:
+    minimum_dimensions: 5  # Standard requirement
+    allow_novel_dimensions: false
+
+  anti_patterns:
+    premature_convergence:
+      min_rounds: 2
+      min_alternatives: 2
+
+    circular_reasoning:
+      threshold: 0.85
+
+  scarcity:
+    assumption_ratio: 2.0  # Standard threshold
+
+# Output expectations
+output:
+  format: "Single recommendation with alternatives considered"
+  single_recommendation: true
+  confidence_levels: "Overall + per component"
+
+  structure:
+    - section: "Recommended Approach"
+      include: ["Description", "Why chosen", "Confidence"]
+    - section: "Alternatives Considered"
+      include: ["Options explored", "Why not chosen"]
+    - section: "Implementation Plan"
+      include: ["Phased approach", "Success criteria"]
+    - section: "Risks & Mitigation"
+      include: ["Identified risks", "Mitigation strategies"]
+
+# Quality gate adjustments
+quality_gate:
+  stress_test:
+    required: true
+    focus: "Recommended approach"
+
+  concrete_actions:
+    requirement: "Detailed implementation plan"
+
+  confidence:
+    expectation: "Medium-High (60-85%)"
+    reason: "Balanced exploration and validation"
+
+# Example prompts
+example_initial_prompts:
+  - "Should we use {option A} or {option B} for {problem}?"
+  - "What's the best approach to {problem}?"
+  - "Help us decide between {alternatives}"
+  - "Recommend solution for {problem}"
+
+# Success metrics
+success:
+  alternatives_evaluated: ">= 2"
+  dimension_coverage: ">= 5"
+  actionability: "High (clear next steps)"
+  user_satisfaction: "Confident to proceed with recommendation"

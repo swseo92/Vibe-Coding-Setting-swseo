@@ -1,0 +1,107 @@
+# Exploration Mode
+
+purpose: "Creative idea generation and broad exploration of solution space"
+
+# When to use
+triggers:
+  keywords:
+    - "explore"
+    - "brainstorm"
+    - "what are the options"
+    - "different approaches"
+    - "creative solutions"
+    - "alternatives"
+
+  problem_characteristics:
+    - novel_problem: true
+    - multiple_valid_solutions: true
+    - user_wants_options: true
+    - innovation_preferred: true
+
+# Debate configuration
+rounds:
+  minimum: 3
+  recommended: 5
+  maximum: 7
+
+exploration_phase:
+  rounds: "1-4"  # Extended exploration
+  focus: "Divergent thinking, generate many alternatives"
+
+convergence_phase:
+  rounds: "5-7"
+  focus: "Reality-check, synthesize, present options"
+
+# Agent weighting
+claude:
+  breadth: 1.5  # 50% higher weight on breadth
+  creativity: 2.0  # 2x weight on creative/novel solutions
+  user_alignment: 1.0
+
+codex:
+  feasibility_checks: 0.5  # Softer feasibility checks
+  implementation_detail: 0.5  # Less focus on implementation
+  validation: 1.0
+
+# Facilitator adjustments
+facilitator:
+  coverage:
+    minimum_dimensions: 4  # Lower requirement (normally 5)
+    allow_novel_dimensions: true  # OK to explore beyond 8 standard dimensions
+
+  anti_patterns:
+    premature_convergence:
+      disabled: false  # Still check, but adjusted
+      min_rounds: 3  # Higher threshold (normally 2)
+      min_alternatives: 3  # Require more alternatives (normally 2)
+
+    circular_reasoning:
+      threshold: 0.90  # Higher tolerance (normally 0.85)
+      # In exploration, revisiting ideas with new angles is valuable
+
+  scarcity:
+    assumption_ratio: 3.0  # Higher tolerance (normally 2.0)
+    # Exploration mode allows more speculation
+
+# Output expectations
+output:
+  format: "Multiple options with tradeoffs"
+  single_recommendation: false
+  confidence_levels: "Per option"
+
+  structure:
+    - section: "Option A"
+      include: ["Description", "Pros", "Cons", "Best when", "Confidence"]
+    - section: "Option B"
+      include: ["Description", "Pros", "Cons", "Best when", "Confidence"]
+    - section: "Option C"
+      include: ["Description", "Pros", "Cons", "Best when", "Confidence"]
+    - section: "Recommendation"
+      include: ["Criteria for choosing", "Not single answer"]
+
+# Quality gate adjustments
+quality_gate:
+  stress_test:
+    required: true
+    per_option: true  # Stress test each option
+
+  concrete_actions:
+    requirement: "Per option, not single plan"
+
+  confidence:
+    expectation: "Medium (50-70%)"
+    reason: "Exploration inherently has more uncertainty"
+
+# Example prompts
+example_initial_prompts:
+  - "Explore different architecture patterns for {problem}"
+  - "What are creative solutions to {problem}?"
+  - "Brainstorm approaches - don't converge yet"
+  - "Generate 5 wildly different solutions"
+
+# Success metrics
+success:
+  alternatives_generated: ">= 3"
+  dimension_coverage: ">= 4"
+  novelty_score: "High"
+  user_satisfaction: "Provided enough options to make informed choice"
