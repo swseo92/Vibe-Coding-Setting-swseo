@@ -1,6 +1,6 @@
 ---
 name: git-worktree-manager
-description: Manage parallel development workflows using git worktree for Python projects in PyCharm on Windows. Use this skill when users need to create independent development environments for multiple features, handle merge conflicts, or manage worktree lifecycle (create/merge/cleanup). Supports Korean commands (워크트리 생성, 브랜치 병합, 충돌 해결). Optimized for solo developers working on Python projects with pytest test suites.
+description: Manage parallel development workflows using git worktree for Python projects in PyCharm on Windows. Trigger when user says "create worktree", "워크트리 생성", "worktree 생성", "merge branch", "브랜치 병합", "기능 브랜치 merge", "resolve conflict", "충돌 해결", "cleanup worktree", or "워크트리 정리". Optimized for solo developers working on Python projects with pytest test suites.
 ---
 
 # Git Worktree Manager
