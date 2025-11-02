@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
-# codex-session.sh
-# Generalized Codex stateful session management
+# claude-code-session.sh
+# Generalized Claude Code stateful session management
 #
 # Usage:
-#   codex-session.sh new "prompt" [options]
-#   codex-session.sh continue <session-id> "prompt"
-#   codex-session.sh info <session-id>
-#   codex-session.sh list
+#   claude-code-session.sh new "prompt" [options]
+#   claude-code-session.sh continue <session-id> "prompt"
+#   claude-code-session.sh info <session-id>
+#   claude-code-session.sh list
 
 set -euo pipefail
 
 VERSION="1.0.0"
-SESSIONS_DIR="${CODEX_SESSIONS_DIR:-.codex-sessions}"
+SESSIONS_DIR="${CLAUDE_CODE_SESSIONS_DIR:-.claude-code-sessions}"
 
 # =============================================================
 # Configuration
 # =============================================================
 
 DEFAULT_OUTPUT_FORMAT="text"
-DEFAULT_SANDBOX="workspace-write"
-DEFAULT_MODEL=""  # Empty = use Codex's default from config.toml
+DEFAULT_MODEL=""  # Empty = use Claude Code default
 
 # =============================================================
 # Helper Functions
@@ -104,14 +103,12 @@ cmd_new() {
     # Parse options
     local output_dir=""
     local output_format="$DEFAULT_OUTPUT_FORMAT"
-    local sandbox="$DEFAULT_SANDBOX"
     local model="$DEFAULT_MODEL"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --output-dir) output_dir="$2"; shift 2 ;;
             --output-format) output_format="$2"; shift 2 ;;
-            --sandbox) sandbox="$2"; shift 2 ;;
             --model) model="$2"; shift 2 ;;
             --quiet) QUIET=true; shift ;;
             --debug) DEBUG=true; shift ;;
@@ -131,7 +128,7 @@ cmd_new() {
 
     mkdir -p "$session_dir"
 
-    log_info "Starting new Codex session: $session_id"
+    log_info "Starting new Claude Code session: $session_id"
     debug "Session directory: $session_dir"
 
     # Save initial problem
@@ -139,35 +136,53 @@ cmd_new() {
 
     # Execute Round 1
     local round1_output="$session_dir/round-001.txt"
-    local round1_log="$session_dir/round-001.log"
+    local round1_json="$session_dir/round-001.json"
 
-    debug "Executing: codex exec with prompt"
+    debug "Executing: claude --print with prompt"
 
-    if [[ "$output_format" == "json" ]]; then
-        # Build command with optional model
-        local cmd=(codex exec "$prompt" --json --sandbox "$sandbox")
-        [[ -n "$model" ]] && cmd+=(-m "$model")
-        "${cmd[@]}" > "$session_dir/round-001.jsonl" 2>&1
+    # Build command with optional model
+    local cmd=(claude --print "$prompt" --output-format json)
+    [[ -n "$model" ]] && cmd+=(--model "$model")
 
-        # Extract Codex session ID from JSONL
-        local actual_session_id=$(grep -o '"session_id":"[^"]*"' "$session_dir/round-001.jsonl" | head -1 | cut -d'"' -f4 || echo "")
+    # Execute and capture JSON output
+    local json_output
+    if json_output=$("${cmd[@]}" 2>&1); then
+        debug "Claude Code execution successful"
 
-        if [[ -n "$actual_session_id" ]]; then
-            echo "$actual_session_id" > "$session_dir/codex_session_id.txt"
-            debug "Codex session ID: $actual_session_id"
+        # Save JSON output
+        echo "$json_output" > "$round1_json"
+
+        # Extract session ID from JSON
+        local claude_session_id
+        if command -v python3 &>/dev/null; then
+            claude_session_id=$(python3 -c "import json; data=json.loads('''$json_output'''); print(data.get('session_id', ''))" 2>/dev/null || echo "")
         fi
+
+        if [[ -z "$claude_session_id" ]] && command -v python &>/dev/null; then
+            claude_session_id=$(python -c "import json; data=json.loads('''$json_output'''); print(data.get('session_id', ''))" 2>/dev/null || echo "")
+        fi
+
+        if [[ -n "$claude_session_id" ]]; then
+            echo "$claude_session_id" > "$session_dir/claude_session_id.txt"
+            debug "Claude Code session ID: $claude_session_id"
+        fi
+
+        # Extract result text
+        local result_text
+        if command -v python3 &>/dev/null; then
+            result_text=$(python3 -c "import json; data=json.loads('''$json_output'''); print(data.get('result', ''))" 2>/dev/null || echo "")
+        fi
+
+        if [[ -z "$result_text" ]] && command -v python &>/dev/null; then
+            result_text=$(python -c "import json; data=json.loads('''$json_output'''); print(data.get('result', ''))" 2>/dev/null || echo "")
+        fi
+
+        # Save result text
+        echo "$result_text" > "$round1_output"
     else
-        # Use --full-auto for automatic execution
-        local cmd=(codex exec "$prompt" --full-auto --sandbox "$sandbox" -o "$round1_output")
-        [[ -n "$model" ]] && cmd+=(-m "$model")
-        "${cmd[@]}" > "$round1_log" 2>&1
-
-        # Try to extract session ID from log
-        local actual_session_id=$(grep -i "session id:" "$round1_log" | head -1 | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' || echo "")
-        if [[ -n "$actual_session_id" ]]; then
-            echo "$actual_session_id" > "$session_dir/codex_session_id.txt"
-            debug "Codex session ID: $actual_session_id"
-        fi
+        log_error "Claude Code execution failed"
+        echo "$json_output" > "$session_dir/error.log"
+        exit 1
     fi
 
     # Save metadata
@@ -212,27 +227,74 @@ cmd_continue() {
     log_info "Continuing session $session_id (Round $next_round)"
     debug "Session directory: $session_dir"
 
-    # Check if we have Codex session ID
-    local codex_session_id=""
-    if [[ -f "$session_dir/codex_session_id.txt" ]]; then
-        codex_session_id=$(cat "$session_dir/codex_session_id.txt")
-        debug "Using Codex session ID: $codex_session_id"
+    # Check if we have Claude Code session ID
+    local claude_session_id=""
+    if [[ -f "$session_dir/claude_session_id.txt" ]]; then
+        claude_session_id=$(cat "$session_dir/claude_session_id.txt")
+        debug "Using Claude Code session ID: $claude_session_id"
     fi
 
     # Execute next round
     local round_output="$session_dir/round-${round_label}.txt"
-    local round_log="$session_dir/round-${round_label}.log"
+    local round_json="$session_dir/round-${round_label}.json"
 
-    if [[ -n "$codex_session_id" ]]; then
+    if [[ -n "$claude_session_id" ]]; then
         # Use explicit session ID
-        debug "Resuming with explicit session ID: $codex_session_id"
-        codex exec resume "$codex_session_id" "$prompt" \
-            > "$round_output" 2> "$round_log"
+        debug "Resuming with explicit session ID: $claude_session_id"
+
+        # Execute
+        local json_output
+        if json_output=$(claude --resume "$claude_session_id" --print "$prompt" --output-format json 2>&1); then
+            debug "Claude Code resume successful"
+
+            # Save JSON
+            echo "$json_output" > "$round_json"
+
+            # Extract result text
+            local result_text
+            if command -v python3 &>/dev/null; then
+                result_text=$(python3 -c "import json; data=json.loads('''$json_output'''); print(data.get('result', ''))" 2>/dev/null || echo "")
+            fi
+
+            if [[ -z "$result_text" ]] && command -v python &>/dev/null; then
+                result_text=$(python -c "import json; data=json.loads('''$json_output'''); print(data.get('result', ''))" 2>/dev/null || echo "")
+            fi
+
+            # Save result
+            echo "$result_text" > "$round_output"
+        else
+            log_error "Claude Code resume failed"
+            echo "$json_output" > "$session_dir/round-${round_label}-error.log"
+            exit 1
+        fi
     else
-        # Use --last (fallback)
-        debug "Resuming with --last"
-        codex exec resume --last "$prompt" \
-            > "$round_output" 2> "$round_log"
+        # Use --continue (fallback)
+        debug "Resuming with --continue"
+
+        local json_output
+        if json_output=$(claude --continue --print "$prompt" --output-format json 2>&1); then
+            debug "Claude Code continue successful"
+
+            # Save JSON
+            echo "$json_output" > "$round_json"
+
+            # Extract result text
+            local result_text
+            if command -v python3 &>/dev/null; then
+                result_text=$(python3 -c "import json; data=json.loads('''$json_output'''); print(data.get('result', ''))" 2>/dev/null || echo "")
+            fi
+
+            if [[ -z "$result_text" ]] && command -v python &>/dev/null; then
+                result_text=$(python -c "import json; data=json.loads('''$json_output'''); print(data.get('result', ''))" 2>/dev/null || echo "")
+            fi
+
+            # Save result
+            echo "$result_text" > "$round_output"
+        else
+            log_error "Claude Code continue failed"
+            echo "$json_output" > "$session_dir/round-${round_label}-error.log"
+            exit 1
+        fi
     fi
 
     # Update metadata
@@ -279,14 +341,14 @@ cmd_info() {
         echo "  (no rounds)"
     fi
     echo ""
-    if [[ -f "$session_dir/codex_session_id.txt" ]]; then
-        echo "Codex Session ID: $(cat "$session_dir/codex_session_id.txt")"
+    if [[ -f "$session_dir/claude_session_id.txt" ]]; then
+        echo "Claude Code Session ID: $(cat "$session_dir/claude_session_id.txt")"
     fi
 }
 
 cmd_list() {
     echo "==================================================="
-    echo "Codex Sessions"
+    echo "Claude Code Sessions"
     echo "==================================================="
 
     local found=0
@@ -376,9 +438,9 @@ case "$COMMAND" in
         ;;
     --help|-h|help)
         cat << EOF
-Codex Session Manager v$VERSION
+Claude Code Session Manager v$VERSION
 
-Manage stateful multi-round conversations with Codex CLI.
+Manage stateful multi-round conversations with Claude Code.
 
 Usage:
   $0 new "prompt" [options]           Start new session
@@ -388,24 +450,22 @@ Usage:
   $0 clean <session-id>               Remove session
 
 Options:
-  --output-dir <dir>      Output directory (default: .codex-sessions)
+  --output-dir <dir>      Output directory (default: .claude-code-sessions)
   --output-format <fmt>   text|json (default: text)
-  --sandbox <mode>        Sandbox policy (default: workspace-write)
-                          Options: read-only, workspace-write, danger-full-access
-  --model <model>         Codex model (default: auto)
+  --model <model>         Claude Code model (default: auto)
   --quiet                 Suppress progress messages
   --debug                 Enable debug output
 
 Environment Variables:
-  CODEX_SESSIONS_DIR      Override default sessions directory
+  CLAUDE_CODE_SESSIONS_DIR      Override default sessions directory
 
 Examples:
   # Start new session
-  SESSION_ID=\$(bash $0 new "Analyze Django vs FastAPI performance")
+  SESSION_ID=\$(bash $0 new "Explain Python decorators")
 
   # Continue with multiple rounds
-  bash $0 continue "\$SESSION_ID" "Compare scalability"
-  bash $0 continue "\$SESSION_ID" "Consider team productivity"
+  bash $0 continue "\$SESSION_ID" "Provide examples"
+  bash $0 continue "\$SESSION_ID" "What are common pitfalls?"
 
   # Check results
   bash $0 info "\$SESSION_ID"

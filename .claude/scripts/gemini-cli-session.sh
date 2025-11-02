@@ -1,25 +1,52 @@
 #!/usr/bin/env bash
-# codex-session.sh
-# Generalized Codex stateful session management
+# gemini-cli-session.sh
+# Generalized Gemini CLI stateful session management
 #
 # Usage:
-#   codex-session.sh new "prompt" [options]
-#   codex-session.sh continue <session-id> "prompt"
-#   codex-session.sh info <session-id>
-#   codex-session.sh list
+#   gemini-cli-session.sh new "prompt" [options]
+#   gemini-cli-session.sh continue <session-id> "prompt"
+#   gemini-cli-session.sh info <session-id>
+#   gemini-cli-session.sh list
 
 set -euo pipefail
 
 VERSION="1.0.0"
-SESSIONS_DIR="${CODEX_SESSIONS_DIR:-.codex-sessions}"
+SESSIONS_DIR="${GEMINI_CLI_SESSIONS_DIR:-.gemini-cli-sessions}"
 
 # =============================================================
 # Configuration
 # =============================================================
 
 DEFAULT_OUTPUT_FORMAT="text"
-DEFAULT_SANDBOX="workspace-write"
-DEFAULT_MODEL=""  # Empty = use Codex's default from config.toml
+DEFAULT_MODEL=""  # Empty = use Gemini CLI default
+
+# Get API key from settings.json (workaround for Gemini CLI bug)
+# Try multiple possible locations
+GEMINI_SETTINGS=""
+GEMINI_SETTINGS_PYTHON=""  # Python-compatible path
+for settings_path in "${HOME}/.gemini/settings.json" "C:/Users/EST/.gemini/settings.json" "/c/Users/EST/.gemini/settings.json"; do
+    if [[ -f "$settings_path" ]]; then
+        GEMINI_SETTINGS="$settings_path"
+        # Convert /c/ paths to C:/ for Python compatibility
+        GEMINI_SETTINGS_PYTHON="${settings_path/#\/c\//C:/}"
+        break
+    fi
+done
+
+if [[ -n "$GEMINI_SETTINGS_PYTHON" ]]; then
+    # Use heredoc for Python script to avoid quoting issues
+    GEMINI_API_KEY_FROM_FILE=$(python << EOF 2>/dev/null || echo ""
+import json
+try:
+    with open('$GEMINI_SETTINGS_PYTHON') as f:
+        data = json.load(f)
+        print(data.get('auth', {}).get('apiKey', ''))
+except:
+    pass
+EOF
+)
+    export GEMINI_API_KEY="${GEMINI_API_KEY:-$GEMINI_API_KEY_FROM_FILE}"
+fi
 
 # =============================================================
 # Helper Functions
@@ -75,7 +102,6 @@ load_metadata() {
     fi
 
     # Use python for JSON parsing (cross-platform)
-    # Try python3 first, fallback to python
     local result=""
     if command -v python3 &>/dev/null; then
         result=$(python3 -c "import json; data=json.load(open('$session_dir/metadata.json')); print(data.get('round_count', 0))" 2>/dev/null || echo "")
@@ -93,6 +119,39 @@ load_metadata() {
     echo "$result"
 }
 
+build_context_prompt() {
+    local session_dir="$1"
+    local new_prompt="$2"
+
+    # Build conversation history from previous rounds
+    local context=""
+
+    # Add previous rounds (up to last 3 for context window management)
+    # Use grep to exclude -prompt.txt files
+    local round_files=($(ls -1 "$session_dir"/round-*.txt 2>/dev/null | grep -v -- '-prompt\.txt$' | tail -3 || echo ""))
+
+    if [[ ${#round_files[@]} -gt 0 ]] && [[ -n "${round_files[0]}" ]]; then
+        context="Previous conversation:\n\n"
+        for round_file in "${round_files[@]}"; do
+            local round_num=$(basename "$round_file" | sed 's/round-\([0-9]*\).txt/\1/')
+            local round_prompt=$(cat "$session_dir/round-${round_num}-prompt.txt" 2>/dev/null || echo "")
+            local round_response=$(cat "$round_file" 2>/dev/null || echo "")
+
+            if [[ -n "$round_prompt" ]]; then
+                context="${context}User: $round_prompt\n\n"
+            fi
+            if [[ -n "$round_response" ]]; then
+                context="${context}Assistant: $round_response\n\n"
+            fi
+        done
+        context="${context}Current user message: $new_prompt"
+    else
+        context="$new_prompt"
+    fi
+
+    echo -e "$context"
+}
+
 # =============================================================
 # Core Commands
 # =============================================================
@@ -104,14 +163,12 @@ cmd_new() {
     # Parse options
     local output_dir=""
     local output_format="$DEFAULT_OUTPUT_FORMAT"
-    local sandbox="$DEFAULT_SANDBOX"
     local model="$DEFAULT_MODEL"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --output-dir) output_dir="$2"; shift 2 ;;
             --output-format) output_format="$2"; shift 2 ;;
-            --sandbox) sandbox="$2"; shift 2 ;;
             --model) model="$2"; shift 2 ;;
             --quiet) QUIET=true; shift ;;
             --debug) DEBUG=true; shift ;;
@@ -119,11 +176,17 @@ cmd_new() {
         esac
     done
 
+    # Check API key
+    if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+        log_error "GEMINI_API_KEY not set. Please configure it in ~/.gemini/settings.json or export GEMINI_API_KEY"
+        exit 1
+    fi
+
     # Generate session ID first
     local session_id=$(generate_session_id)
     local session_dir="$SESSIONS_DIR/$session_id"
 
-    # Use custom output dir if specified, otherwise use session dir
+    # Use custom output dir if specified
     if [[ -n "$output_dir" ]]; then
         mkdir -p "$output_dir"
         session_dir="$output_dir/$session_id"
@@ -131,43 +194,54 @@ cmd_new() {
 
     mkdir -p "$session_dir"
 
-    log_info "Starting new Codex session: $session_id"
+    log_info "Starting new Gemini CLI session: $session_id"
     debug "Session directory: $session_dir"
 
     # Save initial problem
     echo "$prompt" > "$session_dir/problem.txt"
+    echo "$prompt" > "$session_dir/round-001-prompt.txt"
 
     # Execute Round 1
     local round1_output="$session_dir/round-001.txt"
-    local round1_log="$session_dir/round-001.log"
+    local round1_json="$session_dir/round-001.json"
 
-    debug "Executing: codex exec with prompt"
+    debug "Executing: gemini with prompt"
 
-    if [[ "$output_format" == "json" ]]; then
-        # Build command with optional model
-        local cmd=(codex exec "$prompt" --json --sandbox "$sandbox")
-        [[ -n "$model" ]] && cmd+=(-m "$model")
-        "${cmd[@]}" > "$session_dir/round-001.jsonl" 2>&1
+    # Build command with optional model
+    local cmd=(gemini "$prompt" -o json)
+    [[ -n "$model" ]] && cmd+=(-m "$model")
 
-        # Extract Codex session ID from JSONL
-        local actual_session_id=$(grep -o '"session_id":"[^"]*"' "$session_dir/round-001.jsonl" | head -1 | cut -d'"' -f4 || echo "")
+    # Execute and capture JSON output
+    local json_output
+    if json_output=$("${cmd[@]}" 2>&1); then
+        debug "Gemini CLI execution successful"
 
-        if [[ -n "$actual_session_id" ]]; then
-            echo "$actual_session_id" > "$session_dir/codex_session_id.txt"
-            debug "Codex session ID: $actual_session_id"
+        # Save JSON output
+        echo "$json_output" > "$round1_json"
+
+        # Extract response text from JSON
+        local result_text=$(python << EOF 2>/dev/null || echo ""
+import json
+try:
+    with open('$round1_json') as f:
+        data = json.load(f)
+        print(data.get('response', '').strip())
+except:
+    pass
+EOF
+)
+
+        if [[ -z "$result_text" ]]; then
+            log_error "Failed to extract response from JSON"
+            exit 1
         fi
+
+        # Save result text
+        echo "$result_text" > "$round1_output"
     else
-        # Use --full-auto for automatic execution
-        local cmd=(codex exec "$prompt" --full-auto --sandbox "$sandbox" -o "$round1_output")
-        [[ -n "$model" ]] && cmd+=(-m "$model")
-        "${cmd[@]}" > "$round1_log" 2>&1
-
-        # Try to extract session ID from log
-        local actual_session_id=$(grep -i "session id:" "$round1_log" | head -1 | grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' || echo "")
-        if [[ -n "$actual_session_id" ]]; then
-            echo "$actual_session_id" > "$session_dir/codex_session_id.txt"
-            debug "Codex session ID: $actual_session_id"
-        fi
+        log_error "Gemini CLI execution failed"
+        echo "$json_output" > "$session_dir/error.log"
+        exit 1
     fi
 
     # Save metadata
@@ -187,20 +261,16 @@ cmd_continue() {
 
     local session_dir="$SESSIONS_DIR/$session_id"
 
-    # Check if session exists in custom location
-    if [[ ! -d "$session_dir" ]]; then
-        # Try to find in other locations
-        for dir in "$SESSIONS_DIR"/*/"$session_id"; do
-            if [[ -d "$dir" ]]; then
-                session_dir="$dir"
-                break
-            fi
-        done
-    fi
-
+    # Check if session exists
     if [[ ! -d "$session_dir" ]]; then
         log_error "Session not found: $session_id"
         log_error "Searched in: $SESSIONS_DIR"
+        exit 1
+    fi
+
+    # Check API key
+    if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+        log_error "GEMINI_API_KEY not set. Please configure it in ~/.gemini/settings.json or export GEMINI_API_KEY"
         exit 1
     fi
 
@@ -212,27 +282,43 @@ cmd_continue() {
     log_info "Continuing session $session_id (Round $next_round)"
     debug "Session directory: $session_dir"
 
-    # Check if we have Codex session ID
-    local codex_session_id=""
-    if [[ -f "$session_dir/codex_session_id.txt" ]]; then
-        codex_session_id=$(cat "$session_dir/codex_session_id.txt")
-        debug "Using Codex session ID: $codex_session_id"
-    fi
+    # Save the new prompt
+    echo "$prompt" > "$session_dir/round-${round_label}-prompt.txt"
+
+    # Build context-aware prompt
+    local context_prompt=$(build_context_prompt "$session_dir" "$prompt")
+    debug "Context prompt built with ${#context_prompt} characters"
 
     # Execute next round
     local round_output="$session_dir/round-${round_label}.txt"
-    local round_log="$session_dir/round-${round_label}.log"
+    local round_json="$session_dir/round-${round_label}.json"
 
-    if [[ -n "$codex_session_id" ]]; then
-        # Use explicit session ID
-        debug "Resuming with explicit session ID: $codex_session_id"
-        codex exec resume "$codex_session_id" "$prompt" \
-            > "$round_output" 2> "$round_log"
+    # Execute
+    local json_output
+    if json_output=$(gemini "$context_prompt" -o json 2>&1); then
+        debug "Gemini CLI execution successful"
+
+        # Save JSON
+        echo "$json_output" > "$round_json"
+
+        # Extract result text
+        local result_text=$(python << EOF 2>/dev/null || echo ""
+import json
+try:
+    with open('$round_json') as f:
+        data = json.load(f)
+        print(data.get('response', '').strip())
+except:
+    pass
+EOF
+)
+
+        # Save result
+        echo "$result_text" > "$round_output"
     else
-        # Use --last (fallback)
-        debug "Resuming with --last"
-        codex exec resume --last "$prompt" \
-            > "$round_output" 2> "$round_log"
+        log_error "Gemini CLI execution failed"
+        echo "$json_output" > "$session_dir/round-${round_label}-error.log"
+        exit 1
     fi
 
     # Update metadata
@@ -244,16 +330,6 @@ cmd_continue() {
 cmd_info() {
     local session_id="$1"
     local session_dir="$SESSIONS_DIR/$session_id"
-
-    # Try to find session
-    if [[ ! -d "$session_dir" ]]; then
-        for dir in "$SESSIONS_DIR"/*/"$session_id"; do
-            if [[ -d "$dir" ]]; then
-                session_dir="$dir"
-                break
-            fi
-        done
-    fi
 
     if [[ ! -d "$session_dir" ]]; then
         log_error "Session not found: $session_id"
@@ -278,15 +354,11 @@ cmd_info() {
     else
         echo "  (no rounds)"
     fi
-    echo ""
-    if [[ -f "$session_dir/codex_session_id.txt" ]]; then
-        echo "Codex Session ID: $(cat "$session_dir/codex_session_id.txt")"
-    fi
 }
 
 cmd_list() {
     echo "==================================================="
-    echo "Codex Sessions"
+    echo "Gemini CLI Sessions"
     echo "==================================================="
 
     local found=0
@@ -376,9 +448,9 @@ case "$COMMAND" in
         ;;
     --help|-h|help)
         cat << EOF
-Codex Session Manager v$VERSION
+Gemini CLI Session Manager v$VERSION
 
-Manage stateful multi-round conversations with Codex CLI.
+Manage stateful multi-round conversations with Gemini CLI.
 
 Usage:
   $0 new "prompt" [options]           Start new session
@@ -388,24 +460,23 @@ Usage:
   $0 clean <session-id>               Remove session
 
 Options:
-  --output-dir <dir>      Output directory (default: .codex-sessions)
+  --output-dir <dir>      Output directory (default: .gemini-cli-sessions)
   --output-format <fmt>   text|json (default: text)
-  --sandbox <mode>        Sandbox policy (default: workspace-write)
-                          Options: read-only, workspace-write, danger-full-access
-  --model <model>         Codex model (default: auto)
+  --model <model>         Gemini model (default: gemini-2.0-flash-exp)
   --quiet                 Suppress progress messages
   --debug                 Enable debug output
 
 Environment Variables:
-  CODEX_SESSIONS_DIR      Override default sessions directory
+  GEMINI_CLI_SESSIONS_DIR       Override default sessions directory
+  GEMINI_API_KEY                API key (auto-loaded from ~/.gemini/settings.json)
 
 Examples:
   # Start new session
-  SESSION_ID=\$(bash $0 new "Analyze Django vs FastAPI performance")
+  SESSION_ID=\$(bash $0 new "Explain Python decorators")
 
   # Continue with multiple rounds
-  bash $0 continue "\$SESSION_ID" "Compare scalability"
-  bash $0 continue "\$SESSION_ID" "Consider team productivity"
+  bash $0 continue "\$SESSION_ID" "Provide examples"
+  bash $0 continue "\$SESSION_ID" "What are common pitfalls?"
 
   # Check results
   bash $0 info "\$SESSION_ID"
@@ -421,6 +492,9 @@ Use Cases:
   - Code reviews (iterative feedback)
   - Documentation (progressive refinement)
   - Architecture decisions (step-by-step evaluation)
+
+Note: Gemini CLI doesn't have native session management, so this script
+      manages context by passing conversation history in each round.
 
 EOF
         exit 0

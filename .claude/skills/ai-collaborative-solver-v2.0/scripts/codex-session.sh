@@ -145,7 +145,7 @@ cmd_new() {
 
     if [[ "$output_format" == "json" ]]; then
         # Build command with optional model
-        local cmd=(codex exec "$prompt" --json --sandbox "$sandbox")
+        local cmd=(codex exec "$prompt" --json --sandbox "$sandbox" --skip-git-repo-check)
         [[ -n "$model" ]] && cmd+=(-m "$model")
         "${cmd[@]}" > "$session_dir/round-001.jsonl" 2>&1
 
@@ -158,7 +158,7 @@ cmd_new() {
         fi
     else
         # Use --full-auto for automatic execution
-        local cmd=(codex exec "$prompt" --full-auto --sandbox "$sandbox" -o "$round1_output")
+        local cmd=(codex exec "$prompt" --full-auto --sandbox "$sandbox" --skip-git-repo-check -o "$round1_output")
         [[ -n "$model" ]] && cmd+=(-m "$model")
         "${cmd[@]}" > "$round1_log" 2>&1
 
@@ -226,12 +226,12 @@ cmd_continue() {
     if [[ -n "$codex_session_id" ]]; then
         # Use explicit session ID
         debug "Resuming with explicit session ID: $codex_session_id"
-        codex exec resume "$codex_session_id" "$prompt" \
+        codex exec resume "$codex_session_id" "$prompt" --skip-git-repo-check \
             > "$round_output" 2> "$round_log"
     else
         # Use --last (fallback)
         debug "Resuming with --last"
-        codex exec resume --last "$prompt" \
+        codex exec resume --last "$prompt" --skip-git-repo-check \
             > "$round_output" 2> "$round_log"
     fi
 

@@ -91,16 +91,194 @@ You: "📋 **제 이해:**
 
 ---
 
-## Step 2: After Clarification
+## Step 2: After Clarification - Execute Debate
 
-**Currently in Phase 1:** After gathering clarification, inform the user:
+After clarification is complete and user confirms, proceed to **Phase 2: Independent Opinion Collection**.
 
+### Phase 2: Independent Opinion Collection
+
+Execute parallel debate with 3 AI agents (Codex, Claude Code, Gemini) to get unbiased independent opinions.
+
+#### 2.1 Build Independent Analysis Prompt
+
+Create a structured prompt that includes:
+- The clarified question
+- All gathered context (constraints, assumptions, requirements)
+- Clear instruction for independent analysis
+
+**Prompt Template:**
 ```
-"명확화가 완료되었습니다. 현재 V2.0 Phase 1이라 실제 AI 토론 기능은 개발 중입니다.
-하지만 명확화 프로세스가 잘 작동하는지 확인했습니다!"
+You are an independent expert analyst. You have NOT seen any other AI's opinion yet.
+
+## Clarified Question
+[Question from Phase 1]
+
+## Context & Constraints
+[All gathered information from Phase 1]
+
+## Your Task
+Provide your independent analysis:
+
+1. **Key Points** (3-5 main insights)
+2. **Pros** (advantages/supporting arguments)
+3. **Cons** (disadvantages/opposing arguments)
+4. **Recommendation** (your conclusion with reasoning)
+
+Be specific and provide clear reasoning for each point.
 ```
 
-**Future (Phase 2+):** Will execute actual AI debate with the enriched context.
+#### 2.2 Execute Parallel Collection
+
+Use the bundled `collect-opinions.sh` helper script that manages everything:
+
+```bash
+# Get script path
+SCRIPTS_DIR="$HOME/.claude/skills/ai-collaborative-solver-v2.0/scripts"
+
+# Execute parallel collection (all-in-one)
+RESULT=$(bash "$SCRIPTS_DIR/collect-opinions.sh" "$PROMPT")
+
+# Parse results
+SESSION_OUTPUT=$(echo "$RESULT" | grep "SESSION_OUTPUT=" | cut -d= -f2)
+CODEX_SESSION=$(echo "$RESULT" | grep "CODEX_SESSION=" | cut -d= -f2)
+CLAUDE_SESSION=$(echo "$RESULT" | grep "CLAUDE_SESSION=" | cut -d= -f2)
+GEMINI_SESSION=$(echo "$RESULT" | grep "GEMINI_SESSION=" | cut -d= -f2)
+SUCCESS_COUNT=$(echo "$RESULT" | grep "SUCCESS_COUNT=" | cut -d= -f2)
+
+echo "Collection complete: $SUCCESS_COUNT/3 agents succeeded"
+echo "Results saved to: $SESSION_OUTPUT"
+```
+
+**What the helper script does:**
+- Launches Codex, Claude Code, and Gemini in parallel
+- Waits for all to complete
+- Collects opinions from each session
+- Saves everything to `.ai-debate-output/session-TIMESTAMP/`
+- Returns session IDs and status
+
+**Output directory structure:**
+```
+.ai-debate-output/
+└── session-20251103-013000/
+    ├── prompt.txt              # Original prompt
+    ├── codex.log               # Full Codex session log
+    ├── claude.log              # Full Claude session log
+    ├── gemini.log              # Full Gemini session log
+    ├── codex-opinion.txt       # Extracted Codex opinion
+    ├── claude-opinion.txt      # Extracted Claude opinion
+    ├── gemini-opinion.txt      # Extracted Gemini opinion
+    ├── codex-session-id.txt    # Session ID for follow-up
+    ├── claude-session-id.txt
+    └── gemini-session-id.txt
+```
+
+#### 2.3 Read Collected Opinions
+
+The helper script already collected everything, just read the files:
+
+```bash
+# Read opinions from the output directory
+CODEX_OPINION=$(cat "$SESSION_OUTPUT/codex-opinion.txt" 2>/dev/null || echo "")
+CLAUDE_OPINION=$(cat "$SESSION_OUTPUT/claude-opinion.txt" 2>/dev/null || echo "")
+GEMINI_OPINION=$(cat "$SESSION_OUTPUT/gemini-opinion.txt" 2>/dev/null || echo "")
+
+# Check if any opinion is missing
+if [[ -z "$CODEX_OPINION" ]]; then
+    echo "Warning: Codex opinion not available"
+fi
+if [[ -z "$CLAUDE_OPINION" ]]; then
+    echo "Warning: Claude opinion not available"
+fi
+if [[ -z "$GEMINI_OPINION" ]]; then
+    echo "Warning: Gemini opinion not available"
+fi
+```
+
+#### 2.4 Analyze and Synthesize
+
+Compare the three independent opinions:
+
+1. **Identify Common Ground**
+   - What do all 3 agents agree on?
+   - Shared key points and recommendations
+
+2. **Highlight Differences**
+   - Where do opinions diverge?
+   - Different priorities or concerns
+
+3. **Extract Unique Insights**
+   - Unique perspective from each agent
+   - Novel arguments or considerations
+
+4. **Synthesize Recommendation**
+   - Weighted synthesis based on agreement
+   - Address conflicting viewpoints
+   - Provide balanced final recommendation
+
+#### 2.5 Present Results to User
+
+Format the analysis as a comprehensive debate summary:
+
+**Output Template:**
+```markdown
+# AI Debate Results
+
+## Question
+[Original clarified question]
+
+## Context Summary
+[Brief recap of constraints from Phase 1]
+
+---
+
+## Independent Opinions
+
+### Codex Analysis
+[Codex's complete opinion]
+
+**Key Strengths:** [Highlight 2-3 strong points]
+
+---
+
+### Claude Analysis
+[Claude's complete opinion]
+
+**Key Strengths:** [Highlight 2-3 strong points]
+
+---
+
+### Gemini Analysis
+[Gemini's complete opinion]
+
+**Key Strengths:** [Highlight 2-3 strong points]
+
+---
+
+## Synthesis
+
+### Areas of Agreement ✅
+[Points where all 3 agents agree]
+
+### Areas of Disagreement ⚠️
+[Points where opinions diverge, with explanations]
+
+### Unique Insights 💡
+- **Codex:** [Unique perspective]
+- **Claude:** [Unique perspective]
+- **Gemini:** [Unique perspective]
+
+---
+
+## Final Recommendation
+
+[Synthesized recommendation considering all viewpoints]
+
+**Confidence Level:** [High/Medium/Low based on agreement]
+
+**Next Steps:**
+1. [Actionable step 1]
+2. [Actionable step 2]
+```
 
 ---
 
@@ -108,17 +286,32 @@ You: "📋 **제 이해:**
 
 ### ✅ Do's
 
+**Phase 1 (Clarification):**
 1. **Always clarify first** - Even if it seems obvious
 2. **Use the templates** - Maintains consistency
 3. **Wait for user response** - Don't assume or skip
 4. **Summarize if info is complete** - Builds trust
 
+**Phase 2 (Debate):**
+1. **Include all Phase 1 context in prompts** - Don't lose clarified info
+2. **Use parallel execution** - Launch all 3 agents with `&` and `wait`
+3. **Capture session IDs** - Needed for potential follow-up rounds
+4. **Analyze objectively** - Don't bias toward any single agent
+5. **Highlight both agreement and disagreement** - Both are valuable
+
 ### ❌ Don'ts
 
+**Phase 1 (Clarification):**
 1. **Don't skip to debate** - Clarification is mandatory
 2. **Don't ask too many questions** - 2-3 max
 3. **Don't make assumptions** - Ask or state clearly
 4. **Don't proceed without confirmation** - Wait for user "yes"
+
+**Phase 2 (Debate):**
+1. **Don't run sessions sequentially** - Use parallel execution for unbiased opinions
+2. **Don't cherry-pick opinions** - Present all viewpoints fairly
+3. **Don't ignore minority opinions** - Unique insights are valuable
+4. **Don't skip synthesis** - Users need actionable conclusions
 
 ---
 
@@ -169,22 +362,52 @@ You: "감사합니다. 명확화가 완료되었습니다.
 
 ---
 
-## Phase 1 Testing
+## Testing & Validation
 
-**Goal:** Validate clarification workflow only
+### Phase 1 (Clarification) - ✅ Complete
 
 **Success Criteria:**
-- [ ] Consistently detects when clarification is needed
-- [ ] Asks appropriate 2-3 questions
-- [ ] Shows understanding summary when info is complete
-- [ ] Waits for user confirmation
-- [ ] No errors or confusion in flow
+- [x] Consistently detects when clarification is needed
+- [x] Asks appropriate 2-3 questions
+- [x] Shows understanding summary when info is complete
+- [x] Waits for user confirmation
+- [x] No errors or confusion in flow
 
-**Next Phase:** Add actual AI debate execution after Phase 1 validates
+### Phase 2 (Debate) - ✅ Complete
+
+**Success Criteria:**
+- [x] Successfully launches 3 sessions in parallel
+- [x] All sessions complete without errors
+- [x] Results are properly collected
+- [ ] Synthesis identifies agreement/disagreement correctly (TODO: Phase 2.4-2.5)
+- [ ] Output is clear and actionable (TODO: Phase 2.4-2.5)
 
 ---
 
-**Version:** 2.0.0-phase1
-**Status:** Testing (Clarification only)
-**Focus:** Get clarification right before adding debate logic
+## Bundled Scripts
+
+This skill includes helper scripts in the `scripts/` directory:
+
+### Session Managers
+- **`codex-session.sh`** - Manages stateful Codex CLI sessions
+- **`claude-code-session.sh`** - Manages stateful Claude Code CLI sessions
+- **`gemini-cli-session.sh`** - Manages stateful Gemini CLI sessions
+
+All session managers provide identical API: `new`, `continue`, `info`, `list`, `clean`
+
+### Orchestration
+- **`collect-opinions.sh`** - Main orchestrator that:
+  - Launches 3 AI agents in parallel
+  - Waits for all to complete
+  - Collects opinions from session directories
+  - Returns structured output with session IDs and status
+
+**Usage**: Scripts are executed by Claude during Phase 2 debate workflow. See section 2.2 for details.
+
+---
+
+**Version:** 2.0.0-phase2
+**Status:** Phase 2.1-2.3 Complete (Opinion Collection Working)
+**Next:** Phase 2.4-2.5 (Analysis & Synthesis)
 **Created:** 2025-11-02
+**Updated:** 2025-11-03 (Phase 2.1-2.3 tested and working)
