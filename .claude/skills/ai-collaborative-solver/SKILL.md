@@ -36,7 +36,35 @@ Use this skill for:
 - Security and compliance decisions
 
 **How to activate:**
-To activate this skill, execute `.claude/skills/ai-collaborative-solver/scripts/ai-debate.sh` using the Bash tool.
+
+When users request AI debate or technical comparisons:
+
+1. **Pre-Clarification Stage (V3.0)**:
+   - If problem statement has missing information → Script generates 1-3 clarifying questions
+   - If problem statement is complete → Script shows understanding summary and asks for confirmation (y/n/a)
+   - User interaction happens automatically through the script
+
+2. **Execute the debate**:
+   ```bash
+   bash .claude/skills/ai-collaborative-solver/scripts/ai-debate.sh "<problem>" --auto --mode balanced
+   ```
+
+   **Important**: Do NOT add `--skip-clarify` flag unless user explicitly requests to skip clarification. The pre-clarification stage improves debate quality by gathering context.
+
+3. **The script will**:
+   - Run pre-clarification (question mode or understanding confirmation)
+   - Auto-select best AI model based on problem type
+   - Execute multi-round debate
+   - Generate report in `.debate-reports/`
+
+**Example flow:**
+```
+User: "Django performance issue (2s → 500ms, 1 week, no DBA)"
+→ Script detects complete information
+→ Shows understanding confirmation: "My understanding: ..."
+→ Asks: "Is this correct? (y/n/a)"
+→ User confirms → Starts debate with enriched context
+```
 
 ---
 
