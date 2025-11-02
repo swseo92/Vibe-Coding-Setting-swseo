@@ -71,7 +71,8 @@ if [[ -f "$PRE_CLARIFY_SCRIPT" ]] && [[ -t 0 ]]; then
     CLARIFIED_OUTPUT_FILE="$STATE_DIR/clarified_problem.txt"
 
     # Run pre-clarify script (it will handle user interaction)
-    if bash "$PRE_CLARIFY_SCRIPT" "$PROBLEM" "$CLARIFIED_OUTPUT_FILE" > "$STATE_DIR/pre-clarify-log.txt" 2>&1; then
+    # Use tee to display output to user AND save to log file
+    if bash "$PRE_CLARIFY_SCRIPT" "$PROBLEM" "$CLARIFIED_OUTPUT_FILE" 2>&1 | tee "$STATE_DIR/pre-clarify-log.txt"; then
         # Use clarified problem if available
         if [[ -f "$CLARIFIED_OUTPUT_FILE" ]]; then
             CLARIFIED_PROBLEM=$(cat "$CLARIFIED_OUTPUT_FILE")

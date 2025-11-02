@@ -17,6 +17,7 @@ TIMESTAMP=$(date +%Y-%m-%d-%H-%M)
 MODEL="auto"
 MODE="balanced"
 ENABLE_SEARCH=false
+SKIP_CLARIFY=false
 PROBLEM=""
 
 # Check registry exists
@@ -49,6 +50,10 @@ while [[ $# -gt 0 ]]; do
             MODEL="auto"
             shift
             ;;
+        --skip-clarify)
+            SKIP_CLARIFY=true
+            shift
+            ;;
         --help|-h)
             cat << EOF
 AI Collaborative Solver - Unified Multi-Model Debate System
@@ -61,6 +66,7 @@ Options:
   --mode <simple|balanced|deep>       Debate mode (default: balanced)
   --search                            Enable Google Search (Gemini only)
   --auto                              Auto-select best model for problem
+  --skip-clarify                      Skip pre-clarification questions
   --help, -h                          Show this help
 
 Examples:
@@ -140,6 +146,32 @@ fi
 # Create debate reports directory
 mkdir -p "$DEBATE_DIR"
 
+# ============================================================
+# Pre-Clarification Stage (V3.0)
+# ============================================================
+if [[ "$SKIP_CLARIFY" == "false" ]] && [[ -t 0 ]]; then
+    # Interactive mode and clarification not skipped
+    PRE_CLARIFY_SCRIPT="$SCRIPT_DIR/pre-clarify.sh"
+
+    if [[ -f "$PRE_CLARIFY_SCRIPT" ]]; then
+        echo "=================================================="
+        echo "Pre-Clarification Stage V3.0"
+        echo "=================================================="
+        echo ""
+
+        # Run pre-clarify (it handles auto-skip internally)
+        CLARIFIED_PROBLEM=$(bash "$PRE_CLARIFY_SCRIPT" "$PROBLEM" "" "$SKIP_CLARIFY" 2>&1 | tee /dev/tty)
+
+        # Use clarified problem if different
+        if [[ -n "$CLARIFIED_PROBLEM" ]] && [[ "$CLARIFIED_PROBLEM" != "$PROBLEM" ]]; then
+            PROBLEM="$CLARIFIED_PROBLEM"
+            echo ""
+            echo "✓ Using enriched problem statement for debate."
+            echo ""
+        fi
+    fi
+fi
+
 # Output file
 REPORT_FILE="$DEBATE_DIR/${TIMESTAMP}-ai-debate-${MODEL}.md"
 
@@ -150,6 +182,7 @@ echo "Problem: $PROBLEM"
 echo "Model: $MODEL"
 echo "Mode: $MODE"
 echo "Google Search: $([ "$ENABLE_SEARCH" = true ] && echo "Enabled" || echo "Disabled")"
+echo "Clarification: $([ "$SKIP_CLARIFY" = true ] && echo "Skipped" || echo "Enabled")"
 echo "Report: $REPORT_FILE"
 echo "=================================================="
 echo ""
