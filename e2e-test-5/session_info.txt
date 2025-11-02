@@ -1,5 +1,0 @@
-Problem: REST API vs GraphQL 실무 선택
-Models: mock
-Mode: simple
-Rounds: 3
-Started: 2025년 11월  1일 토 오후 12:00:59

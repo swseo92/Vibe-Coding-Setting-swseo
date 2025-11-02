@@ -6,7 +6,22 @@ Claude Code를 활용한 개인 개발환경 설정 및 프로젝트 템플릿�
 
 ---
 
-## ⚠️ 중요: 커밋 전 확인사항
+## ⚠️ CRITICAL: 필수 규칙
+
+**작업 시작 전 반드시 읽어야 할 규칙:**
+
+### 1. 임시 파일/폴더 생성 규칙 (MANDATORY)
+
+**🚨 모든 임시/테스트/실험용 파일과 폴더는 반드시 `tmp/` 폴더에만 생성합니다.**
+
+- ✅ **DO**: `tmp/test-feature.py`, `tmp/experiment/`, `tmp/report.md`
+- ❌ **NEVER**: `test-feature.py`, `experiment/`, `report.md` (루트에 직접 생성 금지)
+
+**이유:** 보안 리스크, Git 오염, 관리 불가 방지 (AI 토론 검증됨, 85% 신뢰도)
+
+**자세한 내용:** [임시 파일/폴더 관리 규칙](#️-important-임시-파일폴더-관리-규칙) 섹션 참조
+
+### 2. 커밋 전 확인사항
 
 **변경사항을 커밋하기 전에 이 문서(`claude.md`)를 검토하고 필요시 업데이트하세요.**
 
@@ -457,37 +472,160 @@ git pull
 
 ---
 
-## 테스트 환경 관리
+## ⚠️ IMPORTANT: 임시 파일/폴더 관리 규칙
 
-### tmp/ 폴더 사용
+**CRITICAL RULE: 모든 임시 파일과 폴더는 MUST be created in `tmp/` directory ONLY.**
 
-**새로운 기능이나 설정을 테스트할 때는 반드시 `tmp/` 폴더를 사용하세요.**
+### Why This Rule Exists (보안 & 관리)
+
+AI 토론 결과 (신뢰도 85%):
+- **보안 위험**: 무분별한 파일 생성 → 정보 유출, 디스크 고갈 DoS 취약점
+- **관리 불가**: 200+ 임시 파일 생성 시 중요 파일 구분 불가
+- **Git 오염**: 불필요한 파일이 저장소에 추적됨
+- **감사 어려움**: 분산된 임시 파일로 인한 유지보수 복잡도 증가
+
+### MANDATORY tmp/ 폴더 규칙
+
+**모든 임시 생성물은 `tmp/` 폴더에만 생성합니다:**
 
 ```bash
-# 템플릿 테스트
+# ✅ CORRECT: tmp/ 폴더 내부에 생성
 mkdir -p tmp/test-python-template
 cp -r templates/python/* tmp/test-python-template/
 cd tmp/test-python-template
 uv sync
-# 테스트 진행...
+pytest
 
-# 완료 후 정리
+# ✅ CORRECT: 정리
 cd ../..
 rm -rf tmp/test-python-template
 ```
 
-**규칙**:
-- ✅ **모든 테스트는 `tmp/` 폴더 내부에서 수행**
-- ✅ `tmp/` 폴더는 `.gitignore`에 포함되어 git에 추적되지 않음
-- ✅ 테스트 완료 후 정리 권장 (선택사항)
-- ❌ 저장소 루트에 직접 테스트 파일/폴더 생성 금지
+```bash
+# ❌ WRONG: 루트에 직접 생성 (절대 금지)
+mkdir test-project        # ❌ NEVER DO THIS
+touch test-script.py      # ❌ NEVER DO THIS
+```
 
-**예시**:
-- ✅ `tmp/python-test/`
-- ✅ `tmp/init-workspace-test/`
-- ✅ `tmp/jupyter-test/`
-- ❌ `test-project/` (루트에 직접 생성 금지)
-- ❌ `example-project/` (루트에 직접 생성 금지)
+### 적용 대상 (All Temporary Artifacts)
+
+**MUST use `tmp/` for ALL of the following:**
+
+| 유형 | 설명 | 올바른 위치 | 잘못된 위치 |
+|------|------|-------------|-------------|
+| **테스트 스크립트** | `test-*.py`, `*_test.py` | `tmp/test-feature.py` | `test-feature.py` ❌ |
+| **실험용 폴더** | E2E 테스트, 세션 폴더 | `tmp/e2e-test-1/` | `e2e-test-1/` ❌ |
+| **리포트/분석** | `*-report.md`, `*-analysis.md` | `tmp/feature-report.md` | `feature-report.md` ❌ |
+| **세션 데이터** | `debate-session/`, `test-session/` | `tmp/debate-session/` | `debate-session/` ❌ |
+| **임시 출력** | `.test-outputs/`, `.debug/` | `tmp/.test-outputs/` | `.test-outputs/` ❌ |
+| **백업 파일** | `*.backup`, `*.bak` | `tmp/config.backup` | `config.backup` ❌ |
+| **임시 데이터** | JSON, log, CSV 등 실험 데이터 | `tmp/test-data.json` | `test-data.json` ❌ |
+
+### 강제 규칙 (Enforcement Rules)
+
+**BEFORE creating any file/folder, ASK:**
+
+1. **Is this temporary or experimental?** → `tmp/`
+2. **Is this for testing a feature?** → `tmp/`
+3. **Will this be deleted later?** → `tmp/`
+4. **Is this a one-time analysis?** → `tmp/`
+
+**ONLY create in root directory if:**
+- ✅ It's a permanent project configuration (`claude.md`, `.gitignore`, `pytest.ini`)
+- ✅ It's official documentation (`README.md`, `docs/`)
+- ✅ It's a production template (`templates/`)
+
+**When in doubt → USE `tmp/`**
+
+### 올바른 사용 패턴
+
+```bash
+# ✅ Pattern 1: 기능 테스트
+tmp/
+├── feature-auth-test/
+│   ├── test_auth.py
+│   ├── mock_data.json
+│   └── results.log
+
+# ✅ Pattern 2: 실험
+tmp/
+├── experiment-caching/
+│   ├── benchmark.py
+│   ├── cache-report.md
+│   └── performance.csv
+
+# ✅ Pattern 3: 토론/분석
+tmp/
+└── debate-session-20251102/
+    ├── round1.txt
+    ├── round2.txt
+    └── summary.md
+```
+
+### 정리 가이드 (Cleanup Guide)
+
+**정기적 정리:**
+
+```bash
+# 전체 tmp/ 정리 (주의: 모든 내용 삭제)
+rm -rf tmp/*
+
+# 특정 패턴만 정리
+rm -rf tmp/test-*
+rm -rf tmp/*-session/
+rm -f tmp/*.md
+
+# 7일 이상 된 파일만 삭제
+find tmp/ -mtime +7 -delete
+```
+
+**`.gitignore` 확인:**
+
+```bash
+# tmp/ 폴더가 이미 .gitignore에 포함되어 있는지 확인
+grep "^tmp/" .gitignore
+
+# 없으면 추가
+echo "tmp/" >> .gitignore
+```
+
+### 위반 시 결과 (Violation Consequences)
+
+**If you create files outside `tmp/`:**
+
+1. **즉시 정리 필요** - 사용자가 수동으로 200+ 파일 검토/삭제
+2. **Git 오염** - 불필요한 파일이 untracked files로 나타남
+3. **보안 리스크** - 민감 데이터가 의도치 않게 노출될 수 있음
+4. **저장소 신뢰도 저하** - 프로젝트 구조 파악 불가
+
+### 예외 처리 (Legitimate Exceptions)
+
+**드문 경우지만, 다음의 경우 루트 생성 허용:**
+
+1. **영구적 설정 파일** - `pyproject.toml`, `pytest.ini` 등
+2. **공식 문서** - `README.md`, `CHANGELOG.md`
+3. **프로덕션 코드** - `src/`, `tests/` (영구 테스트 코드)
+
+**이런 경우에도 먼저 사용자에게 확인 요청!**
+
+### Quick Reference
+
+```bash
+# ✅ DO: Always use tmp/
+mkdir -p tmp/my-test
+cd tmp/my-test
+python test.py
+
+# ❌ DON'T: Never create in root
+mkdir my-test          # WRONG
+touch test.py          # WRONG
+```
+
+**Remember: When in doubt, use `tmp/`**
+
+---
+
+**AI 토론 근거:** Gemini 2.5 Pro 분석 (balanced mode, 4 rounds, 85% confidence)
 
 ---
 
@@ -516,6 +654,6 @@ rm -rf tmp/test-python-template
 
 ---
 
-**마지막 업데이트**: 2025-10-25
+**마지막 업데이트**: 2025-11-02 (임시 파일 관리 규칙 추가 - AI 토론 기반)
 **관리자**: swseo
 **저장소**: https://github.com/swseo92/Vibe-Coding-Setting-swseo

@@ -1,5 +1,0 @@
-Problem: Redis vs Memcached: Which is better for API response caching?
-Models: codex
-Mode: simple
-Rounds: 3
-Started: 2025년 10월 31일 금 오후 11:17:47

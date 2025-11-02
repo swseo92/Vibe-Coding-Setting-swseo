@@ -1,5 +1,0 @@
-Problem: Django vs FastAPI 성능 비교
-Models: mock
-Mode: simple
-Rounds: 3
-Started: 2025년 11월  1일 토 오전 11:58:57
