@@ -89,17 +89,133 @@ echo "  Question count: $QUESTION_COUNT"
 echo "  Reason: $REASON"
 echo ""
 
-# Auto-skip if no clarification needed
+# Understanding Confirmation Mode (instead of auto-skip)
 if [[ "$NEEDS_CLARIFICATION" == "false" ]] || [[ "$QUESTION_COUNT" == "0" ]]; then
-    echo "✓ Problem statement is clear and complete. Skipping clarification."
+    echo "✓ Problem statement appears complete."
+    echo ""
+    echo "=================================================="
+    echo "Understanding Confirmation"
+    echo "=================================================="
     echo ""
 
-    if [[ -n "$OUTPUT_FILE" ]]; then
-        echo "$PROBLEM" > "$OUTPUT_FILE"
+    # Generate understanding summary using Claude
+    UNDERSTANDING_PROMPT="You have received this problem statement:
+
+**Problem:** $PROBLEM
+
+The statement appears complete with sufficient information. Please:
+1. Summarize your understanding of the problem
+2. List key constraints and assumptions you identified
+3. State what decision or solution is being requested
+
+**Output Format:**
+📋 **My Understanding:**
+- [Main problem/decision]
+
+🎯 **Identified Constraints:**
+- [Constraint 1]
+- [Constraint 2]
+...
+
+🔍 **Assumptions I'm Making:**
+- [Assumption 1]
+- [Assumption 2]
+...
+
+Keep it concise (3-5 bullet points each)."
+
+    # Call Claude for understanding summary
+    if command -v claude &> /dev/null; then
+        UNDERSTANDING=$(echo "$UNDERSTANDING_PROMPT" | claude --print 2>/dev/null || echo "")
+    else
+        UNDERSTANDING="[Claude CLI not available - proceeding with original problem]"
     fi
 
-    echo "$PROBLEM"
-    exit 0
+    # Validate output
+    if [[ -z "$UNDERSTANDING" ]]; then
+        UNDERSTANDING="📋 Problem: $PROBLEM
+🎯 Constraints: [Will be identified during debate]
+🔍 Assumptions: [Will be validated during debate]"
+    fi
+
+    echo "$UNDERSTANDING"
+    echo ""
+    echo "=================================================="
+    echo ""
+
+    # Check if running in interactive mode
+    if [[ -t 0 ]]; then
+        # Ask for confirmation
+        echo "Is this understanding correct? (y/n/add info)"
+        read -p "Your choice [y/n/a]: " -n 1 -r CONFIRM
+        echo ""
+        echo ""
+
+        case "$CONFIRM" in
+            n|N)
+                echo "Let me ask clarifying questions instead..."
+                echo ""
+                # Force question mode
+                QUESTION_COUNT=2
+                ;;
+            a|A)
+                echo "Please provide additional information or corrections:"
+                echo "(Press Ctrl+D when done)"
+                echo "---"
+                ADDITIONAL_INFO=$(cat)
+                echo "---"
+                echo ""
+
+                # Build enriched problem
+                ENRICHED_PROBLEM="**Original Problem:**
+$PROBLEM
+
+**Your Clarification:**
+$ADDITIONAL_INFO
+
+**AI Understanding:**
+$UNDERSTANDING"
+
+                if [[ -n "$OUTPUT_FILE" ]]; then
+                    echo "$ENRICHED_PROBLEM" > "$OUTPUT_FILE"
+                fi
+
+                echo "✓ Using enriched problem with your clarifications."
+                echo ""
+                echo "$ENRICHED_PROBLEM"
+                exit 0
+                ;;
+            *)
+                # y/Y or default - confirmed
+                echo "✓ Understanding confirmed. Proceeding with debate..."
+                echo ""
+
+                # Build enriched problem with understanding
+                ENRICHED_PROBLEM="**Problem:**
+$PROBLEM
+
+**Confirmed Understanding:**
+$UNDERSTANDING"
+
+                if [[ -n "$OUTPUT_FILE" ]]; then
+                    echo "$ENRICHED_PROBLEM" > "$OUTPUT_FILE"
+                fi
+
+                echo "$ENRICHED_PROBLEM"
+                exit 0
+                ;;
+        esac
+    else
+        # Non-interactive mode - proceed without confirmation
+        echo "Non-interactive mode - proceeding with debate..."
+
+        if [[ -n "$OUTPUT_FILE" ]]; then
+            echo "$PROBLEM" > "$OUTPUT_FILE"
+        fi
+
+        echo "$PROBLEM"
+        exit 0
+    fi
 fi
 
 # Step 2: Generate dynamic questions based on problem type
