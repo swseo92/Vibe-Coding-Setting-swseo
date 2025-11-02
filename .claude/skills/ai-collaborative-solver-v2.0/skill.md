@@ -1,153 +1,106 @@
 ---
 name: ai-collaborative-solver-v2.0
-description: AI debate skill with agent-driven pre-clarification. Use when users request technical comparisons, architecture decisions, or "AI debate/토론" for problem solving. V2.0 focuses on simplicity and clarity.
+description: AI debate skill with pre-clarification. Use when users request "AI 토론", "AI debate", or technical comparisons. V2.0 focuses on clarification quality first.
 ---
 
 # AI Collaborative Solver V2.0
 
-**Simple, Agent-Driven Multi-Model Debate**
-
-*V2.0 Design Philosophy: Start simple, add incrementally*
+**Phase 1: Pre-Clarification Only**
 
 ---
 
-## When to Use This Skill
+## When to Use
 
-Use when users request:
+Trigger when users request:
 - "AI 토론" / "AI debate"
-- Technical comparisons ("Django vs FastAPI", "Redis vs Memcached")
+- "토론해서" / "debate"
+- Technical comparisons ("Django vs FastAPI")
 - Architecture decisions
-- Performance optimization strategies
-- Technology selection with trade-off analysis
-
-**Trigger keywords:** "ai 토론", "ai debate", "토론해서", "비교해줘", "should I use"
+- Performance optimization advice
 
 ---
 
-## How to Activate (V2.0 Simplified)
+## How to Activate
 
-### Step 1: Pre-Clarification (You handle this)
+**Step 1: Always Start with Pre-Clarification**
 
-**Always start by gathering context before running the debate.**
+Before doing anything else, gather context from the user.
 
-#### If user provides minimal information:
+### If Information is Missing
 
-**Ask 2-3 clarifying questions:**
+Ask 2-3 clarifying questions:
 
+**Template:**
 ```
-To run an effective AI debate, I need to clarify:
+AI 토론을 위해 몇 가지 확인하고 싶습니다:
 
-1. **Constraints & Context:**
-   - Tech stack, versions?
-   - Timeline, budget, team size?
-
-2. **Goals:**
-   - What problem are you solving?
-   - What does success look like?
-
-3. **Current State:**
-   - What's your current situation?
-   - Any specific pain points?
+1. [Tech stack / versions]
+2. [Timeline / budget / team constraints]
+3. [Goals / success criteria]
 ```
 
 **Example:**
 ```
-User: "Django vs FastAPI 선택"
+User: "Django vs FastAPI 선택 고민"
 
 You: "AI 토론을 위해 몇 가지 확인하고 싶습니다:
-1. 프로젝트 규모와 팀 구성은? (팀 크기, 경험 수준)
-2. 주요 요구사항은? (성능, 생산성, 학습곡선 중 우선순위)
-3. 기존 스택이 있나요? (Python 버전, 현재 프레임워크)"
 
-User: [답변]
+1. 프로젝트 규모와 유형은? (팀 크기, 예상 사용자 수)
+2. 팀의 기술 스택 경험은? (Python 수준, 프레임워크 경험)
+3. 주요 우선순위는? (개발 속도, 성능, 학습곡선 중 중요한 것)"
 ```
 
-#### If user provides complete information:
+### If Information is Complete
 
-**Show understanding summary and confirm:**
+Show understanding summary and confirm:
 
+**Template:**
 ```
-📋 **My Understanding:**
-- [Main problem/decision]
+📋 **제 이해:**
+- [Main problem/goal]
 
-🎯 **Key Constraints:**
+🎯 **파악한 제약사항:**
 - [Constraint 1]
 - [Constraint 2]
 
-🔍 **Assumptions:**
+🔍 **전제 조건:**
 - [Assumption 1]
 
-**Is this correct? Anything to add or correct?**
+맞나요? 추가하거나 수정할 내용이 있나요?
 ```
 
 **Example:**
 ```
 User: "Django 4.2 + PostgreSQL 14 성능 개선 (2초→500ms, 1주일, DBA 없음)"
 
-You: "📋 My Understanding:
-- Optimize Django 4.2 API: 2s → 500ms (75% improvement)
+You: "📋 **제 이해:**
+- Django 4.2 API 응답시간을 2초에서 500ms로 개선
 
-🎯 Key Constraints:
-- Timeline: 1 week
-- No DBA (developer-level optimizations only)
-- Tech stack: Django 4.2, PostgreSQL 14
+🎯 **파악한 제약사항:**
+- 기한: 1주일
+- 인력: DBA 없음 (개발자 수준 최적화만 가능)
+- 기술: Django 4.2, PostgreSQL 14
 
-🔍 Assumptions:
-- Likely ORM N+1 query issues
-- Infrastructure changes not in scope
-- Code-level optimizations prioritized
+🔍 **전제 조건:**
+- ORM N+1 쿼리 문제 가능성
+- 코드 레벨 최적화 위주
+- 인프라 변경 범위 제한적
 
-Is this correct?"
-
-User: "네 맞습니다"
+맞나요? 추가하거나 수정할 내용이 있나요?"
 ```
 
 ---
 
-### Step 2: Execute AI Debate
+## Step 2: After Clarification
 
-Build enriched problem statement from clarification, then run:
+**Currently in Phase 1:** After gathering clarification, inform the user:
 
-```bash
-bash .claude/skills/ai-collaborative-solver-v2.0/scripts/ai-debate.sh \
-  "<problem with all context>" \
-  --auto \
-  --mode balanced
+```
+"명확화가 완료되었습니다. 현재 V2.0 Phase 1이라 실제 AI 토론 기능은 개발 중입니다.
+하지만 명확화 프로세스가 잘 작동하는지 확인했습니다!"
 ```
 
-**Problem statement format:**
-```
-"<Original problem>. Context: <tech stack, versions>. Constraints: <timeline, team, budget>. Goals: <success criteria>. Current state: <pain points, bottlenecks>."
-```
-
-**Example:**
-```bash
-bash .claude/skills/ai-collaborative-solver-v2.0/scripts/ai-debate.sh \
-  "Django 4.2 + PostgreSQL 14 API performance optimization: 2s → 500ms. Context: Django 4.2, PostgreSQL 14, typical ORM usage. Constraints: 1 week timeline, no DBA available (developer-level changes only). Goals: Achieve 75% response time reduction with code-level optimizations. Current state: Suspected N+1 queries, no query optimization yet." \
-  --auto \
-  --mode balanced
-```
-
----
-
-### Step 3: Summarize Results
-
-After debate completes:
-1. Read the report from `.debate-reports/`
-2. Summarize key findings:
-   - Recommended solution
-   - Key rationale (why this approach)
-   - Implementation steps (3-5 concrete actions)
-   - Risks & mitigations
-   - Confidence level
-
----
-
-## Modes
-
-- `simple`: 3 rounds, ~5-8 min (quick decisions)
-- `balanced`: 4 rounds, ~10-15 min (default, recommended)
-- `deep`: 6 rounds, ~15-25 min (complex problems)
+**Future (Phase 2+):** Will execute actual AI debate with the enriched context.
 
 ---
 
@@ -155,78 +108,83 @@ After debate completes:
 
 ### ✅ Do's
 
-1. **Always clarify first** - Don't skip to debate without context
-2. **Use the templates** - 2-3 questions or understanding summary
-3. **Build enriched problem statement** - Include all clarified context
-4. **Summarize for user** - Don't just show raw report
+1. **Always clarify first** - Even if it seems obvious
+2. **Use the templates** - Maintains consistency
+3. **Wait for user response** - Don't assume or skip
+4. **Summarize if info is complete** - Builds trust
 
 ### ❌ Don'ts
 
-1. **Don't skip clarification** - Even if it seems obvious
-2. **Don't run debate without context** - Quality depends on input quality
-3. **Don't assume** - When in doubt, ask user
-4. **Don't forget to summarize** - Raw report is too long
+1. **Don't skip to debate** - Clarification is mandatory
+2. **Don't ask too many questions** - 2-3 max
+3. **Don't make assumptions** - Ask or state clearly
+4. **Don't proceed without confirmation** - Wait for user "yes"
 
 ---
 
-## V2.0 Design Notes
+## Examples
 
-**What's different from V1.0:**
-- ❌ No pre-clarify.sh script (too complex, stdin/TTY issues)
-- ❌ No complex facilitator logic (keep simple for now)
-- ✅ Agent-driven clarification (Claude Code handles it)
-- ✅ Single script: ai-debate.sh (just run the debate)
-- ✅ Focus: Get clarification right first, add features later
-
-**Next steps (not in V2.0 yet):**
-- Mid-debate user input
-- Coverage monitoring
-- Quality gates
-- Playbook system
-
-**Philosophy:** Start simple, validate, then iterate.
-
----
-
-## Example Complete Flow
+### Example 1: Minimal Info → Ask Questions
 
 ```
-User: "Redis vs Memcached 선택 고민"
+User: "Redis vs Memcached"
 
 You: "AI 토론을 위해 몇 가지 확인하고 싶습니다:
-1. 주요 사용 용도는? (캐싱, 세션 저장, 메시지 큐 등)
-2. 예상 규모는? (초당 요청 수, 데이터 크기, TTL 요구사항)
-3. 팀의 운영 경험은? (Redis/Memcached 경험 유무)"
 
-User: "세션 저장용이고요, 초당 1000 req 정도, 데이터는 작지만 TTL 30분 필요. 팀은 Redis 경험 없음."
+1. 주요 사용 목적은? (캐싱, 세션 저장, 메시지 큐 등)
+2. 예상 규모는? (초당 요청 수, 데이터 크기)
+3. 팀의 운영 경험은? (Redis/Memcached 사용 경험 유무)"
 
-You: "감사합니다. AI 토론을 시작하겠습니다."
+User: "세션 저장용이고, 초당 1000 req, 데이터는 작음. Redis 경험 없음."
 
-[Runs debate with enriched context]
+You: "감사합니다. 명확화가 완료되었습니다.
+(V2.0 Phase 1이라 실제 토론 기능은 개발 중입니다.)"
+```
 
-You: "토론 결과 요약:
+### Example 2: Complete Info → Confirm Understanding
 
-**추천:** Memcached
-**이유:**
-- 세션 저장 단순 용도에 충분
-- Redis 운영 학습곡선 불필요
-- 더 가벼움 (메모리 효율)
+```
+User: "Next.js 14 vs Remix, 5인 팀, React 경험 많음, SEO 중요, 3개월 타임라인"
 
-**구현 단계:**
-1. Memcached 설치 및 기본 설정
-2. Django cache backend 연결
-3. 세션 middleware 설정
+You: "📋 **제 이해:**
+- Next.js 14와 Remix 중 선택
 
-**주의사항:**
-- 장애 복구 전략 필요 (Memcached는 persistence 없음)
-- 향후 복잡한 기능 필요시 Redis 전환 고려
+🎯 **파악한 제약사항:**
+- 팀: 5명, React 경험 풍부
+- 요구사항: SEO 중요
+- 기한: 3개월
 
-전체 리포트: .debate-reports/2025-11-02-XX-XX-ai-debate-codex.md"
+🔍 **전제 조건:**
+- SSR/SSG 필요
+- 팀 학습곡선 고려 필요
+- 프로덕션 안정성 중요
+
+맞나요?"
+
+User: "네 맞습니다"
+
+You: "감사합니다. 명확화가 완료되었습니다.
+(V2.0 Phase 1이라 실제 토론 기능은 개발 중입니다.)"
 ```
 
 ---
 
-**Version:** 2.0.0
-**Status:** Experimental (Simplified redesign)
-**Focus:** Agent-driven pre-clarification only
+## Phase 1 Testing
+
+**Goal:** Validate clarification workflow only
+
+**Success Criteria:**
+- [ ] Consistently detects when clarification is needed
+- [ ] Asks appropriate 2-3 questions
+- [ ] Shows understanding summary when info is complete
+- [ ] Waits for user confirmation
+- [ ] No errors or confusion in flow
+
+**Next Phase:** Add actual AI debate execution after Phase 1 validates
+
+---
+
+**Version:** 2.0.0-phase1
+**Status:** Testing (Clarification only)
+**Focus:** Get clarification right before adding debate logic
 **Created:** 2025-11-02
