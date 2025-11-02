@@ -150,9 +150,15 @@ mkdir -p "$DEBATE_DIR"
 # Pre-Clarification Stage (V3.0)
 # ============================================================
 # Note: Always run unless explicitly skipped (even in Claude Code environment)
+echo "[DEBUG] SKIP_CLARIFY='$SKIP_CLARIFY'" >&2
+
 if [[ "$SKIP_CLARIFY" == "false" ]]; then
+    echo "[DEBUG] Pre-clarification enabled" >&2
     # Clarification enabled (will handle interactivity internally)
     PRE_CLARIFY_SCRIPT="$SCRIPT_DIR/pre-clarify.sh"
+
+    echo "[DEBUG] PRE_CLARIFY_SCRIPT='$PRE_CLARIFY_SCRIPT'" >&2
+    echo "[DEBUG] File exists check: $([ -f "$PRE_CLARIFY_SCRIPT" ] && echo 'YES' || echo 'NO')" >&2
 
     if [[ -f "$PRE_CLARIFY_SCRIPT" ]]; then
         echo "=================================================="
@@ -170,7 +176,11 @@ if [[ "$SKIP_CLARIFY" == "false" ]]; then
             echo "✓ Using enriched problem statement for debate."
             echo ""
         fi
+    else
+        echo "[DEBUG] Pre-clarify script NOT FOUND!" >&2
     fi
+else
+    echo "[DEBUG] Pre-clarification DISABLED (SKIP_CLARIFY='$SKIP_CLARIFY')" >&2
 fi
 
 # Output file
