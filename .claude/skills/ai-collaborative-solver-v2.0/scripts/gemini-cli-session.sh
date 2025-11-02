@@ -164,12 +164,14 @@ cmd_new() {
     local output_dir=""
     local output_format="$DEFAULT_OUTPUT_FORMAT"
     local model="$DEFAULT_MODEL"
+    local stdout_only=false
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --output-dir) output_dir="$2"; shift 2 ;;
             --output-format) output_format="$2"; shift 2 ;;
             --model) model="$2"; shift 2 ;;
+            --stdout-only) stdout_only=true; shift ;;
             --quiet) QUIET=true; shift ;;
             --debug) DEBUG=true; shift ;;
             *) log_error "Unknown option: $1"; exit 1 ;;
@@ -182,6 +184,38 @@ cmd_new() {
         exit 1
     fi
 
+    # Fast mode: no file creation, output only
+    if [[ "$stdout_only" == "true" ]]; then
+        debug "Fast mode: stdout-only (no files)"
+
+        # Build command with optional model
+        local cmd=(gemini "$prompt" -o json)
+        [[ -n "$model" ]] && cmd+=(-m "$model")
+
+        # Execute and capture JSON output
+        local json_output
+        if json_output=$("${cmd[@]}" 2>&1); then
+            # Extract and output response text only (no JSON, no files)
+            local result_text=$(python << EOF 2>/dev/null || echo ""
+import json
+try:
+    data = json.loads('''$json_output''')
+    print(data.get('response', '').strip())
+except:
+    pass
+EOF
+)
+
+            echo "$result_text"
+        else
+            log_error "Gemini CLI execution failed"
+            return 1
+        fi
+
+        return 0
+    fi
+
+    # Normal mode: full session management with files
     # Generate session ID first
     local session_id=$(generate_session_id)
     local session_dir="$SESSIONS_DIR/$session_id"

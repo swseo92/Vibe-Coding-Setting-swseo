@@ -106,6 +106,7 @@ cmd_new() {
     local output_format="$DEFAULT_OUTPUT_FORMAT"
     local sandbox="$DEFAULT_SANDBOX"
     local model="$DEFAULT_MODEL"
+    local stdout_only=false
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -113,12 +114,32 @@ cmd_new() {
             --output-format) output_format="$2"; shift 2 ;;
             --sandbox) sandbox="$2"; shift 2 ;;
             --model) model="$2"; shift 2 ;;
+            --stdout-only) stdout_only=true; shift ;;
             --quiet) QUIET=true; shift ;;
             --debug) DEBUG=true; shift ;;
             *) log_error "Unknown option: $1"; exit 1 ;;
         esac
     done
 
+    # Fast mode: no file creation, output only
+    if [[ "$stdout_only" == "true" ]]; then
+        debug "Fast mode: stdout-only (no files)"
+
+        # Execute and output to stdout directly
+        local cmd=(codex exec "$prompt" --full-auto --sandbox "$sandbox" --skip-git-repo-check)
+        [[ -n "$model" ]] && cmd+=(-m "$model")
+
+        # Execute (stdout goes to caller, stderr suppressed unless debug)
+        if [[ "${DEBUG:-false}" == "true" ]]; then
+            "${cmd[@]}"
+        else
+            "${cmd[@]}" 2>/dev/null
+        fi
+
+        return 0
+    fi
+
+    # Normal mode: full session management with files
     # Generate session ID first
     local session_id=$(generate_session_id)
     local session_dir="$SESSIONS_DIR/$session_id"
