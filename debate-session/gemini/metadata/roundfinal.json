@@ -1,0 +1,19 @@
+{
+    "round": final,
+    "agent": "synthesizer",
+    "confidence": 0,
+    "search": {
+        "enabled": true,
+        "used": true,
+        "sources_found": 4
+    },
+    "evidence": {
+        "t1_present": false,
+        "t2_present": false,
+        "t3_present": true
+    },
+    "metrics": {
+        "citations": 7
+    },
+    "timestamp": "2025-11-02T14:07:35Z"
+}

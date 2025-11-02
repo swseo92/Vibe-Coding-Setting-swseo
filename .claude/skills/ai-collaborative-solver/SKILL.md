@@ -39,31 +39,71 @@ Use this skill for:
 
 When users request AI debate or technical comparisons:
 
-1. **Pre-Clarification Stage (V3.0)**:
-   - If problem statement has missing information → Script generates 1-3 clarifying questions
-   - If problem statement is complete → Script shows understanding summary and asks for confirmation (y/n/a)
-   - User interaction happens automatically through the script
+**Step 1: Pre-Clarification (You handle this directly)**
 
-2. **Execute the debate**:
-   ```bash
-   bash .claude/skills/ai-collaborative-solver/scripts/ai-debate.sh "<problem>" --auto --mode balanced
-   ```
+Before running the script, analyze the problem statement:
 
-   **Important**: Do NOT add `--skip-clarify` flag unless user explicitly requests to skip clarification. The pre-clarification stage improves debate quality by gathering context.
+- **If information is missing (constraints, goals, context):**
+  - Ask 1-3 clarifying questions
+  - Categories: Tech stack, timeline, budget, team capability, success criteria
+  - Example: "What's your current response time and target? Which Django/DB versions? Timeline and constraints?"
 
-3. **The script will**:
-   - Run pre-clarification (question mode or understanding confirmation)
-   - Auto-select best AI model based on problem type
-   - Execute multi-round debate
-   - Generate report in `.debate-reports/`
+- **If information appears complete:**
+  - Show your understanding summary in this format:
+    ```
+    📋 My Understanding:
+    - [Main problem/goal]
+
+    🎯 Identified Constraints:
+    - [Constraint 1]
+    - [Constraint 2]
+
+    🔍 Assumptions I'm Making:
+    - [Assumption 1]
+    - [Assumption 2]
+    ```
+  - Ask: "Is this understanding correct? Anything to add or correct?"
+
+- **Then gather user response** before proceeding to Step 2
+
+**Step 2: Execute the debate**
+
+Build enriched problem statement from clarification:
+```bash
+bash .claude/skills/ai-collaborative-solver/scripts/ai-debate.sh \
+  "<original problem + clarification context>" \
+  --auto \
+  --mode balanced \
+  --skip-clarify
+```
+
+**Important:** Always use `--skip-clarify` flag since YOU already handled clarification in Step 1.
+
+**Step 3: Summarize results**
+
+After debate completes, summarize key findings from the report.
 
 **Example flow:**
 ```
-User: "Django performance issue (2s → 500ms, 1 week, no DBA)"
-→ Script detects complete information
-→ Shows understanding confirmation: "My understanding: ..."
-→ Asks: "Is this correct? (y/n/a)"
-→ User confirms → Starts debate with enriched context
+User: "Django performance issue"
+
+You: "To help with the AI debate, I need to clarify:
+1. Current vs target response time?
+2. Django/PostgreSQL versions?
+3. Timeline and team constraints?"
+
+User: "2s → 500ms, Django 4.2 + PG 14, 1 week, no DBA"
+
+You: "📋 My Understanding:
+- Optimize Django 4.2 API: 2s → 500ms (75% improvement)
+🎯 Constraints: 1 week, no DBA (dev-only optimizations)
+🔍 Assumptions: Likely ORM N+1 queries, code-level fixes
+
+Is this correct?"
+
+User: "Yes"
+
+You: [Execute] bash ai-debate.sh "Django 4.2 + PG 14 performance: 2s→500ms, 1 week, no DBA, likely ORM issues" --auto --mode balanced --skip-clarify
 ```
 
 ---

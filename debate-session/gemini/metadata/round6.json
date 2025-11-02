@@ -1,0 +1,19 @@
+{
+    "round": 6,
+    "agent": "integrator",
+    "confidence": 0,
+    "search": {
+        "enabled": true,
+        "used": true,
+        "sources_found": 4
+    },
+    "evidence": {
+        "t1_present": false,
+        "t2_present": true,
+        "t3_present": true
+    },
+    "metrics": {
+        "citations": 18
+    },
+    "timestamp": "2025-11-02T14:07:06Z"
+}

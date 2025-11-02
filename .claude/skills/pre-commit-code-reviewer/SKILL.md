@@ -1,71 +1,70 @@
 ---
 name: pre-commit-code-reviewer
-description: Perform comprehensive code review using OpenAI Codex (GPT-5-Codex) as LLM judge before git commit for Python projects. Analyze staged changes for bugs, security, performance, readability, and best practices. Generate scored reviews (0-100) with detailed markdown reports saved to .code-reviews/ directory.
+description: This skill should be used when user requests code review before git commit. Trigger when user says "커밋 리뷰", "commit review", "pre-commit review", "review before commit", "코드 리뷰해줘", or "커밋 전에 리뷰". Uses OpenAI Codex with project-specific checklists for scored reviews (0-100).
 ---
 
-# Pre-Commit Code Reviewer (Codex-Powered)
+# Pre-Commit Code Reviewer
 
-## Overview
+Use OpenAI Codex to review staged changes before commit with project-specific quality standards.
 
-This skill uses **OpenAI Codex CLI** (GPT-5-Codex model) as an LLM judge to perform comprehensive code reviews before commit. Get objective, scored assessments (0-100) with categorized issues (critical/warning/suggestion) and detailed improvement recommendations.
+---
+
+## When to Use
+
+Trigger when user requests:
+
+**Korean:**
+- "커밋 전에 코드 리뷰 해줘"
+- "이 코드 커밋해도 괜찮을까?"
+- "커밋 리뷰"
+- "pre-commit review"
+
+**English:**
+- "review my code before commit"
+- "is this code ready to commit?"
+- "check before commit"
+- "review staged changes"
+
+---
 
 ## Prerequisites
 
 **Required:**
-- OpenAI Codex CLI installed: `npm i -g @openai/codex`
-- ChatGPT Plus/Pro subscription (or OpenAI API access)
+- OpenAI Codex CLI: `npm i -g @openai/codex`
+- ChatGPT Plus/Pro subscription
 - Git repository with staged changes
 
-**Verify:**
+**Verify installation:**
 ```bash
 codex --version
 # Should show: codex-cli 0.50.0 or higher
 ```
 
-## When to Use This Skill
+---
 
-Activate this skill when:
-- User says "커밋 전에 코드 리뷰 해줘" or "review my code before commit"
-- User says "이 코드 커밋해도 괜찮을까?" or "is this code ready to commit?"
-- User explicitly requests code review before committing changes
-- User wants to check if changes follow best practices
-- User says "pre-commit review" or "check before commit"
+## Core Review Workflow
 
-Trigger keywords: code review, commit review, 커밋 리뷰, pre-commit, review changes, check code
+### Step 1: Verify Prerequisites
 
-## Review Mindset: Be Critical, Not Complimentary
+**Check 1: Codex session script**
+```bash
+ls ~/.claude/scripts/codex-session.sh
+```
 
-**IMPORTANT**: This is a CODE REVIEW, not a praise session. Codex is configured to FIND PROBLEMS.
+If not found, **STOP and inform user**:
+```
+❌ Codex session script not found.
 
-### Critical Review Principles
+Required: ~/.claude/scripts/codex-session.sh
+This script is part of Vibe-Coding-Setting.
 
-Codex is instructed to:
-- Actively look for bugs, security issues, and code smells
-- Question design decisions and implementation choices
-- Apply high standards without being apologetic
-- Find issues even in "good-looking" code
-- Treat every line of code as potentially problematic
+To fix:
+1. Clone/update Vibe-Coding-Setting repository
+2. Run /apply-settings or /sync-workspace
+3. Verify: ls ~/.claude/scripts/codex-session.sh
+```
 
-**Default stance**: "What could go wrong with this code?"
-
-### Quality Bar
-
-**PASS criteria** (all must be true):
-- ✅ Score ≥ 70/100
-- ✅ No critical security vulnerabilities
-- ✅ No obvious bugs
-- ✅ Adequate test coverage
-- ✅ Documentation present
-- ✅ Error handling present
-
-**Anything less = NEEDS WORK**
-
-## Core Review Process
-
-Follow this workflow for every code review request:
-
-### Step 1: Verify Codex CLI Installation
-
+**Check 2: Codex CLI**
 ```bash
 codex --version
 ```
@@ -74,678 +73,384 @@ If not installed, inform user:
 ```
 ❌ Codex CLI not found.
 
-Install with:
-  npm i -g @openai/codex
-
-Then authenticate with ChatGPT Plus account:
-  codex
+Install: npm i -g @openai/codex
+Authenticate: codex (sign in with ChatGPT Plus account)
 ```
 
-### Step 2: Identify Staged Changes
+### Step 2: Check for Staged Changes
 
 ```bash
-# Get list of staged files
 git diff --staged --name-only
-
-# Get detailed diff
-git diff --staged
 ```
 
-If no files are staged:
-- Inform user: "No staged changes found. Use 'git add <files>' to stage changes first."
-- Stop the review process
+If no files staged, inform user to stage files first.
 
-### Step 3: Call Codex CLI for Review
+### Step 3: Detect Project Checklist
 
-Execute Codex CLI with structured prompt:
+Check if project has custom checklist (in priority order):
 
+1. `.code-review/checklist.md` (project-specific)
+2. `.code-review/checklist-{language}.md` (auto-detect language)
+3. Built-in default (no checklist file)
+
+**Auto-detect language:**
+- Mostly `.py` files → python
+- Mostly `.js/.ts` files → javascript
+- Mostly `.sh` files → bash
+- Mixed or other → default
+
+### Step 4: Call Codex for Review
+
+**With project checklist:**
 ```bash
-codex exec "Act as an expert LLM judge performing critical code review for commit readiness.
+~/.claude/scripts/codex-session.sh new "Review my staged changes following the checklist in .code-review/checklist.md
 
-Review the following aspects with HIGH STANDARDS:
-- Bugs and correctness
-- Security vulnerabilities (SQL injection, XSS, auth issues, etc.)
-- Performance issues (algorithm complexity, N+1 queries, memory leaks)
-- Code quality and readability (naming, complexity, duplication)
-- Best practices adherence (SOLID, DRY, type hints, error handling)
-- Test coverage (do tests exist for new code?)
-- Documentation (docstrings, comments, README updates)
+For each checklist item, report:
+- ✅ PASS or ❌ FAIL
+- If FAIL: file:line, description, and fix recommendation
 
-Your role is to FIND PROBLEMS, not to praise. Be critical and thorough.
-
-Provide response in this EXACT format:
-
-OVERALL SCORE: X/100
-
-CRITICAL ISSUES (must fix before commit):
-- [file:line] Description and impact
-- [file:line] Description and impact
-
-WARNINGS (should fix):
-- [file:line] Description
-- [file:line] Description
-
-SUGGESTIONS (nice to have):
-- [file:line] Description
-- [file:line] Description
-
-RECOMMENDATION: [commit | needs_work | major_refactor]
-
-SUMMARY: [2-3 sentence critical assessment]
-
-Here's the git diff to review:
-$(git diff --staged)
-"
-```
-
-**Important flags:**
-- Default mode is `--mode suggest` (read-only, safe)
-- Codex won't modify files during review
-- Review only, no auto-fixing
-
-### Step 4: Parse Codex Response
-
-Extract key information:
+Then provide:
 - Overall score (0-100)
-- Critical issue count
-- Warning count
-- Suggestion count
-- Recommendation (commit/needs_work/major_refactor)
-- Summary
+- Top 3 issues
+- Recommendation: commit | needs_work | major_refactor
+- 2-3 sentence summary
 
-**Example Codex output:**
-```
-OVERALL SCORE: 65/100
-
-CRITICAL ISSUES (must fix before commit):
-- [user.py:45] SQL injection risk: f-string allows arbitrary SQL execution
-
-WARNINGS (should fix):
-- [user.py:15] Missing type hints reduces type safety
-- [test_user.py:20] Insufficient test coverage for error cases
-
-SUGGESTIONS (nice to have):
-- [user.py:50] Function too complex, consider splitting
-- [user.py:1] Add module-level docstring
-
-RECOMMENDATION: needs_work
-
-SUMMARY: Critical SQL injection vulnerability must be addressed before commit. Code also lacks type hints and comprehensive tests. Fix security issue and add type safety before merging.
+**IMPORTANT: Write all findings in Korean (한국어로 모든 결과를 작성해주세요)**"
 ```
 
-### Step 5: Generate Review Report
+**Without checklist (default):**
+```bash
+~/.claude/scripts/codex-session.sh new "Review my staged changes for commit readiness.
 
-Create comprehensive markdown report using template:
+Focus on: security, bugs, performance, code quality, tests, documentation.
 
-**Template structure:**
-```markdown
-# Code Review Report - [Date Time]
+Provide:
+- Overall score (0-100)
+- Critical issues (must fix)
+- Warnings (should fix)
+- Suggestions (nice to have)
+- Recommendation: commit | needs_work | major_refactor
+- 2-3 sentence summary
 
-**Reviewer:** OpenAI Codex (GPT-5-Codex)
-**Date:** YYYY-MM-DD HH:MM
-**Overall Score:** X/100
-**Recommendation:** [COMMIT | NEEDS WORK | MAJOR REFACTOR]
-
----
-
-## Summary
-
-[Codex's summary]
-
----
-
-## Score Breakdown
-
-| Metric | Score | Status |
-|--------|-------|--------|
-| Overall Quality | X/100 | [Pass/Fail] |
-| Critical Issues | X | [🚨 if >0, ✅ if 0] |
-| Warnings | X | [⚠️ if >3, ✅ if ≤3] |
-| Suggestions | X | [💡] |
-
-**Pass Threshold:** ≥70/100 with 0 critical issues
-
----
-
-## Files Reviewed
-
-- file1.py (Modified)
-- file2.py (New)
-- test_file.py (Modified)
-
----
-
-## 🚨 Critical Issues
-
-**These MUST be fixed before commit:**
-
-1. **[file:line] Issue title**
-   - **Severity:** Critical
-   - **Description:** [Full description]
-   - **Impact:** [What could go wrong]
-   - **Fix:** [How to fix]
-
----
-
-## ⚠️ Warnings
-
-**These SHOULD be fixed:**
-
-1. **[file:line] Issue title**
-   - **Severity:** Warning
-   - **Description:** [Full description]
-   - **Suggestion:** [How to improve]
-
----
-
-## 💡 Suggestions
-
-**Nice to have improvements:**
-
-1. **[file:line] Issue title**
-   - **Description:** [Full description]
-   - **Benefit:** [Why this helps]
-
----
-
-## Recommendation
-
-[COMMIT ✅ | NEEDS WORK 🔴 | MAJOR REFACTOR 🔥]
-
-**Reasoning:**
-[Explanation based on score and issues]
-
-**Next Steps:**
-- [ ] Fix critical issue: [description]
-- [ ] Address warning: [description]
-- [ ] Consider suggestion: [description]
-
----
-
-## Full Codex Output
-
-```
-[Complete Codex CLI output for reference]
+**IMPORTANT: Write all findings in Korean (한국어로 모든 결과를 작성해주세요)**"
 ```
 
----
+**Note:** Codex is a full agent - it will:
+- Detect staged changes automatically
+- Read full files for context (not just diffs)
+- Apply critical review standards
+- Find problems, not give praise
 
-**Generated by:** Pre-Commit Code Reviewer (Codex-Powered)
-**Model:** GPT-5-Codex via OpenAI Codex CLI
-**Session:** [timestamp]
-```
+### Step 5: Save Review Report
 
-### Step 6: Save Review Report
-
-Save to `.code-reviews/` directory:
+Create `.code-reviews/` directory if needed and save report:
 
 ```bash
-# Create directory if needed
 mkdir -p .code-reviews
-
-# Save report
-.code-reviews/YYYY-MM-DD-HH-MM-codex-review.md
+# Save to: .code-reviews/YYYY-MM-DD-HH-MM-review.md
 ```
 
-**Example filename:** `.code-reviews/2025-01-27-16-30-codex-review.md`
+### Step 6: Present Findings
 
-Add to `.gitignore` if needed (optional):
+Display console summary:
+
+```
+📋 Code Review Complete!
+
+📊 Overall Score: X/100
+
+🚨 Critical Issues: X
+⚠️  Warnings: X
+💡 Suggestions: X
+
+Top 3 Issues:
+1. [Type] Description (file:line)
+2. [Type] Description (file:line)
+3. [Type] Description (file:line)
+
+[✅ COMMIT | 🔴 NEEDS WORK | 🔥 MAJOR REFACTOR]
+
+📄 Full report: .code-reviews/YYYY-MM-DD-HH-MM-review.md
+```
+
+---
+
+## Checklist System
+
+### Using Project Checklist
+
+Projects can maintain quality standards in `.code-review/checklist.md`:
+
+**Benefits:**
+- Consistent review criteria across all commits
+- Team-specific standards
+- Language-specific best practices
+- Evolves with project (version controlled)
+
+**Checklist format:**
+- Markdown file with checkbox items
+- Organized by severity (Critical/Warning/Suggestion)
+- Each item has clear pass/fail criteria
+
+See `references/checklist-guide.md` for checklist design principles.
+
+### Creating Project Checklist
+
+**Option 1: Copy starter template**
 ```bash
-# Option 1: Keep reviews in repo (recommended for team learning)
-# .code-reviews/ is committed
-
-# Option 2: Local reviews only
-echo ".code-reviews/" >> .gitignore
+mkdir -p .code-review
+cp ~/.claude/skills/pre-commit-code-reviewer/assets/checklists/python.md \
+   .code-review/checklist.md
 ```
 
-### Step 7: Present Findings to User
+**Option 2: Generate with Codex**
+```bash
+~/.claude/scripts/codex-session.sh new "Create a code review checklist for my project.
+Analyze the codebase and create .code-review/checklist.md with:
+- Project-specific quality standards
+- Language best practices
+- Security requirements
+- Testing expectations
 
-**Console output format:**
-
+**Write checklist in Korean (한국어로 체크리스트 작성)**"
 ```
-📋 Codex Code Review Complete!
 
-📁 Files Reviewed: 3
-  - src/api/user.py (Modified)
-  - src/models/user_model.py (Modified)
-  - tests/test_user.py (New)
+Customize the generated checklist for your team's needs.
 
-📊 Overall Score: 65/100
+### Available Starter Templates
 
-🚨 Critical Issues: 1
-⚠️  Warnings: 3
-💡 Suggestions: 5
+See `assets/checklists/` for language-specific templates:
+
+- `python.md` - Python projects (PEP 8, type hints, pytest)
+- `javascript.md` - JavaScript/TypeScript (ESLint, Jest)
+- `bash.md` - Shell scripts (shellcheck, error handling)
+- `security.md` - Security-focused (OWASP, secrets, auth)
+- `docs.md` - Documentation (markdown, clarity, accuracy)
+
+Copy and customize for your project.
 
 ---
 
-Top 3 Issues to Address:
+## Review Philosophy
 
-1. 🚨 [CRITICAL] SQL injection vulnerability (user.py:45)
-   → f-string allows arbitrary SQL execution
-   → FIX: Use parameterized queries
+**Core principle:** Be critical, not complimentary.
 
-2. ⚠️  [WARNING] Missing type hints (user.py:15-20)
-   → Reduces type safety
-   → ADD: def get_user(id: int) -> Optional[User]:
+Codex is instructed to:
+- Find problems, not praise code
+- Apply high standards
+- Question design decisions
+- Treat code as potentially problematic
+- Default stance: "What could go wrong?"
 
-3. ⚠️  [WARNING] Insufficient test coverage (test_user.py)
-   → Error cases not tested
-   → ADD: Test for None inputs, database failures
+See `references/review-philosophy.md` for detailed philosophy and examples.
+
+### Pass Criteria
+
+**All must be true:**
+- ✅ Score ≥ 70/100
+- ✅ No critical security issues
+- ✅ No obvious bugs
+- ✅ Error handling present
+- ✅ Basic documentation exists
+
+**Anything less = NEEDS WORK**
+
+Critical issues always block commit regardless of score.
 
 ---
-
-🔴 Recommendation: NEEDS WORK
-
-Fix the critical SQL injection vulnerability before committing.
-Address type hints and test coverage in near future.
-
-📄 Full report saved to:
-   .code-reviews/2025-01-27-16-30-codex-review.md
-
----
-
-Would you like me to:
-1. Show the full Codex analysis?
-2. Help fix the SQL injection issue?
-3. Generate improved code with Codex auto-fix?
-```
-
-## Codex Review Dimensions
-
-Codex analyzes these aspects automatically:
-
-### 1. Security
-- SQL injection, XSS, CSRF
-- Authentication/authorization issues
-- Hardcoded secrets
-- Input validation
-- Dependency vulnerabilities
-
-### 2. Bugs & Correctness
-- Logic errors
-- Edge case handling
-- None/null pointer issues
-- Type mismatches
-- Off-by-one errors
-- Resource leaks
-
-### 3. Performance
-- Algorithm complexity (O(n²) vs O(n))
-- Database N+1 queries
-- Memory leaks
-- Unnecessary computations
-- Missing caching
-
-### 4. Code Quality
-- Function length and complexity
-- Code duplication (DRY)
-- Naming conventions
-- Magic numbers
-- Dead code
-
-### 5. Best Practices
-- SOLID principles
-- Type hints (Python)
-- Error handling
-- Logging
-- Documentation
-
-### 6. Testing
-- Test coverage for new code
-- Edge cases covered
-- Mocking appropriately
-- Test naming
-
-### 7. Documentation
-- Docstrings
-- Comments (why, not what)
-- README updates
-- API docs
 
 ## Scoring System
-
-Codex uses this scale:
 
 | Score | Grade | Meaning | Action |
 |-------|-------|---------|--------|
 | 90-100 | A | Excellent | ✅ Commit ready |
 | 80-89 | B | Good | ✅ Commit with minor notes |
-| 70-79 | C | Acceptable | ⚠️ Commit, but improve soon |
-| 60-69 | D | Needs work | 🔴 Fix issues before commit |
+| 70-79 | C | Acceptable | ⚠️ Commit, improve soon |
+| 60-69 | D | Needs work | 🔴 Fix issues first |
 | 0-59 | F | Poor | 🔴 Major refactoring needed |
 
-**Critical issues always block commit, regardless of score.**
+See `references/scoring-system.md` for detailed scoring breakdown.
+
+---
 
 ## Advanced Usage
 
-### Option 1: Quick Review (Default)
+### Multiple Checklists
+
+Combine general and specialized checklists:
 
 ```bash
-# Standard review mode
-codex exec "Review this diff: $(git diff --staged)"
+~/.claude/scripts/codex-session.sh new "Review staged changes using:
+1. .code-review/checklist.md (general standards)
+2. .code-review/checklist-security.md (security focus)
+
+Combine results and provide overall assessment.
+
+**Write all findings in Korean (한국어로 작성)**"
 ```
 
-### Option 2: Detailed Review
+### Language-Specific Auto-Selection
 
 ```bash
-# Request more detailed analysis
-codex exec "Perform VERY thorough code review with detailed explanations for each issue. Include code examples for fixes: $(git diff --staged)"
+~/.claude/scripts/codex-session.sh new "Review staged changes.
+Auto-select appropriate checklist from .code-review/ based on file types:
+- .py files → checklist-python.md
+- .js/.ts files → checklist-javascript.md
+- .sh files → checklist-bash.md
+- .md files → checklist-docs.md
+
+Use most relevant checklist for each file.
+
+**Write all findings in Korean (한국어로 작성)**"
 ```
 
-### Option 3: Specific Aspect Review
+### Specific Aspect Focus
 
 ```bash
-# Focus on security only
-codex exec "Review this diff ONLY for security vulnerabilities. Be extremely thorough: $(git diff --staged)"
+# Security only
+~/.claude/scripts/codex-session.sh new "Review staged changes for security vulnerabilities only.
+Use .code-review/checklist-security.md
 
-# Focus on performance only
-codex exec "Review this diff ONLY for performance issues and algorithm complexity: $(git diff --staged)"
+**Write all findings in Korean (한국어로 작성)**"
+
+# Performance only
+~/.claude/scripts/codex-session.sh new "Review staged changes for performance issues only.
+Focus on algorithm complexity, N+1 queries, caching.
+
+**Write all findings in Korean (한국어로 작성)**"
 ```
 
-### Option 4: Compare with Auto-fix
-
-```bash
-# 1. Get review
-codex exec "Review: $(git diff --staged)"
-
-# 2. If issues found, ask Codex to fix
-codex exec --mode auto-edit "Fix the SQL injection and add type hints in user.py"
-
-# 3. Review again
-codex exec "Review the fixed version: $(git diff --staged)"
-```
-
-## Integration with Git Hooks
-
-### Pre-commit Hook (Optional)
-
-Create `.git/hooks/pre-commit`:
-
-```bash
-#!/bin/bash
-
-echo "🔍 Running Codex code review..."
-
-# Check if there are staged changes
-if git diff --staged --quiet; then
-    echo "No staged changes to review."
-    exit 0
-fi
-
-# Run Codex review
-REVIEW=$(codex exec "Quick review, score only: $(git diff --staged)")
-
-# Extract score (basic parsing)
-SCORE=$(echo "$REVIEW" | grep -oP 'OVERALL SCORE: \K\d+')
-
-if [ -z "$SCORE" ]; then
-    echo "⚠️  Could not determine score, allowing commit"
-    exit 0
-fi
-
-# Block commit if score < 70
-if [ "$SCORE" -lt 70 ]; then
-    echo "❌ Code review failed (Score: $SCORE/100)"
-    echo "Fix issues before committing."
-    exit 1
-fi
-
-echo "✅ Code review passed (Score: $SCORE/100)"
-exit 0
-```
-
-Make executable:
-```bash
-chmod +x .git/hooks/pre-commit
-```
+---
 
 ## Best Practices
 
-### Do's ✅
+**Do's ✅**
 
-1. **Always review before commit**
+1. **Review before every commit**
    - Make it a habit
    - Catch issues early
-   - Improve code quality over time
+   - Maintain quality
 
-2. **Trust but verify**
-   - Codex is very good but not perfect
-   - Review Codex's suggestions critically
-   - Use your judgment
+2. **Maintain project checklist**
+   - Keep `.code-review/checklist.md` updated
+   - Evolve with project learnings
+   - Version control the checklist
 
-3. **Fix critical issues immediately**
+3. **Trust but verify**
+   - Codex is good but not perfect
+   - Apply human judgment
+   - Verify critical suggestions
+
+4. **Fix critical issues immediately**
    - Never commit with critical security issues
-   - Address bugs before they reach production
+   - Address bugs before production
    - Don't accumulate technical debt
 
-4. **Track review history**
-   - Keep `.code-reviews/` in git
-   - Learn from past issues
-   - Measure quality trends
+**Don'ts ❌**
 
-5. **Use specific prompts**
-   - Ask for detailed explanations when needed
-   - Focus on specific aspects (security, performance)
-   - Request code examples for fixes
-
-### Don'ts ❌
-
-1. **Don't skip reviews for "small" changes**
-   - Small changes can have big bugs
-   - Security issues don't discriminate by LOC
-   - Build the habit
+1. **Don't skip reviews**
+   - Even for "small" changes
+   - Security issues don't discriminate by size
 
 2. **Don't ignore warnings**
    - Today's warning = tomorrow's bug
    - Code quality compounds
-   - Fix early, fix often
 
 3. **Don't commit on red**
    - If recommendation is "needs_work", don't commit
-   - If critical issues exist, fix first
-   - Never compromise on security
+   - Fix critical issues first
 
 4. **Don't review huge diffs**
    - Break large changes into smaller commits
-   - Review file-by-file if needed
    - Large diffs = missed issues
-
-5. **Don't disable the skill**
-   - Consistency is key
-   - Quality requires discipline
-   - Make it non-negotiable
-
-## Comparison: Codex vs Claude Review
-
-| Feature | Codex (This Skill) | Claude Built-in |
-|---------|-------------------|-----------------|
-| **Model** | GPT-5-Codex | Claude 3.5 Sonnet |
-| **Scoring** | 0-100 (LLM Judge) | Manual |
-| **Format** | Structured | Flexible |
-| **Speed** | Medium (~5-10s) | Fast (~2-5s) |
-| **Cost** | $20/mo (ChatGPT Plus) | Included |
-| **Strictness** | Very strict | Configurable |
-| **Auto-fix** | Yes (separate mode) | Via Claude |
-
-**Recommendation:** Use both for comprehensive review!
-
-## Troubleshooting
-
-### Error: "codex: command not found"
-
-**Solution:**
-```bash
-# Install Codex CLI
-npm i -g @openai/codex
-
-# Verify
-codex --version
-```
-
-### Error: "Authentication required"
-
-**Solution:**
-```bash
-# Run once to authenticate
-codex
-
-# Sign in with ChatGPT Plus account
-```
-
-### Error: "No staged changes found"
-
-**Solution:**
-```bash
-# Stage files first
-git add file1.py file2.py
-
-# Or stage all
-git add .
-
-# Then request review
-```
-
-### Warning: "Score could not be determined"
-
-**Possible causes:**
-- Codex output format unexpected
-- Network issues
-- Rate limiting
-
-**Solution:**
-- Retry the review
-- Check internet connection
-- Verify Codex CLI is up to date
-
-### Issue: "Review too slow"
-
-**Solutions:**
-- Review smaller diffs (break into multiple commits)
-- Use Quick Review mode
-- Check network speed
-
-### Issue: "Codex missed an obvious bug"
-
-**Remember:**
-- No LLM is perfect
-- Always use critical thinking
-- Combine Codex + Claude + Human review
-- Report patterns to improve prompts
-
-## Example Usage
-
-### Example 1: Basic Review
-
-**User:** "커밋 전에 코드 리뷰 해줘"
-
-**Claude:**
-```
-Checking staged changes...
-
-Found 2 staged files:
-- src/user_service.py (Modified)
-- tests/test_user_service.py (New)
-
-Running Codex code review...
-[Calls Codex CLI]
-
-📋 Codex Code Review Complete!
-
-📊 Overall Score: 78/100
-
-🚨 Critical Issues: 0
-⚠️  Warnings: 2
-💡 Suggestions: 3
-
-Top Issues:
-1. ⚠️  Missing type hints (user_service.py:15)
-2. ⚠️  Error handling could be more specific (user_service.py:30)
-3. 💡 Consider using dataclass for User model
-
-✅ Recommendation: COMMIT
-
-Code is production-ready. Address warnings in future refactoring.
-
-📄 Full report: .code-reviews/2025-01-27-16-45-codex-review.md
-```
-
-### Example 2: Critical Issues Found
-
-**User:** "Is this ready to commit?"
-
-**Claude:**
-```
-Reviewing staged changes with Codex...
-
-📋 Codex Code Review Complete!
-
-📊 Overall Score: 35/100
-
-🚨 Critical Issues: 2
-⚠️  Warnings: 4
-💡 Suggestions: 6
-
-Top Issues:
-1. 🚨 [CRITICAL] SQL injection (user.py:45)
-   Severity: High - allows arbitrary SQL execution
-
-2. 🚨 [CRITICAL] Hardcoded API key (config.py:12)
-   Severity: High - security credential exposed
-
-3. ⚠️  Missing error handling (api.py:67)
-
-🔴 Recommendation: NEEDS WORK
-
-DO NOT COMMIT until critical security issues are fixed.
-
-Would you like me to help fix these issues?
-```
-
-## Cost Considerations
-
-**Codex CLI Pricing:**
-- **ChatGPT Plus:** $20/month (unlimited reviews)
-- **ChatGPT Pro:** $200/month (higher limits)
-- **API:** Pay-per-use (~$0.01-0.05/review)
-
-**Typical usage:**
-- Solo developer: ~10-50 reviews/day → ChatGPT Plus sufficient
-- Team: ~100+ reviews/day → ChatGPT Team or API
-
-**Free alternative:**
-- Use built-in Claude review (no Codex)
-- See: `.claude/skills/pre-commit-code-reviewer/skill.md.backup`
-
-## Resources
-
-### Documentation
-- [OpenAI Codex CLI](https://developers.openai.com/codex/cli/)
-- [Codex GitHub](https://github.com/openai/codex)
-- [OpenAI Codex Guide](../../docs/openai-codex-guide.md)
-
-### Related Skills
-- `codex-integration` - General Codex usage
-- Original Claude review: `skill.md.backup`
-
-### Templates
-- Review report template: `assets/review-report-template.md`
-- Git hook examples: `.git/hooks/pre-commit`
-
-## Limitations
-
-This skill cannot:
-- Execute code or run tests (use pytest separately)
-- Access external linters (use alongside, not replace)
-- Modify code automatically (use `--mode auto-edit` separately)
-- Review changes not yet staged
-- Detect all runtime-only issues
-- Replace human code review for complex changes
-
-**Always combine:** Codex + Claude + Human review for critical code
 
 ---
 
-**Version:** 2.0 (Codex-Powered)
-**Last Updated:** 2025-01-27
-**Model:** GPT-5-Codex via OpenAI Codex CLI
-**Backup:** Original Claude-based version saved to `skill.md.backup`
+## Troubleshooting
+
+### "codex: command not found"
+
+**Solution:**
+```bash
+npm i -g @openai/codex
+codex --version
+```
+
+### "Authentication required"
+
+**Solution:**
+```bash
+codex  # Run once to authenticate
+# Sign in with ChatGPT Plus account
+```
+
+### "No staged changes"
+
+**Solution:**
+```bash
+git add file1.py file2.py
+# Or: git add .
+```
+
+### "Review output unclear"
+
+**Possible causes:**
+- Checklist items ambiguous
+- Diff too large
+- Mixed languages
+
+**Solution:**
+- Clarify checklist wording
+- Break into smaller commits
+- Use language-specific checklists
+
+---
+
+## Resources
+
+### References
+
+Detailed documentation for deep understanding:
+
+- **`references/review-philosophy.md`** - Critical review approach, pass criteria
+- **`references/scoring-system.md`** - Score breakdown, examples
+- **`references/checklist-guide.md`** - How to write effective checklists
+- **`references/codex-usage.md`** - Codex CLI tips and tricks
+
+### Checklist Templates
+
+Starter templates for common languages:
+
+- **`assets/checklists/python.md`** - Python best practices
+- **`assets/checklists/javascript.md`** - JS/TS standards
+- **`assets/checklists/bash.md`** - Shell script quality
+- **`assets/checklists/security.md`** - Security checklist
+- **`assets/checklists/docs.md`** - Documentation quality
+
+Copy to your project and customize.
+
+### Related Documentation
+
+- [OpenAI Codex CLI](https://developers.openai.com/codex/cli/)
+- [OpenAI Codex Guide](../../docs/openai-codex-guide.md)
+- [Codex Session Management](../../docs/codex-session-management.md)
+
+---
+
+## Limitations
+
+**This skill cannot:**
+- Execute code or run tests (use pytest separately)
+- Replace linters (use alongside, not instead)
+- Auto-fix code (use Codex `--mode auto-edit` separately)
+- Review untracked/unstaged changes
+- Detect all runtime issues
+- Replace human review for complex changes
+
+**Best practice:** Combine Codex + Claude + Human review for critical code.
+
+---
+
+**Version:** 3.0 (Checklist-Based)
+**Last Updated:** 2025-11-02
+**Previous Version:** `skill.md.v2.backup`

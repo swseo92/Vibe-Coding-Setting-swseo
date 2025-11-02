@@ -1,0 +1,19 @@
+{
+    "round": 4,
+    "agent": "security",
+    "confidence": 0,
+    "search": {
+        "enabled": true,
+        "used": true,
+        "sources_found": 4
+    },
+    "evidence": {
+        "t1_present": false,
+        "t2_present": false,
+        "t3_present": true
+    },
+    "metrics": {
+        "citations": 8
+    },
+    "timestamp": "2025-11-02T14:06:11Z"
+}

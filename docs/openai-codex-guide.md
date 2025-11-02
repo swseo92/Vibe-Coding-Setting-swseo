@@ -2,7 +2,7 @@
 
 **Complete guide to using OpenAI Codex CLI for LLM-as-Judge code reviews in Claude Code**
 
-Last Updated: 2025-01-27
+Last Updated: 2025-11-02
 
 ---
 
@@ -11,9 +11,10 @@ Last Updated: 2025-01-27
 1. [What is OpenAI Codex?](#what-is-openai-codex)
 2. [Setup Guide](#setup-guide)
 3. [Usage Examples](#usage-examples)
-4. [Cost Information](#cost-information)
-5. [Best Practices](#best-practices)
-6. [Troubleshooting](#troubleshooting)
+4. [Stateful Session Management](#stateful-session-management)
+5. [Cost Information](#cost-information)
+6. [Best Practices](#best-practices)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -266,6 +267,77 @@ Fix SQL injection before commit.
 
 ---
 
+## Stateful Session Management
+
+### Overview
+
+Codex supports **session ID-based multi-turn conversations** that preserve full context across days or weeks:
+
+- ✅ All conversations automatically saved
+- ✅ Unique session ID per conversation
+- ✅ Resume anytime with session ID
+- ✅ Perfect for long-term projects
+
+### Quick Start
+
+```bash
+# Start conversation
+$ codex "Python decorators explained"
+session id: 019a44db-0311-74a3-aa02-cda5de88268b
+
+# Save the session ID!
+$ echo "019a44db-0311-74a3-aa02-cda5de88268b" > .codex-session
+
+# Resume later (even days later)
+$ codex resume $(cat .codex-session)
+You: How do I make class-based decorators?
+```
+
+### Why Session IDs (Not --last)?
+
+**⚠️ Danger of --last with parallel work:**
+
+```bash
+# Terminal 1: Project A
+$ cd project-a && codex "FastAPI design"
+
+# Terminal 2: Project B
+$ cd project-b && codex "Django migration"
+
+# Terminal 1: Resume
+$ codex resume --last  # ❌ Opens Project B session! (most recent)
+```
+
+**✅ Safe approach with session IDs:**
+
+```bash
+# Project A
+$ cd project-a
+$ codex "FastAPI design"
+$ echo "SESSION_ID_A" > .codex-session
+
+# Project B
+$ cd project-b
+$ codex "Django migration"
+$ echo "SESSION_ID_B" > .codex-session
+
+# Resume correctly
+$ cd project-a && codex resume $(cat .codex-session)  # ✅ Correct!
+```
+
+### Complete Guide
+
+For comprehensive session management including:
+- Session ID tracking strategies
+- Parallel project workflows
+- Session file structure
+- Finding lost sessions
+- Best practices
+
+**See:** [Codex Session Management Guide](codex-session-management.md)
+
+---
+
 ## Cost Information
 
 ### Codex CLI Pricing
@@ -464,6 +536,7 @@ codex exec "system-prompt-ko.md를 따라서..."
 
 ### Related Files
 
+- **[Codex Session Management Guide](codex-session-management.md)** - Session ID-based multi-turn conversations
 - Codex CLI Skill: `.claude/skills/codex-integration/`
 - Korean Prompts: `.claude/skills/pre-commit-code-reviewer/prompts/`
   - `system-prompt-ko.md` - Review guidelines
@@ -503,8 +576,14 @@ A: Yes. Review [OpenAI Privacy Policy](https://openai.com/policies/privacy-polic
 **Q: How do I get Korean reviews?**
 A: Use Korean prompt templates in `.claude/skills/pre-commit-code-reviewer/prompts/`
 
+**Q: How do I continue a conversation from yesterday?**
+A: Use session IDs! See [Session Management Guide](codex-session-management.md) for details.
+
+**Q: Can I use `codex resume --last` for multiple projects?**
+A: ⚠️ Dangerous! Use session IDs instead. `--last` opens the most recent session, which may be from a different project.
+
 ---
 
-**Last Updated:** 2025-01-27
+**Last Updated:** 2025-11-02
 **Maintained by:** swseo
 **Repository:** [Vibe-Coding-Setting-swseo](https://github.com/swseo92/Vibe-Coding-Setting-swseo)
