@@ -149,8 +149,9 @@ mkdir -p "$DEBATE_DIR"
 # ============================================================
 # Pre-Clarification Stage (V3.0)
 # ============================================================
-if [[ "$SKIP_CLARIFY" == "false" ]] && [[ -t 0 ]]; then
-    # Interactive mode and clarification not skipped
+# Note: Always run unless explicitly skipped (even in Claude Code environment)
+if [[ "$SKIP_CLARIFY" == "false" ]]; then
+    # Clarification enabled (will handle interactivity internally)
     PRE_CLARIFY_SCRIPT="$SCRIPT_DIR/pre-clarify.sh"
 
     if [[ -f "$PRE_CLARIFY_SCRIPT" ]]; then

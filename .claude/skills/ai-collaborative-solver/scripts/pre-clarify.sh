@@ -143,11 +143,10 @@ Keep it concise (3-5 bullet points each)."
     echo "=================================================="
     echo ""
 
-    # Check if running in interactive mode
-    if [[ -t 0 ]]; then
-        # Ask for confirmation
-        echo "Is this understanding correct? (y/n/add info)"
-        read -p "Your choice [y/n/a]: " -n 1 -r CONFIRM
+    # Try to get user confirmation (works in Claude Code and terminal)
+    # Claude Code environment supports read even when -t 0 is false
+    echo "Is this understanding correct? (y/n/add info)"
+    if read -p "Your choice [y/n/a]: " -n 1 -r CONFIRM 2>/dev/null; then
         echo ""
         echo ""
 
@@ -271,16 +270,14 @@ echo ""
 echo "=================================================="
 echo ""
 
-# Check if running in interactive mode
-if [[ -t 0 ]]; then
-    # Interactive mode - ask user for responses
-    echo "Please answer the questions above (or press Enter to skip):"
-    echo ""
+# Try to get user response (works in Claude Code and terminal)
+echo "Please answer the questions above (or press Enter to skip):"
+echo ""
 
-    read -p "Your response (multi-line, Ctrl+D to finish): " -d $'\04' USER_RESPONSE || USER_RESPONSE=""
+if read -p "Your response (multi-line, Ctrl+D to finish): " -d $'\04' USER_RESPONSE 2>/dev/null; then
     echo ""
 else
-    # Non-interactive mode - skip clarification
+    # Read failed (truly non-interactive like piped input)
     echo "Non-interactive mode detected. Skipping clarification."
     USER_RESPONSE="[Clarification skipped - non-interactive mode]"
 fi
