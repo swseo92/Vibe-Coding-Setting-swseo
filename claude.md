@@ -104,14 +104,16 @@ Vibe-Coding-Setting-swseo/
 │   │   │   └── settings.json     # Hook 설정 (경로 의존적)
 │   │   ├── .specify/             # Speckit 기본 구조
 │   │   ├── .mcp.json             # MCP 설정
-│   │   └── claude.md             # 프로젝트 마커 템플릿
+│   │   └── claude.md             # 프로젝트 마커 템플릿 (기본)
 │   │
 │   └── python/                   # Python 템플릿
-│       ├── claude.md             # 프로젝트용 마커
+│       ├── claude.md             # Python 프로젝트 마커 (환경변수 가이드 포함)
 │       ├── pyproject.toml        # uv 설정
+│       ├── .env.example          # 환경변수 템플릿
 │       ├── .gitignore
 │       ├── pytest.ini
 │       ├── README.md
+│       ├── src/                  # 소스 코드 디렉토리
 │       └── tests/                # 테스트 구조
 │
 ├── speckit/                      # Speckit 원본 (GitHub에만 보관)
@@ -310,22 +312,60 @@ cd ~/my-api-project
 
 ---
 
+## 템플릿 특징
+
+### Python 템플릿
+
+**포함된 기능:**
+- ✅ **환경변수 관리 가이드** - `python-dotenv` 사용법 및 보안 베스트 프랙티스
+- ✅ **`.env.example`** - 환경변수 템플릿 (실제 `.env`는 Git 무시)
+- ✅ **uv 기반 의존성 관리** - 빠른 패키지 설치 및 가상환경 관리
+- ✅ **pytest 설정** - 테스트 프레임워크 및 커버리지 설정
+- ✅ **타입 힌팅 권장** - mypy 설정 및 사용 가이드
+- ✅ **코드 품질 도구** - black, ruff, mypy 설정
+
+**환경변수 관리 (핵심 기능):**
+```python
+# 모든 Python 프로젝트에서 권장하는 방법
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # .env 파일에서 환경변수 로드
+DATABASE_URL = os.getenv("DATABASE_URL")
+```
+
+**사용 시나리오:**
+- FastAPI/Flask 웹 애플리케이션
+- 데이터 분석/ML 프로젝트
+- CLI 도구
+- 라이브러리 개발
+
+---
+
 ## 템플릿 추가 방법
 
 ### 새 언어 템플릿 추가
 
 1. `templates/{언어}/` 폴더 생성
 2. 기본 파일 구조 작성
-   - `claude.md` - 프로젝트 마커
+   - `claude.md` - 프로젝트 마커 (언어별 가이드 포함)
    - `README.md` - 사용법
    - 설정 파일들 (package.json, Cargo.toml 등)
    - `.gitignore`
+   - `.env.example` (환경변수 사용 시)
 3. `/init-workspace` 명령어에 언어 추가
+4. `claude-md-manager` 스킬의 `template-sections.md`에 언어별 예시 추가
+
+**언어별 환경변수 라이브러리:**
+- **Python**: `python-dotenv`
+- **JavaScript/Node**: `dotenv`
+- **Rust**: `dotenv` crate
+- **Go**: `godotenv`
 
 예시:
 ```
 templates/
-├── python/       # 완료
+├── python/       # ✅ 완료 (환경변수 가이드 포함)
 ├── javascript/   # TODO
 ├── rust/         # TODO
 └── go/           # TODO
@@ -654,6 +694,19 @@ touch test.py          # WRONG
 
 ---
 
-**마지막 업데이트**: 2025-11-02 (임시 파일 관리 규칙 추가 - AI 토론 기반)
+**마지막 업데이트**: 2025-11-04
 **관리자**: swseo
 **저장소**: https://github.com/swseo92/Vibe-Coding-Setting-swseo
+
+---
+
+## 변경 이력
+
+### 2025-11-04
+- ✅ `claude-md-manager` 스킬 추가 (커밋 전 자동 claude.md 품질 검증)
+- ✅ Python 템플릿에 환경변수 관리 가이드 추가 (`python-dotenv` 사용법)
+- ✅ `templates/python/claude.md` 생성 (Python 프로젝트 전용 가이드)
+- ✅ `claude-md-manager` 템플릿에 환경변수 베스트 프랙티스 추가 (Python, JavaScript)
+
+### 2025-11-02
+- 임시 파일 관리 규칙 추가 (AI 토론 기반, 85% 신뢰도)
