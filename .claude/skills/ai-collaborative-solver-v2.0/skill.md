@@ -413,9 +413,38 @@ Next Steps:
 
 ---
 
-**🚀 MANDATORY: NOW EXECUTE PHASE 3**
+**🤔 ASK USER: Proceed to deeper analysis?**
 
-**REQUIRED**: You MUST now proceed to Phase 3 for constructive challenge and evidence-based refinement. This is NOT optional - Phase 3-4 are core components of the v4.0 debate system.
+Use the AskUserQuestion tool to ask if the user wants Phase 3-4:
+
+```
+AskUserQuestion({
+  "questions": [{
+    "question": "📊 Phase 2 (기본 분석) 완료! 추가로 더 깊은 분석을 진행할까요?",
+    "header": "추가 분석",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "예, Phase 3-4 진행",
+        "description": "양쪽 의견의 약점 발견, 실제 데이터로 검증, 더 정교한 결론 (추가 40-60초)"
+      },
+      {
+        "label": "아니오, 충분함",
+        "description": "현재 분석으로 충분합니다. Phase 2 결과로 결정하겠습니다."
+      }
+    ]
+  }]
+})
+```
+
+**If user selects "예, Phase 3-4 진행"**: Continue to Phase 3 below.
+
+**If user selects "아니오, 충분함"**: End the debate here. Output a final message:
+```
+✅ AI 토론 완료! Phase 2 분석 결과를 참고하여 결정하세요.
+
+궁금한 점이 있으면 언제든 추가 질문 주세요! 😊
+```
 
 ---
 
@@ -427,7 +456,7 @@ Next Steps:
 
 #### 3.1 Main Claude Challenges Codex Opinion
 
-**MANDATORY**: Execute this step immediately after Phase 2.5 completion. Do NOT skip this phase regardless of agreement level.
+**When to execute**: Only when user selected "예, Phase 3-4 진행" above.
 
 **Your task**: Review Codex's opinion and provide CONSTRUCTIVE challenge.
 
