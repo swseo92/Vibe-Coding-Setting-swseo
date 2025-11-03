@@ -413,9 +413,9 @@ Next Steps:
 
 ---
 
-**🚀 PROCEED TO PHASE 3: Continue to deeper analysis**
+**🚀 MANDATORY: NOW EXECUTE PHASE 3**
 
-Now that initial analysis is complete, proceed to Phase 3 for constructive challenge and evidence-based refinement.
+**REQUIRED**: You MUST now proceed to Phase 3 for constructive challenge and evidence-based refinement. This is NOT optional - Phase 3-4 are core components of the v4.0 debate system.
 
 ---
 
@@ -427,7 +427,7 @@ Now that initial analysis is complete, proceed to Phase 3 for constructive chall
 
 #### 3.1 Main Claude Challenges Codex Opinion
 
-**When to execute**: After Phase 2 completion, if you want deeper analysis beyond the initial synthesis.
+**MANDATORY**: Execute this step immediately after Phase 2.5 completion. Do NOT skip this phase regardless of agreement level.
 
 **Your task**: Review Codex's opinion and provide CONSTRUCTIVE challenge.
 
