@@ -413,6 +413,437 @@ Next Steps:
 
 ---
 
+**🚀 PROCEED TO PHASE 3: Continue to deeper analysis**
+
+Now that initial analysis is complete, proceed to Phase 3 for constructive challenge and evidence-based refinement.
+
+---
+
+### Phase 3: Round 2 - Constructive Challenge (v4.0)
+
+**Objective**: Each agent reviews the other's opinion and provides constructive criticism to identify strengths, weaknesses, and areas needing clarification or evidence.
+
+**IMPORTANT**: This phase enables true debate dynamics - not "rebuttal for rebuttal's sake", but productive challenge that refines thinking and exposes blind spots.
+
+#### 3.1 Main Claude Challenges Codex Opinion
+
+**When to execute**: After Phase 2 completion, if you want deeper analysis beyond the initial synthesis.
+
+**Your task**: Review Codex's opinion and provide CONSTRUCTIVE challenge.
+
+**Guidelines - Follow this structure exactly**:
+
+```markdown
+## Main Claude's Challenge to Codex
+
+✅ **Strengths Acknowledged** (2-3 points)
+What did Codex get right? Which arguments are solid and well-reasoned?
+
+1. [Strength 1 - specific point from Codex opinion]
+2. [Strength 2 - why this argument is valid]
+3. [Strength 3 - technical merit or insight]
+
+⚠️ **Clarifying Questions** (2-3 questions)
+NOT rhetorical attacks - genuine gaps in understanding or specification.
+
+1. [Question 1 - about edge case, constraint, or assumption]
+   - Context: Why this matters for the decision
+   - Example: "You mentioned X, but what about scenario Y?"
+
+2. [Question 2 - about missing consideration]
+   - Context: Why this could affect the recommendation
+
+❌ **Weak Spots Identified** (1-3 issues)
+Logical inconsistencies, overlooked risks, or unsupported claims.
+
+1. [Issue 1 - what's problematic]
+   - Why it's a problem: [logical flaw or missing consideration]
+   - Alternative view: [counter-argument or risk]
+
+2. [Issue 2 - if applicable]
+   - Impact: [how this affects the conclusion]
+
+📊 **Evidence Requested** (if applicable)
+Claims that need data, benchmarks, or case studies to validate.
+
+1. [Claim 1 from Codex] - What evidence would support or refute this?
+   - Suggested search: "[benchmark/comparison/case study]"
+
+2. [Claim 2] - What data is needed?
+```
+
+**Example**:
+
+```markdown
+## Main Claude's Challenge to Codex
+
+✅ **Strengths Acknowledged:**
+1. Codex correctly identifies FastAPI's async performance advantage - this is well-documented
+2. The point about type safety and modern Python features is valid and important
+3. Strong emphasis on developer experience and ecosystem growth is insightful
+
+⚠️ **Clarifying Questions:**
+1. You recommend FastAPI for "modern async patterns" - does the team actually have async/await experience?
+   - Context: If not, this becomes a learning curve liability in a 3-month timeline
+
+2. You mention "ecosystem maturity" concerns for Django - but isn't Django 15+ years old with massive ecosystem?
+   - Clarification needed: Are you referring to async-specific ecosystem?
+
+❌ **Weak Spots Identified:**
+1. **Performance claim oversimplified**
+   - You cite "5x faster" but at 10k DAU (daily active users), not concurrent users
+   - Impact: At this scale, both frameworks handle load fine - performance difference may not matter
+
+2. **Learning curve minimized**
+   - FastAPI + async + Pydantic + SQLAlchemy is 4 new concepts for a team used to Django
+   - Risk: 3-month timeline is tight for learning + building
+
+📊 **Evidence Requested:**
+1. "FastAPI is 5x faster" - need benchmark at 10k concurrent (not just req/s tests)
+   - Suggested search: "FastAPI vs Django benchmark 10000 concurrent users real-world"
+
+2. "Smaller ecosystem" concern - quantify: how many fewer libraries/integrations?
+   - Suggested search: "Django REST Framework packages vs FastAPI ecosystem 2024"
+```
+
+**Execution**:
+You don't need to call any script - you are Main Claude, so analyze and write directly.
+
+---
+
+#### 3.2 Codex Challenges Main Claude Opinion
+
+**When to execute**: In parallel with 3.1 (or immediately after), to get Codex's perspective on your opinion.
+
+**How to execute**: Use codex-session.sh with challenge prompt.
+
+**Command**:
+
+```bash
+SCRIPTS_DIR="$HOME/.claude/skills/ai-collaborative-solver-v2.0/scripts"
+
+# Build challenge prompt for Codex
+CODEX_CHALLENGE_PROMPT="You are reviewing Main Claude's technical opinion and providing constructive challenge.
+
+**CRITICAL**: Follow this EXACT structure. Use these emoji markers:
+✅ Strengths Acknowledged (2-3 points)
+⚠️ Clarifying Questions (2-3 questions)
+❌ Weak Spots Identified (1-3 issues)
+📊 Evidence Requested (if applicable)
+
+## Context
+Question: [Insert clarified question from Phase 1]
+Constraints: [Insert key constraints]
+
+## Main Claude's Opinion
+[Paste your complete Phase 2.1 opinion here]
+
+## Your Task
+Provide constructive challenge following the structure above:
+
+1. ✅ **Strengths**: What did Main Claude get right? (2-3 specific points)
+
+2. ⚠️ **Questions**: Genuine gaps or missing considerations (2-3 questions with context)
+
+3. ❌ **Weak Spots**: Logical flaws, overlooked risks, unsupported claims (1-3 issues with impact)
+
+4. 📊 **Evidence Requested**: Claims needing data/benchmarks (if any)
+
+Be specific, constructive, and focus on improving the final recommendation."
+
+# Execute Codex challenge (parallel with your challenge, or sequential)
+CODEX_CHALLENGE=$(bash "$SCRIPTS_DIR/codex-session.sh" new "$CODEX_CHALLENGE_PROMPT" --stdout-only --quiet 2>&1)
+
+echo "Codex challenge collected successfully"
+```
+
+**Performance**:
+- Phase 3.1 (your challenge): ~5-10s (text generation)
+- Phase 3.2 (Codex challenge): ~15-20s (API call)
+- **Total if parallel**: ~20s (overlapped)
+- **Total if sequential**: ~25-30s
+
+**Note**: For v4.0, run sequentially (simpler). For v4.1+, optimize with parallel execution.
+
+---
+
+#### 3.3 Review Challenges
+
+Now you have:
+1. **Your challenge to Codex** (from 3.1)
+2. **Codex's challenge to you** (from 3.2)
+
+Read both challenges carefully. These will be addressed in Phase 4.
+
+**Quick sanity check**:
+- Are the challenges constructive, not adversarial?
+- Do they ask genuine questions (not rhetorical)?
+- Do they identify real weaknesses (not nitpicking)?
+- Is evidence requested for claims (not trivial points)?
+
+If challenges seem unproductive or generic, you may need to refine the prompts in future iterations.
+
+**Proceed to Phase 4**: Evidence-Based Refinement
+
+---
+
+### Phase 4: Round 3 - Evidence-Based Refinement (v4.0)
+
+**Objective**: Respond to challenges from Phase 3, provide evidence for claims, acknowledge valid criticisms, and refine original positions.
+
+**IMPORTANT**: This phase transforms debate into collaborative improvement - not defending positions, but finding truth through evidence and reasoning.
+
+#### 4.1 Main Claude Responds to Codex's Challenge
+
+**Input**: Codex's challenge to your opinion (from Phase 3.2)
+
+**Your task**: Address each section of Codex's challenge systematically.
+
+**Response Structure**:
+
+```markdown
+## Main Claude's Response to Codex's Challenge
+
+### Addressing Questions
+
+**Q1: [Codex's question]**
+A: [Your answer OR "Valid point - I don't have enough information. This needs clarification from user."]
+
+**Q2: [Codex's question]**
+A: [Your answer with reasoning]
+
+### Addressing Weak Spots
+
+**Issue 1: [Codex identified issue]**
+✅ **Acknowledged** OR ⚠️ **Counter-argument**
+
+If acknowledged:
+- Why it's valid: [explain]
+- How it changes view: [updated position]
+
+If counter-argument:
+- Why the criticism doesn't hold: [reasoning]
+- Supporting evidence: [if available]
+
+**Issue 2: [If applicable]**
+[Same structure]
+
+### Evidence Gathering
+
+**Claim 1: [Codex requested evidence for]**
+🔍 **Evidence Search**: [If needed, use WebSearch tool]
+📊 **Found**:
+- [Evidence source 1]: [Summary]
+- [Evidence source 2]: [Summary]
+✅ **Conclusion**: [How evidence supports/refutes claim]
+
+**Claim 2: [If applicable]**
+[Same structure]
+
+### Updated Position
+
+**Original**: [Your Phase 2.1 recommendation]
+**After addressing challenges**: [Refined recommendation]
+**Changes**:
+- [What changed and why]
+- [What remains the same]
+
+**Confidence**: [Original level] → [New level] (Higher/Same/Lower)
+**Reasoning**: [Why confidence changed or stayed]
+```
+
+**WebSearch Integration**:
+
+When Codex requests evidence, use the WebSearch tool:
+
+```
+If challenge includes "📊 Evidence Requested", determine what to search:
+
+Example:
+Codex asks: "Need benchmark for FastAPI vs Django at 10k concurrent users"
+
+Action:
+1. Use WebSearch tool with query: "FastAPI Django benchmark 10000 concurrent users performance"
+2. Review top 3 results
+3. Summarize findings with sources
+
+Format:
+🔍 **Evidence Search**: "FastAPI Django benchmark 10k concurrent"
+📊 **Found**:
+- TechEmpower Benchmarks (techempower.com): FastAPI 25k req/s, Django 5k req/s
+- Real Python article (realpython.com): "At 10k DAU, both handle load fine"
+- Stack Overflow discussion: "Performance difference negligible at <50k concurrent"
+
+✅ **Conclusion**: Codex was correct on raw performance (5x faster), but at 10k DAU scale, difference is not a deciding factor. Both frameworks sufficient.
+```
+
+**Example Response**:
+
+```markdown
+## Main Claude's Response to Codex's Challenge
+
+### Addressing Questions
+
+**Q1: Does the team actually have async/await experience?**
+A: ✅ **Valid point** - I assumed team Python experience = async experience. This needs user clarification.
+   - If NO async experience → Django safer (Codex concern justified)
+   - If YES async experience → FastAPI feasible
+
+**Critical follow-up**: User, does your team have async/await experience in Python?
+
+**Q2: "Ecosystem maturity" concern - clarify async-specific or general?**
+A: You're right to push back. Django has massive ecosystem overall. I meant async-specific ecosystem (e.g., async-compatible libraries). Updated: "Django's async ecosystem is less mature than FastAPI's, but sync ecosystem is larger."
+
+### Addressing Weak Spots
+
+**Issue 1: Performance claim oversimplified (10k DAU vs concurrent)**
+✅ **Acknowledged**: You're absolutely correct.
+
+🔍 **Evidence Search**: "FastAPI Django 10k daily active users"
+📊 **Found**:
+- TechEmpower: FastAPI 25k req/s vs Django 5k req/s (raw benchmarks)
+- Real Python: "At 10k DAU (~500 concurrent), both handle easily"
+
+✅ **Refined**: Performance advantage exists but NOT critical at this scale. Both sufficient for 10k DAU.
+
+**Issue 2: Learning curve minimized**
+⚠️ **Partially acknowledged**:
+- True: FastAPI + async + Pydantic is 3 new concepts
+- But: If team already knows SQLAlchemy, only 2 new concepts
+- Counter: Django + DRF also has learning curve (serializers, viewsets, etc.)
+
+📊 **Evidence**:
+- FastAPI tutorial: ~3 days for basic CRUD (official docs)
+- DRF tutorial: ~2 days for basic CRUD (official docs)
+
+✅ **Refined**: Learning curves comparable (FastAPI: 3 days, DRF: 2 days). 3-month timeline accommodates either.
+
+### Evidence Gathering
+
+**Claim: "Smaller ecosystem"**
+🔍 **Evidence Search**: "Django REST Framework vs FastAPI ecosystem size 2024"
+📊 **Found**:
+- Django packages: 4,000+ on djangopackages.org
+- FastAPI integrations: 500+ on awesome-fastapi GitHub
+- But: FastAPI uses standard Python libs (not framework-specific)
+
+✅ **Conclusion**: Django has 8x more framework-specific packages, but FastAPI leverages broader Python ecosystem. "Smaller" is context-dependent.
+
+### Updated Position
+
+**Original**: Django recommended (emphasis on stability + timeline)
+**After addressing challenges**:
+- IF team lacks async experience → Django (Codex point valid)
+- IF team has async experience → FastAPI feasible
+
+**Changes**:
+- Added conditional: async experience is decisive factor
+- Performance argument weakened (not critical at 10k DAU)
+- Learning curve reassessed (comparable, not blocking)
+
+**Confidence**: Medium (60%) → Medium-High (70%)
+**Reasoning**: Codex challenges refined analysis, but added conditionality rather than changing core recommendation.
+```
+
+---
+
+#### 4.2 Codex Responds to Main Claude's Challenge
+
+**When to execute**: In parallel with 4.1 (or sequentially)
+
+**How to execute**: Use codex-session.sh with response prompt
+
+**Command**:
+
+```bash
+SCRIPTS_DIR="$HOME/.claude/skills/ai-collaborative-solver-v2.0/scripts"
+
+# Build response prompt for Codex
+CODEX_RESPONSE_PROMPT="You received constructive challenge from Main Claude. Now respond systematically.
+
+**CRITICAL**: Follow this structure:
+
+## Codex's Response to Main Claude's Challenge
+
+### Addressing Questions
+[Answer each question Main Claude raised]
+
+### Addressing Weak Spots
+[For each issue: Acknowledge OR provide counter-argument]
+
+### Evidence Gathering
+[If Main Claude requested evidence, provide it with sources]
+
+### Updated Position
+[Original → Refined recommendation, confidence change]
+
+---
+
+## Context
+Question: [Insert original question]
+Constraints: [Insert key constraints]
+
+## Your Original Opinion
+[Paste Codex Phase 2.2 opinion]
+
+## Main Claude's Challenge to You
+[Paste Main Claude's Phase 3.1 challenge]
+
+---
+
+## Your Task
+
+Respond to Main Claude's challenge following the structure above:
+
+1. **Addressing Questions**: Answer each question or admit uncertainty
+2. **Addressing Weak Spots**: Acknowledge valid points OR explain why criticism doesn't hold
+3. **Evidence Gathering**: If evidence was requested, provide:
+   - Search query used (if WebSearch available)
+   - Findings with sources
+   - How evidence affects your position
+4. **Updated Position**: Refine recommendation based on challenges
+   - What changed
+   - Confidence evolution
+
+Be honest: if Main Claude exposed a real gap, acknowledge it and update your view."
+
+# Execute Codex response
+CODEX_RESPONSE=$(bash "$SCRIPTS_DIR/codex-session.sh" new "$CODEX_RESPONSE_PROMPT" --stdout-only --quiet 2>&1)
+
+echo "Codex response collected successfully"
+```
+
+**Performance**:
+- Phase 4.1 (your response): ~10-20s (with WebSearch) or ~5s (no search)
+- Phase 4.2 (Codex response): ~15-25s (API call + potential search)
+- **Total if parallel**: ~20-30s
+- **Total if sequential**: ~30-50s
+
+**Note**: WebSearch may add 10-20s per evidence request. Budget accordingly.
+
+---
+
+#### 4.3 Review Refined Positions
+
+Now you have:
+1. **Your refined opinion** (from 4.1) - after addressing Codex challenges
+2. **Codex's refined opinion** (from 4.2) - after addressing your challenges
+
+**Quick assessment**:
+- Did opinions converge (more agreement now)?
+- Did new evidence change recommendations?
+- Are there still unresolved differences?
+- Is more evidence needed, or is analysis sufficient?
+
+**Decision point**:
+- If **converged**: Proceed to Phase 5 (User Intervention) or Phase 6 (Final Synthesis)
+- If **still divergent but evidence-backed**: Proceed to Phase 5 for user input
+- If **evidence insufficient**: Consider another evidence-gathering round (rare, v4.1+ feature)
+
+**Proceed to Phase 5**: User Intervention Point
+
+---
+
 ## Best Practices
 
 ### ✅ Do's
