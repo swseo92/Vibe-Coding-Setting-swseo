@@ -1,0 +1,24 @@
+# Python Template Metadata
+# This file defines required and optional sections for Python projects
+
+required_sections:
+  - name: "Exception Handling & Traceback 보존"
+    description: "예외 처리 시 traceback 보존 패턴 및 Anti-patterns"
+    required: true
+
+  - name: "환경변수 관리"
+    description: "python-dotenv 사용 및 보안 베스트 프랙티스"
+    required: true
+
+optional_sections:
+  - name: "프로젝트 설명"
+    description: "프로젝트 목적, 주요 기능, 아키텍처"
+    required: false
+
+  - name: "개발 환경"
+    description: "필수 도구, 설치 및 실행 방법"
+    required: false
+
+  - name: "개발 규칙"
+    description: "코드 스타일, 테스트, 커밋 규칙"
+    required: false

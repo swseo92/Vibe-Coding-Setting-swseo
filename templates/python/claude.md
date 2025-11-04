@@ -391,4 +391,179 @@ pytest tests/test_main.py::test_function_name
 
 ---
 
+## Exception Handling & Traceback 보존
+
+**🚨 예외 처리 시 원본 traceback을 반드시 보존해야 합니다.**
+
+디버깅의 핵심은 에러 발생 지점과 호출 스택을 정확히 파악하는 것입니다. `try-except`를 잘못 사용하면 중요한 traceback 정보가 손실되어 디버깅이 매우 어려워집니다.
+
+### ✅ 올바른 패턴
+
+**1. logging.exception() 사용** (가장 권장):
+```python
+import logging
+
+try:
+    risky_operation()
+except Exception:
+    # 자동으로 전체 traceback 포함하여 로깅
+    logging.exception("Operation failed")
+    # 또는 특정 로그 레벨 사용
+    # logging.error("Operation failed", exc_info=True)
+```
+
+**2. traceback.print_exc() 사용**:
+```python
+import traceback
+import sys
+
+try:
+    risky_operation()
+except Exception:
+    # 전체 traceback을 stderr로 출력
+    traceback.print_exc()
+    # 또는
+    # traceback.print_exc(file=sys.stderr)
+```
+
+**3. raise from으로 예외 체이닝** (컨텍스트 보존):
+```python
+try:
+    database_operation()
+except KeyError as e:
+    # 원본 예외(KeyError)를 보존하면서 새 예외(ValueError) 발생
+    raise ValueError("Invalid configuration key") from e
+    # Traceback에 "During handling of the above exception..." 표시됨
+```
+
+**4. 예외 재발생** (처리 후 전파):
+```python
+try:
+    critical_operation()
+except Exception:
+    logging.exception("Critical operation failed, cleaning up...")
+    cleanup_resources()
+    raise  # 원본 예외를 그대로 재발생 (traceback 보존)
+```
+
+### ❌ Anti-patterns (피해야 할 패턴)
+
+**1. Bare except** (절대 금지):
+```python
+try:
+    something()
+except:  # ❌ NEVER! BaseException, KeyboardInterrupt까지 잡음
+    print("Error occurred")
+```
+
+**이유:**
+- `KeyboardInterrupt`, `SystemExit` 같은 시스템 예외까지 잡아버림
+- 프로그램 종료 불가 (Ctrl+C 무시)
+- 항상 `except Exception:`을 사용하세요
+
+**2. 정보 손실** (traceback 버림):
+```python
+try:
+    risky_operation()
+except Exception as e:
+    print(f"Error: {e}")  # ❌ Traceback 손실! 메시지만 출력
+    # 어디서 에러가 났는지 알 수 없음
+```
+
+**올바른 방법:**
+```python
+except Exception:
+    logging.exception("Error occurred")  # ✅ Traceback 보존
+```
+
+**3. raise from 누락** (컨텍스트 손실):
+```python
+try:
+    parse_config()
+except KeyError as e:
+    raise ValueError("Invalid config")  # ❌ 원본 KeyError 정보 손실
+```
+
+**올바른 방법:**
+```python
+except KeyError as e:
+    raise ValueError("Invalid config") from e  # ✅ 체이닝
+```
+
+**4. 과도한 try-except** (너무 넓은 범위):
+```python
+try:
+    step1()
+    step2()
+    step3()
+except Exception:
+    logging.exception("Something failed")  # ❌ 어느 단계에서 실패했는지 모호
+```
+
+**올바른 방법:**
+```python
+try:
+    step1()
+except Exception:
+    logging.exception("Step 1 failed")
+
+try:
+    step2()
+except Exception:
+    logging.exception("Step 2 failed")
+```
+
+### 실전 예제
+
+**데이터베이스 작업**:
+```python
+import logging
+from contextlib import suppress
+
+def fetch_user(user_id):
+    try:
+        user = db.query(User).filter_by(id=user_id).first()
+        if not user:
+            raise ValueError(f"User {user_id} not found")
+        return user
+    except SQLAlchemyError:
+        logging.exception(f"Database error fetching user {user_id}")
+        raise  # 상위 호출자에게 전파
+
+# 선택적: 무시해도 되는 예외
+with suppress(FileNotFoundError):
+    os.remove("temp_file.txt")  # 파일 없어도 OK
+```
+
+**API 호출**:
+```python
+import requests
+import logging
+
+def call_external_api(url):
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        return response.json()
+    except requests.Timeout:
+        logging.exception(f"API timeout: {url}")
+        raise  # 타임아웃은 재시도 가능하므로 전파
+    except requests.HTTPError as e:
+        # 원본 HTTP 에러를 보존하면서 커스텀 예외 발생
+        raise APIError(f"API call failed: {url}") from e
+    except Exception:
+        logging.exception(f"Unexpected error calling API: {url}")
+        raise
+```
+
+### 핵심 원칙
+
+1. **절대 bare except 사용 금지**: 항상 `except Exception:` 사용
+2. **Traceback 보존 필수**: `logging.exception()` 또는 `traceback.print_exc()`
+3. **예외 체이닝**: `raise ... from e`로 원본 컨텍스트 보존
+4. **구체적 예외 처리**: 가능한 한 구체적 예외 타입 catch
+5. **적절한 범위**: 최소한의 코드만 try 블록에 포함
+
+---
+
 **마지막 업데이트**: [날짜]
