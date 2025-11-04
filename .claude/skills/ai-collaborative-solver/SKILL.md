@@ -1098,31 +1098,26 @@ Use structured output format including:
 
 ## Bundled Scripts
 
-This skill includes helper scripts in the `scripts/` directory:
+This skill includes a helper script in the `scripts/` directory:
 
-### Session Manager (Active)
+### Session Manager
 - **`codex-session.sh`** - Manages stateful Codex CLI sessions
   - Supports `--stdout-only --quiet` for fast, minimal-overhead execution
   - API: `new`, `continue`, `info`, `list`, `clean`
-  - Used by main Claude to collect Codex's independent opinion
-
-### Legacy Scripts (Not Used in v3.0)
-- **`claude-code-session.sh`** - Previously used for spawning separate Claude sessions (removed in v3.0 for performance)
-- **`gemini-cli-session.sh`** - Previously used for 3-agent debates (removed due to reliability issues)
-- **`collect-opinions.sh`** - Old parallel orchestrator (replaced by direct main Claude opinion generation)
-
-**Usage**: Only `codex-session.sh` is actively used in Phase 2.2. Main Claude generates its own opinion directly without spawning a separate session.
+  - Used in Phase 2.2 to collect Codex's independent opinion
+  - Main Claude generates its own opinion directly without spawning a separate session
 
 ---
 
-**Version:** 3.1.0-complete
-**Status:** ✅ All Phases Complete (Phase 1 + Phase 2.1-2.5)
+**Version:** 3.1.1
+**Status:** ✅ All Phases Complete (Phase 1-6)
 **Features:**
 - Phase 1: Pre-Clarification (ensures context quality)
-- Phase 2.1-2.3: Independent opinion collection (Main Claude + Codex)
-- Phase 2.4: 4-step systematic synthesis (common ground, differences, unique insights, recommendation)
-- Phase 2.5: Structured markdown output (complete debate summary)
+- Phase 2: Independent opinion collection (Main Claude + Codex) with 4-step synthesis
+- Phase 3-4: Socratic Challenge & Evidence-based Defense
+- Phase 5: Dynamic Q&A and multi-round capability
+- Phase 6: Comprehensive final synthesis with confidence evolution
 **Opinions:** Main Claude (self-generated) + Codex (via script)
-**Performance:** ~26s total execution time (52% faster than v2.0, includes synthesis)
+**Performance:** ~26s (Phase 2 only), ~120-150s (multi-round with Phase 5-6)
 **Created:** 2025-11-02
-**Updated:** 2025-11-04 (v3.1: Implemented Phase 2.4-2.5 with concrete synthesis instructions)
+**Updated:** 2025-11-05 (v3.1.1: Removed legacy scripts, documentation cleanup)
