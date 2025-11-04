@@ -52,7 +52,7 @@ generate_session_id() {
 
 save_session_metadata() {
     local session_id="$1"
-    local session_dir="$SESSIONS_DIR/$session_id"
+    local session_dir="$2"
 
     cat > "$session_dir/metadata.json" <<EOF
 {
@@ -219,7 +219,7 @@ cmd_new() {
     fi
 
     # Save metadata
-    ROUND_COUNT=1 STATUS="active" save_session_metadata "$session_id"
+    ROUND_COUNT=1 STATUS="active" save_session_metadata "$session_id" "$session_dir"
 
     log_info "Session created: $session_dir"
     log_info "Round 1 completed"
@@ -331,7 +331,7 @@ cmd_continue() {
     fi
 
     # Update metadata
-    ROUND_COUNT=$next_round save_session_metadata "$session_id"
+    ROUND_COUNT=$next_round save_session_metadata "$session_id" "$session_dir"
 
     log_info "Round $next_round completed"
 }

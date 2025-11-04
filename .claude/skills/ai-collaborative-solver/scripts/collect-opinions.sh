@@ -115,6 +115,7 @@ main() {
     log_info "========================================"
 
     # Output session info to stdout (for Claude to capture)
+    echo "SESSION_ID=$(basename "$session_output")"
     echo "SESSION_OUTPUT=$session_output"
     echo "SUCCESS_COUNT=$success_count"
 
