@@ -1,467 +1,1049 @@
 ---
 name: ai-collaborative-solver
-description: This skill should be used when users request technical comparisons ("X vs Y"), architecture decisions, or AI-assisted problem solving. Triggers: "Should I use", "AI debate", or decision requests.
+description: AI debate skill with pre-clarification. Use when users request "AI 토론", "AI debate", or technical comparisons. Focuses on clarification quality first.
 ---
 
 # AI Collaborative Solver
 
-**Unified Multi-Model Debate System**
-
-*Registry-Based Model Selection | 3 AI Models | V3.0 Quality Framework*
+**Phase 1: Pre-Clarification Only**
 
 ---
 
-## Overview
+## When to Use
 
-Orchestrate multi-model debates across three leading AI engines: **Codex, Claude, and Gemini**. Built on Codex V3.0's proven architecture, automatically select models, run hybrid debates, and maintain consistent quality standards through a unified interface.
-
-**Key Innovation:** Model-agnostic orchestration with registry-based auto-selection to leverage the best AI for each problem type while maintaining Codex V3.0 quality standards.
-
----
-
-## When to Use This Skill
-
-Use this skill for:
-
-- **Technical Stack Decisions:** Choose between frameworks, databases, architectures, or tools
-- **Performance Analysis:** Evaluate scalability, optimization strategies, caching approaches
-- **Security Evaluation:** Assess security trade-offs, compliance requirements
-- **Multi-Perspective Problems:** Resolve complex decisions requiring diverse AI reasoning
-
-**Common Scenarios:**
-- Technology selection (language, framework, database)
-- System design and architecture planning
-- Migration planning (monolith to microservices, database changes)
-- Performance optimization strategies
-- Security and compliance decisions
-
-**How to activate:**
-
-When users request AI debate or technical comparisons:
-
-**Step 1: Pre-Clarification (You handle this directly)**
-
-Before running the script, analyze the problem statement:
-
-- **If information is missing (constraints, goals, context):**
-  - Ask 1-3 clarifying questions
-  - Categories: Tech stack, timeline, budget, team capability, success criteria
-  - Example: "What's your current response time and target? Which Django/DB versions? Timeline and constraints?"
-
-- **If information appears complete:**
-  - Show your understanding summary in this format:
-    ```
-    📋 My Understanding:
-    - [Main problem/goal]
-
-    🎯 Identified Constraints:
-    - [Constraint 1]
-    - [Constraint 2]
-
-    🔍 Assumptions I'm Making:
-    - [Assumption 1]
-    - [Assumption 2]
-    ```
-  - Ask: "Is this understanding correct? Anything to add or correct?"
-
-- **Then gather user response** before proceeding to Step 2
-
-**Step 2: Execute the debate**
-
-Build enriched problem statement from clarification:
-```bash
-bash .claude/skills/ai-collaborative-solver/scripts/ai-debate.sh \
-  "<original problem + clarification context>" \
-  --auto \
-  --mode balanced \
-  --skip-clarify
-```
-
-**Important:** Always use `--skip-clarify` flag since YOU already handled clarification in Step 1.
-
-**Step 3: Summarize results**
-
-After debate completes, summarize key findings from the report.
-
-**Example flow:**
-```
-User: "Django performance issue"
-
-You: "To help with the AI debate, I need to clarify:
-1. Current vs target response time?
-2. Django/PostgreSQL versions?
-3. Timeline and team constraints?"
-
-User: "2s → 500ms, Django 4.2 + PG 14, 1 week, no DBA"
-
-You: "📋 My Understanding:
-- Optimize Django 4.2 API: 2s → 500ms (75% improvement)
-🎯 Constraints: 1 week, no DBA (dev-only optimizations)
-🔍 Assumptions: Likely ORM N+1 queries, code-level fixes
-
-Is this correct?"
-
-User: "Yes"
-
-You: [Execute] bash ai-debate.sh "Django 4.2 + PG 14 performance: 2s→500ms, 1 week, no DBA, likely ORM issues" --auto --mode balanced --skip-clarify
-```
-
----
-
-## Supported AI Models
-
-### Codex (GPT-5-Codex via OpenAI)
-- **Best for:** Code review, architecture, implementation details, security analysis
-- **Strengths:** Deep code analysis, technical accuracy, debugging, performance optimization
-- **Model:** GPT-5-Codex (state-of-the-art agentic coding model)
-- **Capabilities:** chat, json, tool, debate, code_execution, thread_continuity
-- **Cost:** $20/month (ChatGPT Plus required)
-- **Context:** 128k tokens
-- **Quality Tier:** Premium
-
-### Claude (Sonnet 4.5 via Claude Code)
-- **Best for:** Writing, reasoning, analysis, documentation, explanation
-- **Strengths:** Excellent at reasoning, long-form writing, thoughtful analysis, clarity
-- **Model:** Claude Sonnet 4.5 (best coding model in the world - Sep 2025)
-- **Via:** Claude Code CLI (login-based, no API key needed)
-- **Capabilities:** chat, json, tool, debate, long_context
-- **Cost:** ~$0.03-0.08 per debate (Claude Pro/Max subscription)
-- **Context:** 200k tokens
-- **Quality Tier:** Premium
-
-### Gemini (2.5 Pro via Google)
-- **Best for:** Current trends, research, latest information (2024-2025)
-- **Strengths:** Google Search integration, free tier, massive context, grounding
-- **Capabilities:** chat, json, debate, grounding, large_context
-- **Cost:** FREE (60 req/min, 1000 req/day)
-- **Context:** 1M tokens
-- **Quality Tier:** Standard
-
-### Hybrid (Multiple Models)
-- **Best for:** Critical decisions, comprehensive analysis, complex problems
-- **Strengths:** Multiple perspectives, consensus building, validation
-- **Cost:** Combined (choose any combination)
-- **Models:** Codex + Claude + Gemini (any combination)
-
----
-
-## Architecture
-
-```
-AI Collaborative Solver (V1.0)
-│
-├── Unified Orchestrator (ai-debate.sh)
-│   ├── Registry Integration (capability-based selection)
-│   ├── Model Selection (auto/manual via registry)
-│   ├── Mode Configuration (simple/balanced/deep)
-│   └── Output Management (reports, metadata, logging)
-│
-├── Capability Registry (registry.yaml)
-│   ├── Model Definitions (costs, capabilities, limits)
-│   ├── Selection Rules (pattern-based auto-selection)
-│   ├── Cost Presets (minimal/balanced/premium/hybrid)
-│   └── Fallback Chains (model availability handling)
-│
-├── Model Adapters (V3.0 Enhanced)
-│   ├── Codex Adapter (OpenAI GPT-4/o3)
-│   │   ├── Metadata extraction (confidence, evidence tiers)
-│   │   ├── Quality gates integration
-│   │   └── V3.0 facilitator preparation
-│   │
-│   ├── Claude Adapter (Anthropic Claude 3.5 Sonnet)
-│   │   ├── API/CLI integration
-│   │   ├── Conversation history management
-│   │   └── Structured reasoning prompts
-│   │
-│   ├── Gemini Adapter (Google Gemini 2.5 Pro)
-│   │   ├── Multi-agent roles (6 perspectives)
-│   │   ├── Google Search grounding
-│   │   └── Context window optimization (1M tokens)
-│   │
-│   └── [Future: Enhanced Facilitator integration]
-│
-├── Utilities
-│   ├── Model Selector V2 (registry-based, 13 rules)
-│   └── Hybrid Orchestrator (multi-model synthesis)
-│
-└── Quality Frameworks (from Codex V3.0)
-    ├── Coverage Monitor (8 dimensions)
-    ├── Evidence Tiers (T1/T2/T3 markers)
-    ├── Anti-Pattern Detection
-    └── Quality Gates (prepared for V3.0 integration)
-```
-
----
-
-## Modes
-
-### Simple Mode (3 rounds, ~5-8 min)
-**Purpose:** Quick analysis for straightforward problems
-
-**Process:**
-1. **Explorer**: Generate 3-5 diverse approaches
-2. **Critic**: Reality-check feasibility
-3. **Synthesizer**: Recommend solution
-
-**Use when:**
-- Time-sensitive decisions
-- Binary choices (A vs B)
-- Simple architecture decisions
-
-**Example:** "Should we use REST or GraphQL?"
-
----
-
-### Balanced Mode (4 rounds, ~10-15 min) - Default
-**Purpose:** Thorough analysis for most problems
-
-**Process:**
-1. **Explorer**: Generate diverse approaches
-2. **Critic**: Reality-check feasibility
-3. **Synthesizer**: Recommend solution
-4. **Security Analyst**: Risk analysis
-
-**Use when:**
+Trigger when users request:
+- "AI 토론" / "AI debate"
+- "토론해서" / "debate"
+- Technical comparisons ("Django vs FastAPI")
 - Architecture decisions
-- Technology stack selection
-- Most general problems
-
-**Example:** "Design authentication system for SaaS"
+- Performance optimization advice
 
 ---
 
-### Deep Mode (6 rounds, ~15-25 min)
-**Purpose:** Comprehensive analysis for complex problems
+## How to Activate
 
-**Process:**
-1. **Explorer**: Generate diverse approaches
-2. **Critic**: Reality-check feasibility
-3. **Synthesizer**: Recommend solution
-4. **Security Analyst**: Security & risk analysis
-5. **Performance Specialist**: Scalability analysis
-6. **Integrator**: Final comprehensive synthesis
+**Step 1: Always Start with Pre-Clarification**
 
-**Use when:**
-- Complex system architecture
-- High-stakes decisions
-- Security/performance critical
+Before doing anything else, gather context from the user.
 
-**Example:** "Design payment processing with PCI compliance"
+### If Information is Missing
+
+Ask 2-3 clarifying questions:
+
+**Template:**
+```
+AI 토론을 위해 몇 가지 확인하고 싶습니다:
+1. [Tech stack / versions]
+2. [Timeline / budget / team constraints]
+3. [Goals / success criteria]
+```
+
+### If Information is Complete
+
+Show understanding summary and confirm:
+
+**Template:**
+```
+📋 **제 이해:**
+- [Main problem/goal]
+
+🎯 **파악한 제약사항:**
+- [Constraint 1], [Constraint 2]
+
+🔍 **전제 조건:**
+- [Assumption 1]
+
+맞나요? 추가하거나 수정할 내용이 있나요?
+```
 
 ---
 
-## Usage
+## Step 2: After Clarification - Execute Debate
 
-### Basic Usage (Auto-Select Model)
+After clarification is complete and user confirms, proceed to **Phase 2: Independent Opinion Collection**.
+
+### Phase 2: Independent Opinion Collection (Optimized)
+
+**New approach:** You (main Claude) generate your own opinion first, then collect Codex's independent opinion. This eliminates the 34-second overhead of spawning a separate Claude Code session.
+
+#### 2.1 Generate Your Own Independent Opinion
+
+**CRITICAL:** Generate your analysis BEFORE calling Codex. This ensures independence.
+
+Using the clarified context from Phase 1, provide your independent analysis:
+
+**Your Analysis Structure:**
+```markdown
+## Claude Code Analysis
+
+### Key Points (3-5 main insights)
+[Your key insights based on the clarified question and context]
+
+### Pros (advantages/supporting arguments)
+- [Pro 1 with reasoning]
+- [Pro 2 with reasoning]
+- [Pro 3 with reasoning]
+
+### Cons (disadvantages/opposing arguments)
+- [Con 1 with reasoning]
+- [Con 2 with reasoning]
+- [Con 3 with reasoning]
+
+### Recommendation
+[Your conclusion with clear reasoning]
+```
+
+**Important notes:**
+- Be specific and objective
+- Base analysis on the clarified constraints from Phase 1
+- Don't wait for Codex's opinion - generate yours independently first
+- Save your analysis to a variable or session output directory
+
+#### 2.2 Collect Codex Opinion (Single Agent)
+
+Now execute Codex to get an independent second opinion:
 
 ```bash
-./.claude/skills/ai-collaborative-solver/scripts/ai-debate.sh "Problem description" --auto
+# Get script path
+SCRIPTS_DIR="$HOME/.claude/skills/ai-collaborative-solver-v2.0/scripts"
+
+# Build prompt for Codex with full context
+CODEX_PROMPT="You are an independent expert analyst. You have NOT seen any other AI's opinion yet.
+
+## Clarified Question
+[Insert question from Phase 1]
+
+## Context & Constraints
+[Insert all gathered context from Phase 1]
+
+## Your Task
+Provide your independent analysis:
+
+1. **Key Points** (3-5 main insights)
+2. **Pros** (advantages/supporting arguments)
+3. **Cons** (disadvantages/opposing arguments)
+4. **Recommendation** (your conclusion with reasoning)
+
+Be specific and provide clear reasoning for each point."
+
+# Execute Codex only (fast, no file creation)
+CODEX_OPINION=$(bash "$SCRIPTS_DIR/codex-session.sh" new "$CODEX_PROMPT" --stdout-only --quiet 2>&1)
+
+echo "Codex opinion collected successfully"
 ```
 
-Automatically selects the best AI model based on problem type.
+**Performance improvements vs old approach:**
+- **Old:** 2 agents in parallel (Codex + Claude Code) = 55s
+- **New:** 1 agent only (Codex) = ~13s
+- **Speedup:** 75% faster! (42 seconds saved)
+- No separate Claude Code session spawn overhead
+- No file I/O overhead (uses --stdout-only)
+
+#### 2.3 Compare Your Opinion with Codex's Opinion
+
+Now you have two independent opinions:
+1. **Your analysis** (from 2.1) - already generated
+2. **Codex's opinion** (from 2.2) - captured in `$CODEX_OPINION`
+
+Read both carefully and prepare for synthesis.
+
+#### 2.4 Analyze and Synthesize
+
+**IMPORTANT**: Perform this analysis systematically and objectively. Compare your opinion (from 2.1) with Codex's opinion (from 2.2).
+
+**Step 1: Identify Common Ground**
+
+Review both opinions and extract points of agreement:
+
+```
+Action: Read through both opinions carefully
+Look for:
+  - Similar key points or insights
+  - Matching recommendations
+  - Shared concerns or priorities
+  - Common technical assessments
+
+Example:
+Your opinion: "Django provides better admin interface"
+Codex opinion: "Django's built-in admin is a major advantage"
+→ Common ground: Both agree Django admin is valuable
+```
+
+**Step 2: Highlight Differences**
+
+Identify where opinions diverge and understand why:
+
+```
+Action: Compare contrasting viewpoints
+Look for:
+  - Different recommendations
+  - Opposing priorities (speed vs stability, etc.)
+  - Conflicting technical assessments
+  - Different risk evaluations
+
+Example:
+Your opinion: "FastAPI is better for this team (async expertise)"
+Codex opinion: "Django is better for this team (proven stability)"
+→ Difference: Trade-off between modern features vs proven reliability
+→ Root cause: Different weighting of team skill vs project risk
+```
+
+**Step 3: Extract Unique Insights**
+
+Find what each perspective uniquely contributes:
+
+```
+Your unique insights:
+  - What did you emphasize that Codex didn't?
+  - What angle did you take that's distinctive?
+  - Example: "You focused on team morale and modern tech stack appeal"
+
+Codex unique insights:
+  - What did Codex highlight that you missed?
+  - What novel consideration did Codex raise?
+  - Example: "Codex emphasized ecosystem maturity and hiring pool"
+
+Why these insights matter:
+  - Unique insights reveal blind spots
+  - They enrich the final analysis
+  - They show the value of multiple perspectives
+```
+
+**Step 4: Synthesize Final Recommendation**
+
+Create a balanced recommendation that considers both perspectives:
+
+```
+Process:
+1. Count agreement vs disagreement points
+   - If 70%+ agreement → High confidence, synthesize toward consensus
+   - If 40-70% agreement → Medium confidence, present balanced view
+   - If <40% agreement → Low confidence, present options
+
+2. Weight the opinions:
+   - If both strongly agree → Strong recommendation
+   - If one strong, one weak → Moderate recommendation
+   - If both disagree → Present trade-offs, let user decide
+
+3. Address conflicts explicitly:
+   - "While [your opinion] suggests X, [Codex] raises concern about Y"
+   - "The trade-off is between [benefit A] and [cost B]"
+   - "This depends on whether [assumption 1] or [assumption 2] holds"
+
+4. Formulate final recommendation:
+   - State clear conclusion
+   - Explain reasoning (why this balances both views)
+   - Provide confidence level (High/Medium/Low)
+   - Give actionable next steps
+
+Example synthesis:
+"Given the 3-month timeline and team's lack of async experience, Django
+is the safer choice despite FastAPI's performance benefits. While your
+analysis correctly identifies FastAPI's modern advantages, Codex's concern
+about learning curve risk is more critical given the timeline constraint.
+Confidence: High (both agree timeline is tight, prioritize stability)."
+```
+
+#### 2.5 Present Results to User
+
+**IMPORTANT**: Format the complete analysis using the template below. Fill each section with content from your Phase 2.4 synthesis.
+
+**How to fill the template:**
+
+**Section 1: Question & Context**
+```
+1. Question: Copy the clarified question from Phase 1
+2. Context Summary: List 3-5 key constraints/requirements
+   - Timeline, budget, team size, technical constraints
+   - Keep it brief (2-3 sentences max)
+```
+
+**Section 2: Independent Opinions**
+```
+Your Analysis:
+  - Copy your complete opinion from Phase 2.1
+  - Add "Key Strengths" (2-3 strongest points you made)
+  - Example strengths: "Strong emphasis on timeline risk", "Detailed performance analysis"
+
+Codex Analysis:
+  - Copy Codex's complete opinion from Phase 2.2
+  - Add "Key Strengths" (2-3 strongest points from Codex)
+  - Example strengths: "Comprehensive ecosystem assessment", "Practical migration considerations"
+```
+
+**Section 3: Synthesis**
+```
+Areas of Agreement ✅:
+  - List all common ground points from Phase 2.4 Step 1
+  - Format: Bullet points, 3-5 items
+  - Example: "Both agree Django's admin interface is valuable for rapid development"
+
+Areas of Disagreement ⚠️:
+  - List all differences from Phase 2.4 Step 2
+  - Format: Each disagreement with explanation
+  - Example: "Performance: Your analysis prioritizes async capabilities, while Codex emphasizes proven stability"
+
+Unique Insights 💡:
+  - Your perspective: From Phase 2.4 Step 3 (your unique insights)
+  - Codex perspective: From Phase 2.4 Step 3 (Codex unique insights)
+  - Format: 1-2 sentences each
+```
+
+**Section 4: Final Recommendation**
+```
+Recommendation:
+  - Use the synthesis from Phase 2.4 Step 4
+  - State clear conclusion (1-2 paragraphs)
+  - Explain the reasoning
+
+Confidence Level:
+  - High: 70%+ agreement, strong consensus
+  - Medium: 40-70% agreement, balanced trade-offs
+  - Low: <40% agreement, conflicting views
+
+Reasoning:
+  - Why this recommendation balances both views (2-3 sentences)
+  - Reference specific points from both opinions
+
+Next Steps:
+  - 3-5 actionable steps
+  - Specific and implementable
+  - Example: "1. Set up Django 5.0 project structure", "2. Configure PostgreSQL database"
+```
+
+**Complete Output Template:**
+```markdown
+# AI Debate Results
+
+## Question
+[Copy clarified question from Phase 1]
+
+## Context Summary
+[List 3-5 key constraints: timeline, team, scale, priorities]
 
 ---
 
-### Specify Model
+## Independent Opinions
 
-**Using Codex (Code/Architecture):**
-```bash
-./ai-debate.sh "Code review needed for auth module" --model codex --mode balanced
-```
+### Your Analysis (Claude Code)
+[Paste your complete opinion from Phase 2.1]
 
-**Using Claude (Writing/Reasoning):**
-```bash
-./ai-debate.sh "Write technical documentation for API" --model claude --mode balanced
-```
-
-**Using Gemini (Research/Trends):**
-```bash
-./ai-debate.sh "Latest 2025 React best practices" --model gemini --search
-```
+**Key Strengths:**
+- [Strength 1: e.g., "Thorough async performance analysis"]
+- [Strength 2: e.g., "Strong focus on team skillset"]
 
 ---
 
-### Hybrid Mode (Multiple Models)
+### Codex Analysis
+[Paste Codex complete opinion from Phase 2.2]
 
-**Two Models:**
-```bash
-./ai-debate.sh "Microservices vs Monolith architecture" --models codex,claude --mode balanced
+**Key Strengths:**
+- [Strength 1: e.g., "Comprehensive ecosystem assessment"]
+- [Strength 2: e.g., "Practical migration concerns"]
+
+---
+
+## Synthesis
+
+### Areas of Agreement ✅
+[From Phase 2.4 Step 1 - List common ground points]
+- [Agreement point 1]
+- [Agreement point 2]
+- [Agreement point 3]
+
+### Areas of Disagreement ⚠️
+[From Phase 2.4 Step 2 - List differences with explanations]
+- **[Topic]**: Your view vs Codex view, root cause of difference
+- **[Topic]**: Your view vs Codex view, root cause of difference
+
+### Unique Insights 💡
+- **Your perspective:** [From Phase 2.4 Step 3 - Your unique angle]
+- **Codex's perspective:** [From Phase 2.4 Step 3 - Codex unique insights]
+
+---
+
+## Final Recommendation
+
+[From Phase 2.4 Step 4 - State clear conclusion with reasoning]
+
+**Confidence Level:** [High/Medium/Low]
+
+**Reasoning:** [Explain why this balances both viewpoints, 2-3 sentences]
+
+**Next Steps:**
+1. [Specific actionable step]
+2. [Specific actionable step]
+3. [Specific actionable step]
 ```
 
-**Three Models (Comprehensive):**
-```bash
-./ai-debate.sh "Critical decision: Database selection" --models codex,claude,gemini --mode deep
+**CRITICAL**: Actually output this formatted markdown to the user. Don't just describe it - present the complete analysis.
+
+---
+
+**🤔 ASK USER: Proceed to deeper analysis?**
+
+Use the AskUserQuestion tool to ask if the user wants Phase 3-4:
+
+```
+AskUserQuestion({
+  "questions": [{
+    "question": "📊 Phase 2 (기본 분석) 완료! 추가로 더 깊은 분석을 진행할까요?",
+    "header": "추가 분석",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "예, Phase 3-4 진행",
+        "description": "양쪽 의견의 약점 발견, 실제 데이터로 검증, 더 정교한 결론 (추가 40-60초)"
+      },
+      {
+        "label": "아니오, 충분함",
+        "description": "현재 분석으로 충분합니다. Phase 2 결과로 결정하겠습니다."
+      }
+    ]
+  }]
+})
 ```
 
-**Output:** Comparison report with all perspectives, synthesis, and consensus
+**If user selects "예, Phase 3-4 진행"**: Continue to Phase 3 below.
 
----
-
-### Through Claude Code
-
-**Activation via Claude Code:**
-
-When activated through a user request like "AI 토론해서 Django vs FastAPI 비교해줘", the skill automatically:
-
-1. Analyzes problem type
-2. Auto-selects best model (or prompts for clarification if uncertain)
-3. Runs the debate
-4. Summarizes results
-
----
-
-## Auto Model Selection Rules
-
-Automatically choose the best model based on keywords (13 rules in registry):
-
-| Problem Type | Keywords | Selected Model | Reason |
-|--------------|----------|----------------|--------|
-| **Code Analysis** | 코드, code, 리뷰, review, 버그, bug | **Codex** | Deep technical understanding |
-| **Writing/Docs** | write, 작성, document, 문서 | **Claude** | Excellent at writing & explanations |
-| **Reasoning** | reason, 추론, analyze, 분석, think | **Claude** | Strong reasoning capabilities |
-| **Current Trends** | 2025, 최신, latest, 트렌드, trend | **Gemini** | Google Search for latest info |
-| **Research** | 검색, search, 조사, research, find | **Gemini** | Google Search grounding |
-| **Architecture** | 아키텍처, architecture, 설계, design | **Codex** | Technical reasoning |
-| **Architecture + Trends** | architecture + 2025/latest | **Gemini** | Need current trends |
-| **Comparisons** | vs, compare, 비교, 선택 | **Gemini** (general)<br/>**Codex** (technical) | Context-dependent |
-| **Security Code** | 보안 + 코드 | **Codex** | Precise code analysis |
-| **Security Research** | 보안 + 조사/트렌드 | **Gemini** | Current threat intel |
-| **Performance** | 성능, performance, 최적화, optimize | **Codex** | Code expertise |
-| **Database** | 데이터베이스, database, SQL, query | **Codex** | Technical precision |
-| **Framework + Latest** | framework/library + 2025/latest | **Gemini** | Latest trends |
-
-**Priority:** Rules are evaluated in order. Later rules can override earlier ones.
-
-**Default:** If no rule matches, selects **Codex** (most comprehensive technical capability)
-
----
-
-## Model Comparison
-
-| Feature | Codex | Claude | Gemini |
-|---------|-------|--------|--------|
-| **Model** | GPT-5-Codex | Claude Sonnet 4.5 | Gemini 2.5 Pro |
-| **Provider** | OpenAI | Anthropic | Google |
-| **Cost** | $20/month | ~$0.03-0.08/debate | FREE |
-| **Context** | 128k tokens | 200k tokens | 1M tokens |
-| **Code Analysis** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Writing** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **Reasoning** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **Research** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Current Info (2025)** | ⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Google Search** | ❌ | ❌ | ✅ |
-| **Speed** | Medium | Fast | Fast |
-| **Quality Framework** | V3.0 (Enhanced) | V3.0 (Enhanced) | V3.0 (Enhanced) |
-| **Best Use Case** | Code/Architecture | Writing/Reasoning | Trends/Research |
-
-**Recommendation:** Use `--auto` to enable automatic model selection based on the problem type.
-
-**For detailed model specifications, pricing, and performance benchmarks, see:** [`references/model-comparison.md`](references/model-comparison.md)
-
----
-
-## Examples
-
-### Example 1: Auto-Select (Code Review)
-
-**Input:**
-```bash
-./ai-debate.sh "코드 리뷰 필요: 인증 모듈" --auto
+**If user selects "아니오, 충분함"**: End the debate here. Output a final message:
 ```
+✅ AI 토론 완료! Phase 2 분석 결과를 참고하여 결정하세요.
 
-**What happens:**
-1. Keywords detected: "코드 리뷰" → Auto-select **Codex**
-2. Mode: balanced (default)
-3. Codex analyzes code-level details
-4. Report saved to `.debate-reports/`
-
-**For more detailed examples, see:** [`references/examples.md`](references/examples.md)
-
----
-
-### Example 5: Through Claude Code
-
-**User:** "AI로 토론해서 PostgreSQL vs MongoDB 결정해줘"
-
-**Claude:**
-1. Activates AI Collaborative Solver skill
-2. Analyzes: Database comparison → **Auto-select Codex**
-3. Runs: `./ai-debate.sh "PostgreSQL vs MongoDB" --model codex --mode balanced`
-4. Summarizes key findings
-
-**Claude's response:**
-```
-Codex 토론 결과:
-
-**추천:** PostgreSQL
-**신뢰도:** 85%
-
-**주요 근거:**
-- 관계형 데이터 구조 (user profiles)
-- ACID 보장 필요
-- 팀 경험 (PostgreSQL)
-
-**구현 단계:**
-1. 스키마 설계 (정규화)
-2. 인덱스 최적화
-3. Connection pooling
-
-**리스크:**
-- 초기 스키마 설계 중요 → 마이그레이션 계획
-- 복잡한 쿼리 시 성능 → 인덱스 전략
-
-전체 리포트: .debate-reports/2025-10-31-XX-XX-ai-debate-codex.md
+궁금한 점이 있으면 언제든 추가 질문 주세요! 😊
 ```
 
 ---
 
-## Advanced Usage
+### Phase 3: Round 2 - Constructive Challenge (v4.0)
 
-For advanced features including custom mode configuration, registry customization, and adding new models, see:
-- [`references/advanced-usage.md`](references/advanced-usage.md) - Custom modes, CI/CD integration, performance optimization
-- [`references/registry-config.md`](references/registry-config.md) - Model registry configuration, adding new models
+**Objective**: Each agent reviews the other's opinion and provides constructive criticism to identify strengths, weaknesses, and areas needing clarification or evidence.
 
----
+**IMPORTANT**: This phase enables true debate dynamics - not "rebuttal for rebuttal's sake", but productive challenge that refines thinking and exposes blind spots.
 
-## Output Format
+#### 3.1 Main Claude Challenges Codex Opinion
 
-Save reports to `.debate-reports/` with structure:
+**When to execute**: Only when user selected "예, Phase 3-4 진행" above.
+
+**Your task**: Review Codex's opinion and provide CONSTRUCTIVE challenge.
+
+**Guidelines - Follow this structure exactly**:
 
 ```markdown
-# AI Collaborative Debate Report
+## Main Claude's Challenge to Codex
 
-**Generated:** 2025-10-31 10:30:00
-**Model:** codex (auto-selected)
-**Mode:** balanced
+✅ **Strengths Acknowledged** (2-3 points)
+What did Codex get right? Which arguments are solid and well-reasoned?
 
-## Problem Statement
-...
+1. [Strength 1 - specific point from Codex opinion]
+2. [Strength 2 - why this argument is valid]
+3. [Strength 3 - technical merit or insight]
 
-## Round 1: Explorer
-...
+⚠️ **Clarifying Questions** (2-3 questions)
+NOT rhetorical attacks - genuine gaps in understanding or specification.
 
-## Round 2: Critic
-...
+1. [Question 1 - about edge case, constraint, or assumption]
+   - Context: Why this matters for the decision
+   - Example: "You mentioned X, but what about scenario Y?"
 
-## Round 3: Synthesizer
-...
+2. [Question 2 - about missing consideration]
+   - Context: Why this could affect the recommendation
 
-## Round 4: Security Analyst
-...
+❌ **Weak Spots Identified** (1-3 issues)
+Logical inconsistencies, overlooked risks, or unsupported claims.
 
-## Final Summary
+1. [Issue 1 - what's problematic]
+   - Why it's a problem: [logical flaw or missing consideration]
+   - Alternative view: [counter-argument or risk]
 
-1. **Recommended Solution:** [Clear recommendation]
-2. **Key Rationale:** [Why this solution]
-3. **Implementation Steps:** [3-5 concrete steps]
-4. **Risks & Mitigations:** [Top 3 risks]
-5. **Confidence Level:** [0-100%]
+2. [Issue 2 - if applicable]
+   - Impact: [how this affects the conclusion]
 
-## Metadata
-- Total Duration: 12 minutes
-- Model: codex
-- Mode: balanced
+📊 **Evidence Requested** (if applicable)
+Claims that need data, benchmarks, or case studies to validate.
+
+1. [Claim 1 from Codex] - What evidence would support or refute this?
+   - Suggested search: "[benchmark/comparison/case study]"
+
+2. [Claim 2] - What data is needed?
 ```
+
+**Example**:
+
+```markdown
+## Main Claude's Challenge to Codex
+
+✅ **Strengths Acknowledged:**
+1. Codex correctly identifies FastAPI's async performance advantage - this is well-documented
+2. The point about type safety and modern Python features is valid and important
+3. Strong emphasis on developer experience and ecosystem growth is insightful
+
+⚠️ **Clarifying Questions:**
+1. You recommend FastAPI for "modern async patterns" - does the team actually have async/await experience?
+   - Context: If not, this becomes a learning curve liability in a 3-month timeline
+
+2. You mention "ecosystem maturity" concerns for Django - but isn't Django 15+ years old with massive ecosystem?
+   - Clarification needed: Are you referring to async-specific ecosystem?
+
+❌ **Weak Spots Identified:**
+1. **Performance claim oversimplified**
+   - You cite "5x faster" but at 10k DAU (daily active users), not concurrent users
+   - Impact: At this scale, both frameworks handle load fine - performance difference may not matter
+
+2. **Learning curve minimized**
+   - FastAPI + async + Pydantic + SQLAlchemy is 4 new concepts for a team used to Django
+   - Risk: 3-month timeline is tight for learning + building
+
+📊 **Evidence Requested:**
+1. "FastAPI is 5x faster" - need benchmark at 10k concurrent (not just req/s tests)
+   - Suggested search: "FastAPI vs Django benchmark 10000 concurrent users real-world"
+
+2. "Smaller ecosystem" concern - quantify: how many fewer libraries/integrations?
+   - Suggested search: "Django REST Framework packages vs FastAPI ecosystem 2024"
+```
+
+**Execution**:
+You don't need to call any script - you are Main Claude, so analyze and write directly.
+
+---
+
+#### 3.2 Codex Challenges Main Claude Opinion
+
+**When to execute**: In parallel with 3.1 (or immediately after), to get Codex's perspective on your opinion.
+
+**How to execute**: Use codex-session.sh with challenge prompt.
+
+**Command**:
+
+```bash
+SCRIPTS_DIR="$HOME/.claude/skills/ai-collaborative-solver-v2.0/scripts"
+
+# Build challenge prompt for Codex
+CODEX_CHALLENGE_PROMPT="You are reviewing Main Claude's technical opinion and providing constructive challenge.
+
+**CRITICAL**: Follow this EXACT structure. Use these emoji markers:
+✅ Strengths Acknowledged (2-3 points)
+⚠️ Clarifying Questions (2-3 questions)
+❌ Weak Spots Identified (1-3 issues)
+📊 Evidence Requested (if applicable)
+
+## Context
+Question: [Insert clarified question from Phase 1]
+Constraints: [Insert key constraints]
+
+## Main Claude's Opinion
+[Paste your complete Phase 2.1 opinion here]
+
+## Your Task
+Provide constructive challenge following the structure above:
+
+1. ✅ **Strengths**: What did Main Claude get right? (2-3 specific points)
+
+2. ⚠️ **Questions**: Genuine gaps or missing considerations (2-3 questions with context)
+
+3. ❌ **Weak Spots**: Logical flaws, overlooked risks, unsupported claims (1-3 issues with impact)
+
+4. 📊 **Evidence Requested**: Claims needing data/benchmarks (if any)
+
+Be specific, constructive, and focus on improving the final recommendation."
+
+# Execute Codex challenge (parallel with your challenge, or sequential)
+CODEX_CHALLENGE=$(bash "$SCRIPTS_DIR/codex-session.sh" new "$CODEX_CHALLENGE_PROMPT" --stdout-only --quiet 2>&1)
+
+echo "Codex challenge collected successfully"
+```
+
+**Performance**:
+- Phase 3.1 (your challenge): ~5-10s (text generation)
+- Phase 3.2 (Codex challenge): ~15-20s (API call)
+- **Total if parallel**: ~20s (overlapped)
+- **Total if sequential**: ~25-30s
+
+**Note**: For v4.0, run sequentially (simpler). For v4.1+, optimize with parallel execution.
+
+---
+
+#### 3.3 Review Challenges
+
+Now you have:
+1. **Your challenge to Codex** (from 3.1)
+2. **Codex's challenge to you** (from 3.2)
+
+Read both challenges carefully. These will be addressed in Phase 4.
+
+**Quick sanity check**:
+- Are the challenges constructive, not adversarial?
+- Do they ask genuine questions (not rhetorical)?
+- Do they identify real weaknesses (not nitpicking)?
+- Is evidence requested for claims (not trivial points)?
+
+If challenges seem unproductive or generic, you may need to refine the prompts in future iterations.
+
+**Proceed to Phase 4**: Evidence-Based Refinement
+
+---
+
+### Phase 4: Round 3 - Evidence-Based Refinement (v4.0)
+
+**Objective**: Respond to challenges from Phase 3, provide evidence for claims, acknowledge valid criticisms, and refine original positions.
+
+**IMPORTANT**: This phase transforms debate into collaborative improvement - not defending positions, but finding truth through evidence and reasoning.
+
+#### 4.1 Main Claude Responds to Codex's Challenge
+
+**Input**: Codex's challenge to your opinion (from Phase 3.2)
+
+**Your task**: Address each section of Codex's challenge systematically.
+
+**Response Structure**:
+
+```markdown
+## Main Claude's Response to Codex's Challenge
+
+### Addressing Questions
+
+**Q1: [Codex's question]**
+A: [Your answer OR "Valid point - I don't have enough information. This needs clarification from user."]
+
+**Q2: [Codex's question]**
+A: [Your answer with reasoning]
+
+### Addressing Weak Spots
+
+**Issue 1: [Codex identified issue]**
+✅ **Acknowledged** OR ⚠️ **Counter-argument**
+
+If acknowledged:
+- Why it's valid: [explain]
+- How it changes view: [updated position]
+
+If counter-argument:
+- Why the criticism doesn't hold: [reasoning]
+- Supporting evidence: [if available]
+
+**Issue 2: [If applicable]**
+[Same structure]
+
+### Evidence Gathering
+
+**Claim 1: [Codex requested evidence for]**
+🔍 **Evidence Search**: [If needed, use WebSearch tool]
+📊 **Found**:
+- [Evidence source 1]: [Summary]
+- [Evidence source 2]: [Summary]
+✅ **Conclusion**: [How evidence supports/refutes claim]
+
+**Claim 2: [If applicable]**
+[Same structure]
+
+### Updated Position
+
+**Original**: [Your Phase 2.1 recommendation]
+**After addressing challenges**: [Refined recommendation]
+**Changes**:
+- [What changed and why]
+- [What remains the same]
+
+**Confidence**: [Original level] → [New level] (Higher/Same/Lower)
+**Reasoning**: [Why confidence changed or stayed]
+```
+
+**WebSearch Integration**:
+
+When Codex requests evidence, use the WebSearch tool:
+
+```
+If challenge includes "📊 Evidence Requested", determine what to search:
+
+Example:
+Codex asks: "Need benchmark for FastAPI vs Django at 10k concurrent users"
+
+Action:
+1. Use WebSearch tool with query: "FastAPI Django benchmark 10000 concurrent users performance"
+2. Review top 3 results
+3. Summarize findings with sources
+
+Format:
+🔍 **Evidence Search**: "FastAPI Django benchmark 10k concurrent"
+📊 **Found**:
+- TechEmpower Benchmarks (techempower.com): FastAPI 25k req/s, Django 5k req/s
+- Real Python article (realpython.com): "At 10k DAU, both handle load fine"
+- Stack Overflow discussion: "Performance difference negligible at <50k concurrent"
+
+✅ **Conclusion**: Codex was correct on raw performance (5x faster), but at 10k DAU scale, difference is not a deciding factor. Both frameworks sufficient.
+```
+
+**Example Response**:
+
+```markdown
+## Main Claude's Response to Codex's Challenge
+
+### Addressing Questions
+
+**Q1: Does the team actually have async/await experience?**
+A: ✅ **Valid point** - I assumed team Python experience = async experience. This needs user clarification.
+   - If NO async experience → Django safer (Codex concern justified)
+   - If YES async experience → FastAPI feasible
+
+**Critical follow-up**: User, does your team have async/await experience in Python?
+
+**Q2: "Ecosystem maturity" concern - clarify async-specific or general?**
+A: You're right to push back. Django has massive ecosystem overall. I meant async-specific ecosystem (e.g., async-compatible libraries). Updated: "Django's async ecosystem is less mature than FastAPI's, but sync ecosystem is larger."
+
+### Addressing Weak Spots
+
+**Issue 1: Performance claim oversimplified (10k DAU vs concurrent)**
+✅ **Acknowledged**: You're absolutely correct.
+
+🔍 **Evidence Search**: "FastAPI Django 10k daily active users"
+📊 **Found**:
+- TechEmpower: FastAPI 25k req/s vs Django 5k req/s (raw benchmarks)
+- Real Python: "At 10k DAU (~500 concurrent), both handle easily"
+
+✅ **Refined**: Performance advantage exists but NOT critical at this scale. Both sufficient for 10k DAU.
+
+**Issue 2: Learning curve minimized**
+⚠️ **Partially acknowledged**:
+- True: FastAPI + async + Pydantic is 3 new concepts
+- But: If team already knows SQLAlchemy, only 2 new concepts
+- Counter: Django + DRF also has learning curve (serializers, viewsets, etc.)
+
+📊 **Evidence**:
+- FastAPI tutorial: ~3 days for basic CRUD (official docs)
+- DRF tutorial: ~2 days for basic CRUD (official docs)
+
+✅ **Refined**: Learning curves comparable (FastAPI: 3 days, DRF: 2 days). 3-month timeline accommodates either.
+
+### Evidence Gathering
+
+**Claim: "Smaller ecosystem"**
+🔍 **Evidence Search**: "Django REST Framework vs FastAPI ecosystem size 2024"
+📊 **Found**:
+- Django packages: 4,000+ on djangopackages.org
+- FastAPI integrations: 500+ on awesome-fastapi GitHub
+- But: FastAPI uses standard Python libs (not framework-specific)
+
+✅ **Conclusion**: Django has 8x more framework-specific packages, but FastAPI leverages broader Python ecosystem. "Smaller" is context-dependent.
+
+### Updated Position
+
+**Original**: Django recommended (emphasis on stability + timeline)
+**After addressing challenges**:
+- IF team lacks async experience → Django (Codex point valid)
+- IF team has async experience → FastAPI feasible
+
+**Changes**:
+- Added conditional: async experience is decisive factor
+- Performance argument weakened (not critical at 10k DAU)
+- Learning curve reassessed (comparable, not blocking)
+
+**Confidence**: Medium (60%) → Medium-High (70%)
+**Reasoning**: Codex challenges refined analysis, but added conditionality rather than changing core recommendation.
+```
+
+---
+
+#### 4.2 Codex Responds to Main Claude's Challenge
+
+**When to execute**: In parallel with 4.1 (or sequentially)
+
+**How to execute**: Use codex-session.sh with response prompt
+
+**Command**:
+
+```bash
+SCRIPTS_DIR="$HOME/.claude/skills/ai-collaborative-solver-v2.0/scripts"
+
+# Build response prompt for Codex
+CODEX_RESPONSE_PROMPT="You received constructive challenge from Main Claude. Now respond systematically.
+
+**CRITICAL**: Follow this structure:
+
+## Codex's Response to Main Claude's Challenge
+
+### Addressing Questions
+[Answer each question Main Claude raised]
+
+### Addressing Weak Spots
+[For each issue: Acknowledge OR provide counter-argument]
+
+### Evidence Gathering
+[If Main Claude requested evidence, provide it with sources]
+
+### Updated Position
+[Original → Refined recommendation, confidence change]
+
+---
+
+## Context
+Question: [Insert original question]
+Constraints: [Insert key constraints]
+
+## Your Original Opinion
+[Paste Codex Phase 2.2 opinion]
+
+## Main Claude's Challenge to You
+[Paste Main Claude's Phase 3.1 challenge]
+
+---
+
+## Your Task
+
+Respond to Main Claude's challenge following the structure above:
+
+1. **Addressing Questions**: Answer each question or admit uncertainty
+2. **Addressing Weak Spots**: Acknowledge valid points OR explain why criticism doesn't hold
+3. **Evidence Gathering**: If evidence was requested, provide:
+   - Search query used (if WebSearch available)
+   - Findings with sources
+   - How evidence affects your position
+4. **Updated Position**: Refine recommendation based on challenges
+   - What changed
+   - Confidence evolution
+
+Be honest: if Main Claude exposed a real gap, acknowledge it and update your view."
+
+# Execute Codex response
+CODEX_RESPONSE=$(bash "$SCRIPTS_DIR/codex-session.sh" new "$CODEX_RESPONSE_PROMPT" --stdout-only --quiet 2>&1)
+
+echo "Codex response collected successfully"
+```
+
+**Performance**:
+- Phase 4.1 (your response): ~10-20s (with WebSearch) or ~5s (no search)
+- Phase 4.2 (Codex response): ~15-25s (API call + potential search)
+- **Total if parallel**: ~20-30s
+- **Total if sequential**: ~30-50s
+
+**Note**: WebSearch may add 10-20s per evidence request. Budget accordingly.
+
+---
+
+#### 4.3 Review Refined Positions
+
+Now you have:
+1. **Your refined opinion** (from 4.1) - after addressing Codex challenges
+2. **Codex's refined opinion** (from 4.2) - after addressing your challenges
+
+**Quick assessment**:
+- Did opinions converge (more agreement now)?
+- Did new evidence change recommendations?
+- Are there still unresolved differences?
+- Is more evidence needed, or is analysis sufficient?
+
+**Decision point**:
+- If **converged**: Proceed to Phase 5 (User Intervention) or Phase 6 (Final Synthesis)
+- If **still divergent but evidence-backed**: Proceed to Phase 5 for user input
+- If **evidence insufficient**: Consider another evidence-gathering round (rare, v4.1+ feature)
+
+**Proceed to Phase 5**: User Intervention Point
+
+---
+
+### Phase 5: Dynamic Q&A + User Intervention (v5.0)
+
+**Objective**: Enable content-driven user participation during debate + provide multi-round control after Phase 4
+
+**IMPORTANT**: This phase has TWO distinct components that work together:
+1. **Dynamic Q&A** (Throughout phases 2-4): Ask user for critical information when needed
+2. **User Intervention** (After Phase 4): Let user decide next steps
+
+---
+
+#### 5.1 Dynamic Q&A (Content-Driven Checkpoints)
+
+**When to trigger**: Whenever you encounter uncertainty or need user-specific information during Phase 2-4
+
+**Trigger conditions** (check continuously):
+
+```markdown
+**Uncertainty Markers** to watch for:
+- "I don't know..."
+- "It depends on..."
+- "Assuming that..."
+- "If the team has..."
+- "Unclear whether..."
+
+**When detected**: Immediately pause and ask user for clarification
+```
+
+**How to ask** (use AskUserQuestion tool):
+
+```
+**Pattern:**
+
+[You detect uncertainty in your analysis]
+"I notice that [specific aspect] is unclear. Let me ask the user."
+
+AskUserQuestion({
+  "questions": [{
+    "question": "[Clear, specific question about the uncertainty]",
+    "header": "[Short label, 8-12 chars]",
+    "multiSelect": false,
+    "options": [
+      {"label": "[Option 1]", "description": "[What this means]"},
+      {"label": "[Option 2]", "description": "[What this means]"},
+      {"label": "[Option 3]", "description": "[What this means]"}
+    ]
+  }]
+})
+
+[After receiving answer]
+"Thank you! Based on [user answer], I can now [adjust analysis]..."
+```
+
+**Detailed Examples**: See `references/phase-5-dynamic-qa-examples.md` for 4 comprehensive scenarios:
+- Example 1: Team experience uncertainty (Phase 2)
+- Example 2: Challenge validation (Phase 3)
+- Example 3: Evidence interpretation (Phase 4)
+- Example 4: Priority clarification (Phase 2)
+
+---
+
+#### 5.2 User Intervention Point (After Phase 4)
+
+**When to execute**: After Phase 4.3 (Review Refined Positions) completes
+
+**Purpose**: Let user decide whether to:
+- Conclude debate (proceed to Phase 6)
+- Dig deeper on specific point (repeat Phase 3-4)
+- Add new constraints (restart from Phase 1)
+
+**Step 1**: Summarize current state (Phase 2 + Phase 3-4 results, confidence changes, key insights)
+
+**Step 2**: Ask user what to do next using AskUserQuestion:
+- Option A: "Conclude debate" → Go to Phase 6
+- Option B: "Dig deeper" → Focus on specific aspect, repeat Phase 3-4
+- Option C: "Add constraint" → Restart from Phase 1 with new info
+
+**Step 3**: Handle user choice and proceed accordingly
+
+**Detailed Templates**: See `references/phase-5-dynamic-qa-examples.md` for complete Step 1-3 templates with examples
+
+---
+
+#### 5.3 Round Tracking (for Phase 6)
+
+**IMPORTANT**: Track all debate rounds for Phase 6 synthesis
+
+```markdown
+**Round History** (internal tracking):
+
+Round 1:
+- Phase 2 opinions: [Your X%, Codex Y%]
+- Phase 3 challenges: [Summary]
+- Phase 4 evidence: [Summary]
+- Confidence after: [Your A%, Codex B%]
+- User decision: [Dig deeper on Z aspect]
+
+Round 2 (if user chose "Dig deeper" or "Add constraint"):
+- Focus: [Specific aspect OR new constraint]
+- Phase 2 (re-run): [Updated opinions]
+- Phase 3-4 (focused): [Focused analysis]
+- Confidence after: [Your C%, Codex D%]
+- User decision: [Conclude OR dig more]
+
+... (continue if more rounds)
+```
+
+This history will feed into Phase 6 for comprehensive synthesis.
+
+---
+
+### Phase 6: Multi-round Final Synthesis (v5.0)
+
+**Objective**: Integrate ALL debate rounds into a comprehensive, evidence-backed final recommendation
+
+**When to execute**: After user selects "Conclude debate" in Phase 5.2
+
+---
+
+#### 6.1 Collect Round History
+
+**Step 1: Review all rounds**
+
+```markdown
+**Internal Review** (don't output yet):
+
+How many rounds did we complete?
+- Round 1: Always present (Phase 2-4 initial)
+- Round 2+: Only if user chose "Dig deeper" or "Add constraint"
+
+For each round, what changed?
+- Opinion shifts
+- New evidence discovered
+- Confidence adjustments
+- Key insights gained
+```
+
+---
+
+#### 6.2 Synthesize Multi-Round Insights
+
+**Step 2: Identify evolution patterns**
+
+```markdown
+**Evolution Analysis**:
+
+1. **Confidence Trajectory**:
+   - Round 1: Your view [X%], Codex [Y%]
+   - Round 2: Your view [A%], Codex [B%]
+   - ... (if more rounds)
+   - Pattern: [Converging / Diverging / Stable]
+
+2. **Key Insight Accumulation**:
+   - Round 1 insights: [List]
+   - Round 2 additional insights: [List]
+   - Total unique insights: [N]
+
+3. **Evidence Quality**:
+   - Round 1 evidence: [Qualitative description]
+   - Round 2 evidence: [Did we get better/more specific evidence?]
+   - Total evidence strength: [Weak / Moderate / Strong]
+
+4. **Agreement Evolution**:
+   - Round 1 agreement: [X%]
+   - Round 2 agreement: [Y%]
+   - Trend: [Increasing / Decreasing / Fluctuating]
+```
+
+---
+
+#### 6.3 Generate Final Output
+
+**Step 3: Present comprehensive final recommendation**
+
+Use structured output format including:
+- Question & Context
+- Multi-Round Debate History (all rounds)
+- Confidence Evolution (visual chart)
+- Final Recommendation (with reasoning synthesizing ALL rounds)
+- Implementation Roadmap (specific, actionable)
+- What We Learned (highlights, alternative paths)
+
+**Complete Template**: See `references/phase-6-synthesis-examples.md` for full output structure with detailed example
+
+---
+
+## Phase 5-6 Summary
+
+**Phase 5 adds**:
+1. ✅ Dynamic Q&A throughout Phase 2-4 (content-driven)
+2. ✅ User intervention point after Phase 4 (process control)
+3. ✅ Multi-round capability (dig deeper / add constraints)
+4. ✅ Round tracking for Phase 6
+
+**Phase 6 adds**:
+1. ✅ Multi-round history integration
+2. ✅ Confidence evolution visualization
+3. ✅ Comprehensive final synthesis
+4. ✅ Implementation roadmap
+5. ✅ Learnings summary
+
+**Expected time**:
+- Single round (Phase 2-4 only): 56-90s
+- With Phase 5-6: +20-30s per round
+- Total with 2 rounds: ~120-150s
 
 ---
 
@@ -469,153 +1051,78 @@ Save reports to `.debate-reports/` with structure:
 
 ### ✅ Do's
 
-1. **Use Auto-Select for Most Cases**
-   ```bash
-   ./ai-debate.sh "Problem" --auto
-   ```
-   Enable automatic model selection
+**Phase 1 (Clarification):**
+1. **Always clarify first** - Even if it seems obvious
+2. **Use the templates** - Maintains consistency
+3. **Wait for user response** - Don't assume or skip
+4. **Summarize if info is complete** - Builds trust
 
-2. **Provide Full Context**
-   ```bash
-   ./ai-debate.sh "Django vs FastAPI. Team 5, 3 month timeline, REST API" --auto
-   ```
-
-3. **Use Hybrid for Critical Decisions**
-   ```bash
-   ./ai-debate.sh "Problem" --models codex,gemini
-   ```
-
-4. **Enable Search for Current Info**
-   ```bash
-   ./ai-debate.sh "2025 trends" --model gemini --search
-   ```
-
-5. **Check Model Selection**
-   Review auto-selected model makes sense for problem
-
----
+**Phase 2 (Debate):**
+1. **Generate your opinion FIRST** - Before calling Codex, ensures independence
+2. **Include all Phase 1 context** - Pass clarified info to Codex prompt
+3. **Use fast mode (--stdout-only --quiet)** - Minimize overhead
+4. **Analyze objectively** - Compare your opinion with Codex fairly
+5. **Highlight both agreement and disagreement** - Both are valuable
 
 ### ❌ Don'ts
 
-1. **Don't Force Wrong Model**
-   - ❌ `--model gemini` for code review
-   - ✅ `--auto` or `--model codex`
+**Phase 1 (Clarification):**
+1. **Don't skip to debate** - Clarification is mandatory
+2. **Don't ask too many questions** - 2-3 max
+3. **Don't make assumptions** - Ask or state clearly
+4. **Don't proceed without confirmation** - Wait for user "yes"
 
-2. **Don't Skip Context**
-   - ❌ "Which database?"
-   - ✅ "PostgreSQL vs MongoDB for user data, team 3, relational structure"
-
-3. **Don't Ignore Hybrid Disagreements**
-   - If Codex and Gemini disagree, understand why
-   - Different perspectives = valuable trade-offs
-
-4. **Don't Trust Blindly**
-   - Always validate recommendations
-   - Check confidence levels
+**Phase 2 (Debate):**
+1. **Don't wait for Codex before generating your opinion** - Generate yours first
+2. **Don't cherry-pick opinions** - Present both viewpoints fairly
+3. **Don't ignore unique insights** - Both perspectives are valuable
+4. **Don't skip synthesis** - Users need actionable conclusions
 
 ---
 
-## Troubleshooting
+## Examples
 
-For solutions to common issues (CLI installation, authentication, model selection, performance), see: [`references/troubleshooting.md`](references/troubleshooting.md)
+**Example 1**: Minimal info → Ask 2-3 clarifying questions → Collect user answers → Proceed to Phase 2
 
----
-
-## Integration with Codex V3.0
-
-This skill builds on Codex V3.0's architecture:
-
-**Inherited:**
-- ✅ Quality modes (simple/balanced/deep)
-- ✅ Agent roles (explorer/critic/synthesizer)
-- ✅ Facilitator concepts
-- ✅ Coverage dimensions
-- ✅ Quality gates
-
-**New:**
-- 🆕 Model abstraction layer
-- 🆕 Auto model selection
-- 🆕 Hybrid multi-model debates
-- 🆕 Gemini integration
-- 🆕 Unified interface
-
-**Backward Compatible:**
-- Codex V3.0 workflows still work
-- Existing playbooks can be used
-- Quality frameworks maintained
+**Example 2**: Complete info → Show understanding summary → User confirms → Proceed to Phase 2
 
 ---
 
-## Comparison: Old vs New
+## Testing & Validation
 
-| Feature | Codex-Only (V3.0) | AI Collaborative |
-|---------|-------------------|------------------|
-| **Models** | Codex only | Codex + Gemini + more |
-| **Selection** | Manual | Auto + manual |
-| **Cost** | $20/mo | $0-20/mo (Gemini free) |
-| **Use Cases** | Code-focused | All problem types |
-| **Interface** | Codex-specific | Model-agnostic |
-| **Hybrid** | ❌ | ✅ |
+**Phase 1-2**: ✅ Complete | **Phase 3-4**: ✅ Complete | **Phase 5-6**: ✅ Complete
+
+**Performance**: ~26s (Phase 2), ~70-90s (Phase 2-4), ~120-150s (multi-round with Phase 5-6)
 
 ---
 
-## Future Enhancements
+## Bundled Scripts
 
-**Planned:**
-- [ ] Claude adapter (MCP-based)
-- [ ] DeepSeek adapter
-- [ ] Copilot adapter (GitHub)
-- [ ] 3+ model hybrid debates
-- [ ] Consensus confidence scoring
-- [ ] Automated playbook generation
-- [ ] Web UI for debate visualization
+This skill includes helper scripts in the `scripts/` directory:
 
----
+### Session Manager (Active)
+- **`codex-session.sh`** - Manages stateful Codex CLI sessions
+  - Supports `--stdout-only --quiet` for fast, minimal-overhead execution
+  - API: `new`, `continue`, `info`, `list`, `clean`
+  - Used by main Claude to collect Codex's independent opinion
 
-## Quick Reference
+### Legacy Scripts (Not Used in v3.0)
+- **`claude-code-session.sh`** - Previously used for spawning separate Claude sessions (removed in v3.0 for performance)
+- **`gemini-cli-session.sh`** - Previously used for 3-agent debates (removed due to reliability issues)
+- **`collect-opinions.sh`** - Old parallel orchestrator (replaced by direct main Claude opinion generation)
 
-### Choose Model
-
-```bash
-# Auto (recommended)
-./ai-debate.sh "Problem" --auto
-
-# Codex (code/architecture)
-./ai-debate.sh "Problem" --model codex
-
-# Gemini (trends/research)
-./ai-debate.sh "Problem" --model gemini --search
-
-# Hybrid (critical decisions)
-./ai-debate.sh "Problem" --models codex,gemini
-```
-
-### Choose Mode
-
-```bash
-# Simple (5-8 min)
---mode simple
-
-# Balanced (10-15 min) - Default
---mode balanced
-
-# Deep (15-25 min)
---mode deep
-```
+**Usage**: Only `codex-session.sh` is actively used in Phase 2.2. Main Claude generates its own opinion directly without spawning a separate session.
 
 ---
 
-## Related Documentation
-
-- **Codex V3.0:** `.claude/skills/codex-collaborative-solver/SKILL.md`
-- **Gemini Solver:** `.claude/skills/gemini-collaborative-solver/SKILL.md`
-- **OpenAI Codex Guide:** `docs/openai-codex-guide.md`
-- **Gemini Solver Guide:** `docs/gemini-solver-guide.md`
-
----
-
-**Version:** 1.0.0
-**Status:** Stable
-**Created:** 2025-10-31
-**Based On:** Codex V3.0 + Gemini Solver 1.0
-**Models:** Codex (GPT-4/o3) + Gemini 2.5 Pro
+**Version:** 3.1.0-complete
+**Status:** ✅ All Phases Complete (Phase 1 + Phase 2.1-2.5)
+**Features:**
+- Phase 1: Pre-Clarification (ensures context quality)
+- Phase 2.1-2.3: Independent opinion collection (Main Claude + Codex)
+- Phase 2.4: 4-step systematic synthesis (common ground, differences, unique insights, recommendation)
+- Phase 2.5: Structured markdown output (complete debate summary)
+**Opinions:** Main Claude (self-generated) + Codex (via script)
+**Performance:** ~26s total execution time (52% faster than v2.0, includes synthesis)
+**Created:** 2025-11-02
+**Updated:** 2025-11-04 (v3.1: Implemented Phase 2.4-2.5 with concrete synthesis instructions)
