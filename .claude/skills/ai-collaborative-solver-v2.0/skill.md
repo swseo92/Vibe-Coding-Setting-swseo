@@ -33,21 +33,9 @@ Ask 2-3 clarifying questions:
 **Template:**
 ```
 AI 토론을 위해 몇 가지 확인하고 싶습니다:
-
 1. [Tech stack / versions]
 2. [Timeline / budget / team constraints]
 3. [Goals / success criteria]
-```
-
-**Example:**
-```
-User: "Django vs FastAPI 선택 고민"
-
-You: "AI 토론을 위해 몇 가지 확인하고 싶습니다:
-
-1. 프로젝트 규모와 유형은? (팀 크기, 예상 사용자 수)
-2. 팀의 기술 스택 경험은? (Python 수준, 프레임워크 경험)
-3. 주요 우선순위는? (개발 속도, 성능, 학습곡선 중 중요한 것)"
 ```
 
 ### If Information is Complete
@@ -60,33 +48,12 @@ Show understanding summary and confirm:
 - [Main problem/goal]
 
 🎯 **파악한 제약사항:**
-- [Constraint 1]
-- [Constraint 2]
+- [Constraint 1], [Constraint 2]
 
 🔍 **전제 조건:**
 - [Assumption 1]
 
 맞나요? 추가하거나 수정할 내용이 있나요?
-```
-
-**Example:**
-```
-User: "Django 4.2 + PostgreSQL 14 성능 개선 (2초→500ms, 1주일, DBA 없음)"
-
-You: "📋 **제 이해:**
-- Django 4.2 API 응답시간을 2초에서 500ms로 개선
-
-🎯 **파악한 제약사항:**
-- 기한: 1주일
-- 인력: DBA 없음 (개발자 수준 최적화만 가능)
-- 기술: Django 4.2, PostgreSQL 14
-
-🔍 **전제 조건:**
-- ORM N+1 쿼리 문제 가능성
-- 코드 레벨 최적화 위주
-- 인프라 변경 범위 제한적
-
-맞나요? 추가하거나 수정할 내용이 있나요?"
 ```
 
 ---
@@ -925,140 +892,11 @@ AskUserQuestion({
 "Thank you! Based on [user answer], I can now [adjust analysis]..."
 ```
 
----
-
-**Example 1: Phase 2 - Team Experience Uncertainty**
-
-```markdown
-### Your Analysis (Phase 2.1)
-
-While generating opinion:
-"FastAPI is great for async workloads, but **I don't know if the team has async/await experience**..."
-
-[Pause and Ask]
-❓ AskUserQuestion({
-  "question": "Does your team have Python async/await experience?",
-  "header": "Async exp",
-  "options": [
-    {"label": "Yes (1+ year)", "description": "Production experience with async code"},
-    {"label": "Some (tutorials)", "description": "Basic understanding, no production use"},
-    {"label": "None", "description": "Never used async/await"}
-  ]
-})
-
-[User answers: "None"]
-
-✅ "Thank you! Since team has NO async experience, I'll adjust my recommendation:
-- FastAPI's async benefits are offset by learning curve
-- Django's synchronous model is safer for your team"
-
-[Continue with enriched context]
-```
-
----
-
-**Example 2: Phase 3 - Challenge Based on Missing Info**
-
-```markdown
-### Phase 3.1 Challenge
-
-Codex mentioned:
-"Team should be able to handle Django Channels complexity"
-
-[You detect assumption]
-"Codex is **assuming WebSocket experience**, but I'm not sure..."
-
-[Pause and Ask]
-❓ AskUserQuestion({
-  "question": "Does your team have real-time communication (WebSocket, SSE) experience?",
-  "header": "Realtime exp",
-  "options": [
-    {"label": "Yes (production)", "description": "Built production WebSocket/SSE apps"},
-    {"label": "Yes (prototypes)", "description": "Experimented but not in production"},
-    {"label": "No", "description": "No real-time experience"}
-  ]
-})
-
-[User answers: "No"]
-
-✅ "Thank you! This is important for the challenge:
-
-**Challenge to Codex**:
-❌ Weak Spot: You assumed WebSocket experience, but team has NONE.
-- Django Channels learning curve: 2-3 weeks
-- This significantly impacts the recommendation"
-
-[Continue Phase 3 with real context]
-```
-
----
-
-**Example 3: Phase 4 - Evidence Validation**
-
-```markdown
-### Phase 4.1 Evidence Gathering
-
-🔍 WebSearch: "Django Channels learning curve"
-📊 Found: "Average learning time: 2-3 weeks for experienced Django developers"
-
-[You need context to interpret this]
-"Is 2-3 weeks acceptable for this project's timeline?"
-
-[Pause and Ask]
-❓ AskUserQuestion({
-  "question": "Your project timeline is 3 months. Is 2-3 weeks for Channels learning acceptable?",
-  "header": "Timeline fit",
-  "options": [
-    {"label": "Yes, fine", "description": "We have buffer time"},
-    {"label": "Tight", "description": "Doable but risky"},
-    {"label": "Too risky", "description": "Can't afford this delay"}
-  ]
-})
-
-[User answers: "Too risky"]
-
-✅ "Thank you! This changes the recommendation:
-
-**Evidence Conclusion**:
-❌ 2-3 weeks learning is TOO RISKY for your 3-month timeline
-→ FastAPI WebSocket (1 week learning) is safer choice
-→ Confidence adjustment: Django 90% → 60%, FastAPI 10% → 40%"
-
-[Continue with adjusted view]
-```
-
----
-
-**Example 4: Priority Clarification**
-
-```markdown
-### Phase 2 Synthesis
-
-"There's a trade-off: FastAPI is faster (5x) but Django is more productive (2x faster dev)"
-
-[Need user priority]
-"Which is more important depends on user's priorities..."
-
-[Pause and Ask]
-❓ AskUserQuestion({
-  "question": "For this project, which is more critical?",
-  "header": "Priority",
-  "options": [
-    {"label": "Performance", "description": "Response speed is top priority"},
-    {"label": "Speed to market", "description": "Fast development & launch"},
-    {"label": "Balance", "description": "Both are important"}
-  ]
-})
-
-[User answers: "Speed to market"]
-
-✅ "Thank you! With speed-to-market as priority:
-- Django's productivity advantage is MORE valuable
-- FastAPI's performance edge is LESS critical
-→ Stronger Django recommendation (90% → 95%)"
-
-[Adjust synthesis accordingly]
-```
+**Detailed Examples**: See `references/phase-5-dynamic-qa-examples.md` for 4 comprehensive scenarios:
+- Example 1: Team experience uncertainty (Phase 2)
+- Example 2: Challenge validation (Phase 3)
+- Example 3: Evidence interpretation (Phase 4)
+- Example 4: Priority clarification (Phase 2)
 
 ---
 
@@ -1071,134 +909,16 @@ Codex mentioned:
 - Dig deeper on specific point (repeat Phase 3-4)
 - Add new constraints (restart from Phase 1)
 
----
+**Step 1**: Summarize current state (Phase 2 + Phase 3-4 results, confidence changes, key insights)
 
-**Step 1: Summarize Current State**
+**Step 2**: Ask user what to do next using AskUserQuestion:
+- Option A: "Conclude debate" → Go to Phase 6
+- Option B: "Dig deeper" → Focus on specific aspect, repeat Phase 3-4
+- Option C: "Add constraint" → Restart from Phase 1 with new info
 
-```markdown
-## 📊 Phase 4 Complete - Debate Summary
+**Step 3**: Handle user choice and proceed accordingly
 
-**Original Question**: [Phase 1 question]
-
-**Round 1 (Phase 2)**:
-- Your initial view: [Summary]
-- Codex initial view: [Summary]
-- Agreement level: [X%]
-
-**Round 2 (Phase 3-4)**:
-- Key challenges raised: [2-3 bullets]
-- Evidence gathered: [2-3 bullets]
-- Confidence changes:
-  - Your view: [Original X%] → [New Y%]
-  - Codex view: [Original X%] → [New Y%]
-
-**Current Recommendation**: [Which option, confidence level]
-
-**Key Insights Discovered**:
-1. [Insight 1]
-2. [Insight 2]
-3. [Insight 3]
-```
-
----
-
-**Step 2: Ask User What to Do Next**
-
-```
-AskUserQuestion({
-  "questions": [{
-    "question": "How would you like to proceed?",
-    "header": "Next step",
-    "multiSelect": false,
-    "options": [
-      {
-        "label": "Conclude debate",
-        "description": "Current analysis is sufficient. Generate final recommendation (Phase 6)"
-      },
-      {
-        "label": "Dig deeper",
-        "description": "Focus on specific aspect with another evidence-gathering round"
-      },
-      {
-        "label": "Add constraint",
-        "description": "I have new requirements. Let's restart with updated context"
-      }
-    ]
-  }]
-})
-```
-
----
-
-**Step 3: Handle User Choice**
-
-**Option A: "Conclude debate"**
-```markdown
-✅ User chose to conclude.
-
-Proceeding to Phase 6: Final Synthesis...
-```
-→ Go to Phase 6
-
----
-
-**Option B: "Dig deeper"**
-```markdown
-✅ User wants to dig deeper.
-
-Ask which aspect to focus on:
-
-AskUserQuestion({
-  "question": "Which aspect should we investigate more deeply?",
-  "options": [
-    {"label": "[Aspect 1]", "description": "[Why this matters]"},
-    {"label": "[Aspect 2]", "description": "[Why this matters]"},
-    {"label": "Other", "description": "Specify custom aspect"}
-  ]
-})
-
-[After user selects aspect]
-
-**Focused Analysis Round 2**:
-1. Reformulate challenges focusing on [selected aspect]
-2. Gather MORE evidence on [selected aspect]
-3. Return to Phase 3 with narrowed focus
-
-[Execute Phase 3-4 again with focused scope]
-→ After completion, return to Phase 5.2 (this step) for next decision
-```
-
----
-
-**Option C: "Add constraint"**
-```markdown
-✅ User has new constraints.
-
-Ask what changed:
-
-AskUserQuestion({
-  "question": "What new constraint or requirement should we consider?",
-  "options": [
-    {"label": "Timeline changed", "description": "Deadline moved"},
-    {"label": "Budget constraint", "description": "Cost became factor"},
-    {"label": "Team changed", "description": "Team size/experience shifted"},
-    {"label": "New requirement", "description": "Feature/requirement added"},
-    {"label": "Other", "description": "Different constraint"}
-  ]
-})
-
-[After user explains new constraint]
-
-✅ "Thank you! Let's restart analysis with this new constraint..."
-
-**Restart from Phase 1**:
-1. Incorporate new constraint into clarification
-2. Re-run Phase 2-4 with updated context
-3. Compare new results with previous round
-
-→ Execute Phase 1 again with [original context + new constraint]
-→ Track this as "Round 2" in Phase 6 history
-```
+**Detailed Templates**: See `references/phase-5-dynamic-qa-examples.md` for complete Step 1-3 templates with examples
 
 ---
 
@@ -1293,133 +1013,15 @@ For each round, what changed?
 
 **Step 3: Present comprehensive final recommendation**
 
-```markdown
-# 🎯 Final AI Debate Recommendation
+Use structured output format including:
+- Question & Context
+- Multi-Round Debate History (all rounds)
+- Confidence Evolution (visual chart)
+- Final Recommendation (with reasoning synthesizing ALL rounds)
+- Implementation Roadmap (specific, actionable)
+- What We Learned (highlights, alternative paths)
 
-## Question
-[Original Phase 1 question]
-
-## Context
-[Phase 1 context summary + any constraints added in later rounds]
-
----
-
-## Multi-Round Debate History
-
-### Round 1: Initial Analysis
-**Phase 2 Opinions**:
-- Your view: [Framework X] ([confidence]%)
-  - Key reasoning: [1-2 sentences]
-- Codex view: [Framework Y] ([confidence]%)
-  - Key reasoning: [1-2 sentences]
-- Agreement: [Z%]
-
-**Phase 3-4 Challenges & Evidence**:
-- Challenges raised: [2-3 key challenges]
-- Evidence gathered: [2-3 key evidence pieces]
-- Confidence after: Your [A%], Codex [B%]
-
-**Key Insights**:
-1. [Insight 1 from Round 1]
-2. [Insight 2 from Round 1]
-
----
-
-[If Round 2+ exists]
-### Round 2: Deep Dive on [Aspect]
-**Focus**: [What we investigated deeper]
-
-**Updated Opinions**:
-- Your view: [Change description], confidence [X% → Y%]
-- Codex view: [Change description], confidence [X% → Y%]
-
-**Additional Evidence**:
-- [New evidence from Round 2]
-
-**New Insights**:
-1. [Insight discovered in Round 2]
-
----
-
-[Repeat for each round]
-
----
-
-## Confidence Evolution
-
-```
-Round 1:  Your [X%] ████████░░  Codex [Y%] ████████░░
-Round 2:  Your [A%] ██████████  Codex [B%] ██████░░░░
-Final:    Your [C%] ███████████ Codex [D%] ███████░░░
-```
-
-**Interpretation**:
-- Your confidence [increased/decreased/stable] because [reason]
-- Codex confidence [increased/decreased/stable] because [reason]
-- Overall agreement [converged/diverged/remained stable]
-
----
-
-## Final Recommendation
-
-**Winner**: [Framework name]
-
-**Final Confidence**: [X%]
-
-**Reasoning** (synthesizing ALL rounds):
-[2-3 paragraphs explaining:
-- Why this option after considering ALL evidence
-- How insights from multiple rounds support this
-- What trade-offs were acknowledged and accepted
-- Why alternatives were ruled out]
-
-**Key Decision Factors** (from all rounds):
-1. [Factor 1 - why it mattered]
-2. [Factor 2 - why it mattered]
-3. [Factor 3 - why it mattered]
-
----
-
-## Implementation Roadmap
-
-**Phase 1 (Weeks 1-2)**:
-1. [Specific action based on recommendation]
-2. [Specific action]
-
-**Phase 2 (Weeks 3-6)**:
-1. [Next steps]
-2. [Next steps]
-
-**Phase 3 (Weeks 7-12)**:
-1. [Long-term actions]
-
-**Risk Mitigation**:
-- Risk 1: [How to handle]
-- Risk 2: [How to handle]
-
----
-
-## What We Learned
-
-**Debate Highlights**:
-- [Most surprising finding]
-- [Most valuable evidence]
-- [Biggest assumption we challenged]
-
-**If You Change Your Mind** (alternative path):
-"If [specific condition changes], consider switching to [alternative option] because [reason]"
-
----
-
-✅ **Debate Complete!**
-
-[Total rounds: N]
-[Total time: ~X seconds]
-[Evidence pieces reviewed: Y]
-[Confidence final: Z%]
-
-**Thank you for using AI Collaborative Debate!** 🎉
-```
+**Complete Template**: See `references/phase-6-synthesis-examples.md` for full output structure with detailed example
 
 ---
 
@@ -1480,96 +1082,17 @@ Final:    Your [C%] ███████████ Codex [D%] █████
 
 ## Examples
 
-### Example 1: Minimal Info → Ask Questions
+**Example 1**: Minimal info → Ask 2-3 clarifying questions → Collect user answers → Proceed to Phase 2
 
-```
-User: "Redis vs Memcached"
-
-You: "AI 토론을 위해 몇 가지 확인하고 싶습니다:
-
-1. 주요 사용 목적은? (캐싱, 세션 저장, 메시지 큐 등)
-2. 예상 규모는? (초당 요청 수, 데이터 크기)
-3. 팀의 운영 경험은? (Redis/Memcached 사용 경험 유무)"
-
-User: "세션 저장용이고, 초당 1000 req, 데이터는 작음. Redis 경험 없음."
-
-You: "감사합니다. 이제 AI 토론을 시작하겠습니다.
-
-먼저 제 분석부터 드리겠습니다...
-[Your analysis]
-
-이제 Codex의 독립적인 의견을 수집하겠습니다...
-[Calls Codex]
-
-두 의견을 비교 분석한 결과...
-[Synthesis]"
-```
-
-### Example 2: Complete Info → Confirm Understanding
-
-```
-User: "Next.js 14 vs Remix, 5인 팀, React 경험 많음, SEO 중요, 3개월 타임라인"
-
-You: "📋 **제 이해:**
-- Next.js 14와 Remix 중 선택
-
-🎯 **파악한 제약사항:**
-- 팀: 5명, React 경험 풍부
-- 요구사항: SEO 중요
-- 기한: 3개월
-
-🔍 **전제 조건:**
-- SSR/SSG 필요
-- 팀 학습곡선 고려 필요
-- 프로덕션 안정성 중요
-
-맞나요?"
-
-User: "네 맞습니다"
-
-You: "좋습니다. 이제 AI 토론을 진행하겠습니다.
-
-## Your Analysis (Claude Code)
-[Generate and present your complete analysis]
-
-이제 Codex의 독립적인 의견을 수집하겠습니다...
-[Execute Codex]
-
-## Synthesis
-[Compare and synthesize both opinions]"
-```
+**Example 2**: Complete info → Show understanding summary → User confirms → Proceed to Phase 2
 
 ---
 
 ## Testing & Validation
 
-### Phase 1 (Clarification) - ✅ Complete
+**Phase 1-2**: ✅ Complete | **Phase 3-4**: ✅ Complete | **Phase 5-6**: ✅ Complete
 
-**Success Criteria:**
-- [x] Consistently detects when clarification is needed
-- [x] Asks appropriate 2-3 questions
-- [x] Shows understanding summary when info is complete
-- [x] Waits for user confirmation
-- [x] No errors or confusion in flow
-
-### Phase 2 (Debate) - ✅ Complete
-
-**Success Criteria:**
-- [x] Main Claude generates independent opinion first (Phase 2.1)
-- [x] Successfully launches Codex session (Phase 2.2)
-- [x] Codex opinion is properly collected (Phase 2.3)
-- [x] Synthesis identifies agreement/disagreement correctly (Phase 2.4 - ✅ Implemented)
-- [x] Output is clear and actionable (Phase 2.5 - ✅ Implemented)
-
-**Implementation Status:**
-- Phase 2.1-2.3: ✅ Complete (opinion collection)
-- Phase 2.4: ✅ Complete (4-step synthesis with concrete instructions)
-- Phase 2.5: ✅ Complete (structured output template with fill instructions)
-
-**Performance:**
-- Old v2.0: 54s (2 agents in parallel)
-- New v3.1: ~26s (Main Claude + Codex, with synthesis)
-- Improvement: 52% faster!
+**Performance**: ~26s (Phase 2), ~70-90s (Phase 2-4), ~120-150s (multi-round with Phase 5-6)
 
 ---
 
