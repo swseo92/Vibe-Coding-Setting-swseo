@@ -21,7 +21,20 @@ Claude Code를 활용한 개인 개발환경 설정 및 프로젝트 템플릿�
 
 **자세한 내용:** [임시 파일/폴더 관리 규칙](#️-important-임시-파일폴더-관리-규칙) 섹션 참조
 
-### 2. 커밋 전 확인사항
+### 2. 이모지 사용 금지 규칙 (MANDATORY)
+
+**CRITICAL: Claude는 모든 응답에서 이모지를 사용하지 않습니다.**
+
+- ❌ **NEVER**: 이모지를 텍스트에 포함 (✅, ❌, 🚨, 📄 등 모든 이모지)
+- ✅ **DO**: 순수 텍스트만 사용 (ASCII 문자, 마크다운 기호는 허용)
+- **이유**:
+  - Context(토큰) 낭비 - 이모지는 여러 토큰을 소비
+  - 가독성 저하 - 텍스트 복사/붙여넣기 시 이모지가 방해
+  - 전문성 - 업무용 출력물에서는 이모지 없는 것이 더 professional
+
+**유일한 예외**: 사용자가 명시적으로 "이모지를 사용해줘" 라고 요청한 경우에만
+
+### 3. 커밋 전 확인사항
 
 **변경사항을 커밋하기 전에 이 문서(`claude.md`)를 검토하고 필요시 업데이트하세요.**
 
@@ -71,18 +84,125 @@ Vibe-Coding-Setting-swseo/  ← 이 CLAUDE.md가 위치한 폴더 (저장소 루
 
 ---
 
+## 📚 문서 구조 및 Context 탐색 가이드
+
+**이 저장소는 계층적 README + 중앙 인덱스 하이브리드 시스템을 사용합니다.**
+
+### 문서 탐색 프로토콜 (Claude Code 에이전트용)
+
+**새로운 작업을 시작할 때 다음 순서로 문서를 읽으세요:**
+
+1. **프로젝트 개요 파악**:
+   - 📄 `CLAUDE.md` (이 파일) - 저장소 전체 목적 및 구조
+   - 📄 `README.md` - 프로젝트 소개 및 빠른 시작
+
+2. **중앙 인덱스 확인** (있을 경우):
+   - 📄 `docs/index.md` - 전체 문서 분류 및 빠른 참조
+   - 작업 타입에 해당하는 카테고리 식별 (Architecture, API, Guides 등)
+
+3. **관련 폴더 README 읽기**:
+   - 작업할 모듈의 `[폴더]/README.md` 참조
+   - 예: `.claude/commands/` 작업 시 → `.claude/commands/README.md` (있을 경우)
+
+4. **세부 문서 탐색**:
+   - `docs/` 내부의 관련 가이드, 스펙 문서
+   - 예: `docs/readme-config-spec.md`, `docs/recursive-readme-guide.md`
+
+### 작업 유형별 문서 경로 예시
+
+| 작업 유형 | 읽어야 할 문서 | 우선순위 |
+|-----------|----------------|----------|
+| **새 슬래시 커맨드 추가** | `.claude/commands/` 예시 파일, `CLAUDE.md` > "커스텀 커맨드 추가" | 높음 |
+| **새 스킬 작성** | `.claude/skills/skill-creator/` README, `CLAUDE.md` > "주요 커맨드" | 높음 |
+| **Python 템플릿 수정** | `templates/python/claude.md`, `docs/python/testing_guidelines.md` | 중간 |
+| **문서 시스템 이해** | `docs/index.md`, `docs/readme-config-spec.md` | 중간 |
+| **Speckit 워크플로우** | `.specify/README.md`, `CLAUDE.md` > "주요 커맨드" | 낮음 |
+
+### Token 최적화 팁
+
+**❌ 비효율적인 방법**:
+- 모든 README를 순차적으로 읽기 (50+ 파일, 100K+ tokens)
+- 관련 없는 폴더의 문서까지 탐색
+
+**✅ 효율적인 방법**:
+1. `docs/index.md` 먼저 읽기 (전체 개요 파악)
+2. "Quick Reference" 섹션에서 작업 타입 검색
+3. 명시된 2-3개 문서만 읽기
+4. 필요시 추가 탐색
+
+**예시 (인증 기능 추가)**:
+```
+1. docs/index.md 읽기 (5K tokens)
+2. "Quick Reference" → "Authentication" 발견
+3. 권장 문서만 읽기:
+   - src/auth/README.md (3K tokens)
+   - docs/architecture/security.md (4K tokens)
+4. 총 12K tokens (기존 100K 대비 88% 절감)
+```
+
+### 문서 생성 및 관리
+
+**계층적 README 생성**:
+```bash
+# 초기 설정
+/documentation-manager --init-config
+
+# README 자동 생성 (각 폴더별)
+/documentation-manager --recursive-readme
+
+# 중앙 인덱스 생성
+/docs-generate-index
+```
+
+**문서 검증**:
+```bash
+# 기존 README 품질 체크
+/documentation-manager --check-recursive
+```
+
+**자동화 (CI/CD)**:
+- README 변경 시 자동으로 `docs/index.md` 업데이트
+- 상세: `.claude/commands/docs-generate-index.md` 참조
+
+### Merge Conflict 처리
+
+**`docs/index.md`는 생성물로 취급합니다:**
+
+```bash
+# Conflict 발생 시 재생성
+git checkout --theirs docs/index.md  # 또는 --ours
+/docs-generate-index
+git add docs/index.md
+```
+
+**권장**: `docs/index.md`를 커밋하여 문서 커버리지 추적
+
+### 관련 문서
+
+- 📖 `.claude/skills/documentation-manager/skill.md` - 문서 자동화 전체 가이드
+- 📖 `docs/readme-config-spec.md` - `.readme-config.json` 설정 스펙
+- 📖 `docs/recursive-readme-guide.md` - 계층적 README 상세 가이드
+
+---
+
 ## 디렉토리 구조
 
 ```
 Vibe-Coding-Setting-swseo/
 ├── .claude/                      # Claude Code 설정 (전역에서 사용)
-│   ├── agents/                   # 커스텀 에이전트 (2개)
+│   ├── agents/                   # 커스텀 에이전트 (4개)
 │   ├── commands/                 # 슬래시 커맨드 (15개)
 │   ├── personas/                 # 페르소나 (2개)
 │   ├── scripts/                  # 유틸리티 스크립트
 │   │   ├── init-workspace.sh     # 프로젝트 초기화 (Unix)
-│   │   └── init-workspace.ps1    # 프로젝트 초기화 (Windows)
-│   ├── skills/                   # 스킬 (17개)
+│   │   ├── init-workspace.ps1    # 프로젝트 초기화 (Windows)
+│   │   ├── install-hooks.sh      # Git hook 설치 (Unix)
+│   │   ├── install-hooks.ps1     # Git hook 설치 (Windows)
+│   │   └── run-command.py        # Claude 명령어 실행 wrapper
+│   ├── skills/                   # 스킬 (20개)
+│   ├── state/                    # 상태 파일 저장소 (gitignored, 런타임 데이터)
+│   │   ├── .gitignore            # state 폴더 전체 무시
+│   │   └── pre-commit-full.json  # /pre-commit-full 검증 상태
 │   └── settings.local.json       # 전역 설정 템플릿
 │
 ├── .specify/                     # Speckit 템플릿 & 스크립트 (전역)
@@ -100,8 +220,15 @@ Vibe-Coding-Setting-swseo/
 │   │   │   ├── scripts/          # Hook 스크립트 (경로 의존적)
 │   │   │   │   ├── notify.py     # 알림 TTS 스크립트
 │   │   │   │   ├── run-notify.cmd  # Windows wrapper
-│   │   │   │   └── run-notify.sh   # Unix wrapper
+│   │   │   │   ├── run-notify.sh   # Unix wrapper
+│   │   │   │   ├── install-hooks.sh  # Git hook 설치 (Unix)
+│   │   │   │   ├── install-hooks.ps1 # Git hook 설치 (Windows)
+│   │   │   │   └── run-command.py    # Claude 명령어 실행 wrapper
 │   │   │   └── settings.json     # Hook 설정 (경로 의존적)
+│   │   ├── .githooks/            # Git hook 템플릿 (Git 추적 가능)
+│   │   │   ├── pre-commit        # 커밋 전 검증 (/pre-commit-full)
+│   │   │   ├── commit-msg        # 커밋 메시지 검증
+│   │   │   └── pre-push          # Push 전 검증
 │   │   ├── .specify/             # Speckit 기본 구조
 │   │   ├── .mcp.json             # MCP 설정
 │   │   └── claude.md             # 프로젝트 마커 템플릿 (기본)
@@ -435,6 +562,192 @@ templates/
 
 ---
 
+## Git Hook 자동화
+
+**Claude 슬래시 커맨드와 스킬을 Git hook/GitHub Actions에서 자동 실행할 수 있습니다.**
+
+### 개요
+
+프로젝트 템플릿에는 Git hook 템플릿과 자동화 스크립트가 포함되어 있습니다:
+
+```
+templates/common/
+├── .githooks/                  # Git hook 템플릿 (Git 추적 가능)
+│   ├── pre-commit             # 커밋 전 검증
+│   ├── commit-msg             # 커밋 메시지 검증
+│   └── pre-push               # Push 전 검증
+└── .claude/scripts/
+    ├── run-command.py         # Claude 명령어 실행 wrapper
+    ├── install-hooks.sh       # Hook 설치 (Unix/Mac)
+    └── install-hooks.ps1      # Hook 설치 (Windows)
+```
+
+### 자동 설치
+
+`/init-workspace`로 프로젝트를 초기화하면 **자동으로 Git hook이 설치됩니다**:
+
+```bash
+/init-workspace python
+
+# 출력:
+# Installing Git hooks...
+#   Installed: pre-commit
+#   Installed: commit-msg
+#   Installed: pre-push
+```
+
+**조건**:
+- 프로젝트가 Git 저장소여야 함 (`.git/` 폴더 존재)
+- `.githooks/` 템플릿이 복사되어 있어야 함
+
+### 수동 설치
+
+기존 프로젝트에 hook을 설치하려면:
+
+**Unix/Mac/Linux:**
+```bash
+./.claude/scripts/install-hooks.sh
+```
+
+**Windows:**
+```powershell
+.\.claude\scripts\install-hooks.ps1
+```
+
+### 기본 Hook 동작
+
+**pre-commit** (커밋 전 자동 실행):
+- `/pre-commit-full` 실행
+- 코드 품질 + 문서 검증
+- 실패 시 커밋 중단
+
+**commit-msg** (커밋 메시지 검증):
+- 최소 길이 확인 (10자 이상)
+- Conventional Commits 형식 권장 (선택)
+
+**pre-push** (Push 전 검증):
+- 선택적 테스트 실행
+- Main 브랜치 Push 경고
+
+### Hook 비활성화
+
+**임시로 스킵** (한 번만):
+```bash
+git commit --no-verify
+```
+
+**영구적으로 제거**:
+```bash
+rm .git/hooks/pre-commit
+rm .git/hooks/commit-msg
+rm .git/hooks/pre-push
+```
+
+### 커스텀 Hook 만들기
+
+`.githooks/`에 새 파일을 추가하고 재설치:
+
+**예시: pre-merge-commit**
+```bash
+#!/bin/bash
+# .githooks/pre-merge-commit
+
+# Merge 커밋 전에 특정 검사 수행
+echo "Running pre-merge validation..."
+claude --print "/speckit.analyze"
+```
+
+**설치:**
+```bash
+./.claude/scripts/install-hooks.sh
+```
+
+### 범용 Command Runner
+
+모든 Claude 커맨드를 자동화할 수 있습니다:
+
+**Python wrapper 사용:**
+```bash
+python .claude/scripts/run-command.py "/pre-commit-full"
+python .claude/scripts/run-command.py "/speckit.specify"
+python .claude/scripts/run-command.py --verbose "/your-custom-command"
+```
+
+**직접 CLI 사용:**
+```bash
+claude --print "/pre-commit-full"
+```
+
+### GitHub Actions 통합
+
+**`.github/workflows/pre-commit.yml`** (예시):
+```yaml
+name: Pre-commit Validation
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Claude Code
+        run: |
+          # Claude Code CLI 설치
+          npm install -g @anthropic/claude-code
+
+      - name: Run validation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python .claude/scripts/run-command.py "/pre-commit-full"
+```
+
+**주의**:
+- Claude Code가 CI/CD 환경에서 실행 가능한지 확인 필요
+- API 키를 GitHub Secrets에 저장
+
+### Hook 템플릿 수정
+
+프로젝트별로 hook을 수정하려면 `.githooks/` 파일을 편집한 후:
+
+```bash
+# 변경사항 적용
+./.claude/scripts/install-hooks.sh
+
+# 또는 수동 복사
+cp .githooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+**팁**: `.githooks/`는 Git에 추적되므로 팀원과 공유 가능!
+
+### 문제 해결
+
+**Claude 명령어가 실행되지 않을 때:**
+```bash
+# Claude CLI 설치 확인
+which claude
+
+# PATH 확인
+echo $PATH
+```
+
+**Hook이 실행되지 않을 때:**
+```bash
+# 실행 권한 확인
+ls -la .git/hooks/pre-commit
+
+# 실행 권한 부여
+chmod +x .git/hooks/pre-commit
+```
+
+**Windows에서 Bash script 오류:**
+- Git Bash 사용 권장
+- PowerShell에서는 `.ps1` 스크립트 사용
+
+---
+
 ## Playwright MCP 설정
 
 **MCP Playwright를 사용하여 브라우저 자동화를 수행할 수 있습니다.**
@@ -479,6 +792,206 @@ templates/
 
 전체 설정 방법, 문제 해결, 보안 주의사항은 다음 문서 참조:
 - [`docs/playwright-persistent-login.md`](docs/playwright-persistent-login.md)
+
+---
+
+## Linear API 통합 (완전 버전)
+
+**Linear MCP와 상호보완적으로 사용하는 완전한 API 클라이언트**
+
+MCP는 읽기 중심, API는 쓰기 작업(삭제, 아카이브, 고급 기능)에 특화
+
+### MCP vs API 역할 분담
+
+| 기능 | MCP | API | 비고 |
+|------|-----|-----|------|
+| **Document** | 읽기 | 전체 | create, update, delete, archive |
+| **Issue** | 생성/수정/읽기 | 삭제/아카이브 | 삭제는 API만 |
+| **Comment** | 생성/읽기 | 수정/삭제 | 수정/삭제는 API만 |
+| **Project** | 생성/수정/읽기 | 삭제/아카이브 | 삭제는 API만 |
+| **Cycle** | 읽기만 | 전체 | 생성/수정/삭제 모두 API |
+| **Team** | 읽기만 | 생성/수정 | 쓰기는 API만 |
+| **Label** | 생성/읽기 | 수정/삭제 | 수정/삭제는 API만 |
+| **Attachment** | 없음 | 전체 | MCP 미지원 |
+| **Custom View** | 없음 | 전체 | MCP 미지원 |
+| **Initiative** | 없음 | 전체 | MCP 미지원 |
+| **Roadmap** | 없음 | 전체 | MCP 미지원 |
+| **Workflow** | 없음 | 전체 | MCP 미지원 |
+| **Webhook** | 없음 | 전체 | MCP 미지원 |
+
+### 빠른 시작
+
+**1. API Key 발급:**
+```
+Linear > Settings > API > "Create key"
+```
+
+**2. 환경변수 설정:**
+
+```bash
+cp .env.example .env
+# .env 파일에 LINEAR_API_KEY=lin_api_YOUR_KEY 입력
+```
+
+**3. 의존성 설치:**
+
+```bash
+pip install requests python-dotenv
+```
+
+### 주요 사용 예시
+
+**Document 작업:**
+
+```bash
+# 생성
+python .claude/scripts/linear-api-client.py document create \
+  --title "API Guide" --content "# Guide"
+
+# 업데이트
+python .claude/scripts/linear-api-client.py document update \
+  --id DOC-123 --content "# Updated"
+
+# 삭제
+python .claude/scripts/linear-api-client.py document delete --id DOC-123
+```
+
+**Issue 삭제/아카이브:**
+
+```bash
+# 아카이브 (복구 가능)
+python .claude/scripts/linear-api-client.py issue archive --id ISSUE-123
+
+# 삭제 (영구 삭제)
+python .claude/scripts/linear-api-client.py issue delete --id ISSUE-123
+
+# 복원
+python .claude/scripts/linear-api-client.py issue unarchive --id ISSUE-123
+```
+
+**Cycle 관리 (MCP에서 불가능):**
+
+```bash
+# Cycle 생성
+python .claude/scripts/linear-api-client.py cycle create \
+  --team TEAM-123 --name "Sprint 42"
+
+# Cycle 업데이트
+python .claude/scripts/linear-api-client.py cycle update \
+  --id CYCLE-456 --ends-at "2025-12-31"
+
+# Cycle 아카이브
+python .claude/scripts/linear-api-client.py cycle archive --id CYCLE-456
+```
+
+**Comment 수정/삭제 (MCP에서 불가능):**
+
+```bash
+# Comment 수정
+python .claude/scripts/linear-api-client.py comment update \
+  --id comment-abc --body "Updated text"
+
+# Comment 삭제
+python .claude/scripts/linear-api-client.py comment delete --id comment-abc
+```
+
+**고급 기능 (MCP에 없음):**
+
+```bash
+# Custom View 생성
+python .claude/scripts/linear-api-client.py view create \
+  --name "My High Priority" --team TEAM-123
+
+# Initiative 생성
+python .claude/scripts/linear-api-client.py initiative create \
+  --name "Q4 Goals" --target-date "2025-12-31"
+
+# Webhook 생성
+python .claude/scripts/linear-api-client.py webhook create \
+  --url "https://api.myapp.com/webhook" --types Issue Comment
+
+# Workflow State 추가
+python .claude/scripts/linear-api-client.py workflow create \
+  --team TEAM-123 --name "Code Review" --type started
+
+# Attachment 추가
+python .claude/scripts/linear-api-client.py attachment create \
+  --issue ISSUE-123 --url "https://github.com/org/repo/pull/456"
+```
+
+### Python 코드 통합
+
+```python
+from linear_api_client import LinearAPIClient
+import os
+
+client = LinearAPIClient(os.getenv("LINEAR_API_KEY"))
+
+# Document 관리
+doc = client.create_document(
+    title="My Doc",
+    content="# Hello World"
+)
+
+# Issue 아카이브
+client.archive_issue("ISSUE-123")
+
+# Comment 수정
+client.update_comment(
+    comment_id="comment-abc",
+    body="Updated comment"
+)
+
+# Cycle 생성
+cycle = client.create_cycle(
+    team_id="TEAM-123",
+    name="Sprint 42"
+)
+
+# Custom View 생성
+view = client.create_custom_view(
+    name="High Priority",
+    team_id="TEAM-123"
+)
+
+# Webhook 설정
+webhook = client.create_webhook(
+    url="https://api.myapp.com/webhook",
+    resource_types=["Issue", "Comment"]
+)
+```
+
+### 지원하는 모든 기능
+
+**완전 지원 리소스:**
+- Document (create, update, delete, archive)
+- Cycle (create, update, archive)
+- Team (create, update)
+- Attachment (create, update, delete)
+- Custom View (create, update, delete, archive)
+- Initiative (create, update, delete, connect to project)
+- Roadmap (create, update, delete)
+- Workflow State (create, update, archive)
+- Webhook (create, update, delete)
+
+**부분 지원 (삭제/아카이브만):**
+- Issue (delete, archive, unarchive)
+- Comment (update, delete)
+- Project (delete, archive, unarchive)
+- Label (update, delete)
+
+### 상세 문서
+
+- [빠른 참조 가이드](docs/linear-api-quick-reference.md) - CLI 사용법 완전 정리
+- [MCP vs API 비교](docs/linear-mcp-vs-api-comparison.md) - 기능별 상세 비교
+- [통합 가이드](docs/linear-api-integration.md) - MCP와 함께 사용하는 워크플로우
+
+### 보안 주의사항
+
+- API 키를 절대 Git에 커밋하지 마세요
+- `.env` 파일은 `.gitignore`에 포함되어야 합니다
+- API 키가 노출되면 즉시 재발급하세요
+- API 키는 프로젝트 루트의 `.env` 파일에만 저장
 
 ---
 
@@ -701,6 +1214,35 @@ touch test.py          # WRONG
 ---
 
 ## 변경 이력
+
+### 2025-11-09
+- Linear API 완전 통합 (MCP 상호보완)
+  - `.claude/scripts/linear-api-client.py` - 완전한 Linear API 클라이언트 (1680 lines)
+  - 모든 API 작업 지원: Document, Issue, Comment, Project, Cycle, Team, Label, Attachment, Custom View, Initiative, Roadmap, Workflow, Webhook
+  - 13개 리소스 타입, 50+ 메소드 구현
+  - CLI 인터페이스: resource action 형식 (예: `document create`, `cycle update`)
+  - `docs/linear-api-quick-reference.md` - CLI 사용법 완전 정리
+  - `docs/linear-mcp-vs-api-comparison.md` - MCP vs API 기능 비교표
+  - `docs/linear-api-integration.md` - 통합 가이드 및 워크플로우
+  - `.env.example` 추가 (LINEAR_API_KEY 환경변수 템플릿)
+  - MCP로 불가능한 작업 완벽 지원: 삭제, 아카이브, Cycle 관리, Comment 수정, Custom View, Initiative, Roadmap, Workflow State, Webhook
+- Git Hook 자동화 시스템 추가
+  - `templates/common/.githooks/` - Git hook 템플릿 (pre-commit, commit-msg, pre-push)
+  - `.claude/scripts/run-command.py` - Claude 명령어 실행 wrapper
+  - `.claude/scripts/install-hooks.sh/ps1` - Git hook 설치 스크립트
+  - `/init-workspace`에서 자동 hook 설치
+  - 모든 Claude 슬래시 커맨드/스킬을 Git hook으로 자동화 가능
+- 문서 업데이트: "Git Hook 자동화" 섹션 추가
+- 이모지 사용 금지 규칙 추가 (CRITICAL 규칙)
+
+### 2025-11-08
+- `/pre-commit-full` Incremental Validation 기능 추가
+  - 마지막 검증 이후 커밋만 선택적으로 검증 (시간 절약)
+  - `.claude/state/` 폴더 생성 (검증 상태 저장, gitignored)
+  - 통계 출력: 검증한 커밋 개수, 소요 시간, 커밋 범위
+  - `--force` 옵션으로 전체 검증 가능
+- 에이전트 개수 업데이트 (2개 → 4개)
+- 스킬 개수 업데이트 (17개 → 20개)
 
 ### 2025-11-04
 - ✅ `claude-md-manager` 스킬 추가 (커밋 전 자동 claude.md 품질 검증)

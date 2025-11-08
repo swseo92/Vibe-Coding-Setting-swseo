@@ -128,6 +128,34 @@ case "$LANGUAGE" in
         ;;
 esac
 
+# Install Git hooks if .githooks exists
+if [ -d ".githooks" ] && [ -d ".git" ]; then
+    echo ""
+    echo "Installing Git hooks..."
+
+    # Check if install-hooks.sh exists
+    if [ -f ".claude/scripts/install-hooks.sh" ]; then
+        bash .claude/scripts/install-hooks.sh
+    else
+        # Fallback: manual installation
+        mkdir -p .git/hooks
+        for hook in .githooks/*; do
+            if [ -f "$hook" ]; then
+                HOOK_NAME=$(basename "$hook")
+                cp "$hook" ".git/hooks/$HOOK_NAME"
+                chmod +x ".git/hooks/$HOOK_NAME"
+                echo "  Installed: $HOOK_NAME"
+            fi
+        done
+    fi
+    echo ""
+elif [ -d ".githooks" ]; then
+    echo ""
+    echo "Note: Git hooks available in .githooks/"
+    echo "      Initialize git first, then run: ./.claude/scripts/install-hooks.sh"
+    echo ""
+fi
+
 echo ""
 echo "Next Steps:"
 echo ""

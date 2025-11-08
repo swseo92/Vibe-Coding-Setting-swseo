@@ -47,4 +47,5 @@ __pycache__/
 .code-reviews/
 .playwright-mcp/
 /.env
+.mcp.json
 nul
