@@ -72,6 +72,9 @@ For creating, viewing, or updating issues within a specific project context:
 
 #### 2.3 Create Issue in Project
 
+**Two modes available:**
+
+**A. Quick Mode** (user provides all details upfront)
 1. **Identify project** - Ask user or infer from context
 2. **Gather issue details**:
    - Title (required)
@@ -82,12 +85,69 @@ For creating, viewing, or updating issues within a specific project context:
 3. **Use MCP tool** to create issue
 4. **Confirm creation** with issue identifier and URL
 
-**Template usage:**
-- For bug reports: Use `assets/issue-templates/bug-report.md`
-- For features: Use `assets/issue-templates/feature-request.md`
-- For tasks: Use `assets/issue-templates/task.md`
+**B. Interactive Mode** (human-in-the-loop, recommended for beginners)
 
-Load templates into context when creating issues of those types to ensure consistent, well-structured descriptions.
+Use when user says "create issue", "new issue", or similar without providing details.
+
+**Step 1: Select Project**
+```
+Ask: "Which project should this issue belong to?"
+Options:
+  1. Agent Native Workflow
+  2. YouTube Shorts Factory
+  3. Personal Development
+
+User selects → Store project selection
+```
+
+**Step 2: Select Label Type**
+```
+Ask: "What type of issue is this?"
+Options:
+  1. type:feature - New functionality
+  2. type:bug - Something broken
+  3. type:refactor - Code improvement
+  4. type:docs - Documentation work
+  5. type:learning - Learning/Research
+
+User selects → Store label, determine template
+```
+
+**Step 3: Enter Title**
+```
+Ask: "What's the issue title?"
+User provides → Store title
+```
+
+**Step 4: Use Template**
+```
+Ask: "Would you like to use a template for the description?"
+Options:
+  1. Yes - Use {label-type}.md template
+  2. No - Enter description directly
+  3. Skip - Create issue without description
+
+If Yes:
+  - Load assets/issue-templates/{label-type}.md
+  - Ask for each template section
+  - Fill in template with user's answers
+```
+
+**Step 5: Create Issue**
+```
+- Use mcp__linear_server__create_issue()
+- Include: project, title, labels, description
+- Confirm: "Created [PROJECT-123] Issue Title"
+```
+
+**Template mapping:**
+- type:feature → `assets/issue-templates/feature.md`
+- type:bug → `assets/issue-templates/bug.md`
+- type:refactor → `assets/issue-templates/refactor.md`
+- type:docs → `assets/issue-templates/docs.md`
+- type:learning → `assets/issue-templates/learning.md`
+
+Load templates into context when creating issues to ensure consistent, well-structured descriptions.
 
 #### 2.4 Update Issue
 
@@ -272,27 +332,62 @@ Contains:
 
 ### `assets/issue-templates/`
 
-Use when creating issues to ensure well-structured, complete descriptions:
+Use when creating issues to ensure well-structured, complete descriptions.
 
-- **`bug-report.md`**: Template for bug issues
-  - Steps to reproduce
-  - Expected vs actual behavior
-  - Environment details
+**Minimal templates (Week 1-2 baseline):**
 
-- **`feature-request.md`**: Template for feature issues
-  - User story format
-  - Acceptance criteria
-  - Design considerations
+- **`feature.md`** (type:feature): New functionality
+  - User Story
+  - What to Build
+  - Acceptance Criteria
+  - Notes
 
-- **`task.md`**: Template for task issues
-  - Objective
+- **`bug.md`** (type:bug): Something broken
+  - What's Broken
+  - Steps to Reproduce
+  - Expected vs Actual
+  - Notes
+
+- **`refactor.md`** (type:refactor): Code improvement
+  - Why Refactor
+  - What to Improve
+  - Success Criteria
+  - Notes
+
+- **`docs.md`** (type:docs): Documentation work
+  - What to Document
+  - Target Audience
   - Checklist
-  - Dependencies
+  - Notes
 
-**Usage pattern:**
+- **`learning.md`** (type:learning): Learning/Research
+  - Learning Goal
+  - Why This Matters
+  - Completion Criteria
+  - Notes (Resources, Learning Plan, What I Learned)
+
+**Template evolution:**
+- Start minimal (3-5 sections per template)
+- Add sections based on Week 1 retrospective feedback
+- Keep what's useful, remove what's not
+
+**Usage pattern (Interactive Mode):**
+```
+User: "Create a new issue"
+
+Claude: "Which project?" → User selects "Agent Native Workflow"
+Claude: "What type?" → User selects "type:feature"
+Claude: "Title?" → User: "Add OAuth authentication"
+Claude: "Use template?" → User: "Yes"
+→ Load assets/issue-templates/feature.md
+→ Ask for User Story, What to Build, Acceptance Criteria
+→ Create issue with filled template
+```
+
+**Usage pattern (Quick Mode):**
 ```
 User: "Create a bug report for login issue"
-→ Read assets/issue-templates/bug-report.md
+→ Read assets/issue-templates/bug.md
 → Fill template with user-provided details
 → Create issue with structured description
 ```
@@ -308,19 +403,70 @@ User: "Create a bug report for login issue"
 
 ## Example Interactions
 
-**Example 1: Create bug in project**
+**Example 1: Interactive Issue Creation (Human-in-the-loop)**
 ```
-User: "Create a bug in the mobile app project: login button doesn't work"
+User: "새 Issue 만들어줘"
+
+Claude: "어느 프로젝트에 Issue를 만들까요?"
+  1. Agent Native Workflow
+  2. YouTube Shorts Factory
+  3. Personal Development
+
+User: "1번"
+
+Claude: "Issue 타입을 선택해주세요"
+  1. type:feature (새로운 기능)
+  2. type:bug (버그 수정)
+  3. type:refactor (리팩토링)
+  4. type:docs (문서 작업)
+  5. type:learning (학습/연구)
+
+User: "1"
+
+Claude: "Issue 제목을 입력해주세요"
+
+User: "Add OAuth authentication"
+
+Claude: "템플릿을 사용하시겠습니까?"
+  1. Yes - feature.md 템플릿 사용
+  2. No - 직접 설명 작성
+  3. Skip - 나중에 추가
+
+User: "1"
+
+Claude: (Load assets/issue-templates/feature.md)
+"User Story를 입력해주세요 (As a [user], I want [goal] so that [benefit])"
+
+User: "As a developer, I want OAuth so users can log in securely"
+
+Claude: "What to Build를 간단히 설명해주세요"
+
+User: "Google and GitHub OAuth integration"
+
+Claude: "Acceptance Criteria를 입력해주세요 (하나씩)"
+
+User: "Users can log in with Google"
+User: "Users can log in with GitHub"
+User: "OAuth tokens are stored securely"
+
+Claude: (Create issue with MCP)
+"Created [AGNW-1] Add OAuth authentication in Agent Native Workflow project"
+```
+
+**Example 2: Quick Mode Issue Creation**
+```
+User: "Create a bug in YouTube Shorts Factory: video encoding fails on 4K"
 
 Steps:
-1. List projects to find "mobile app" project ID
-2. Load assets/issue-templates/bug-report.md
-3. Ask user for reproduction steps
-4. Create issue with template-based description
-5. Confirm: "Created issue MOB-45: Login button doesn't work"
+1. Identify project: YouTube Shorts Factory
+2. Identify type: bug (from "bug" keyword)
+3. Load assets/issue-templates/bug.md
+4. Ask for Steps to Reproduce, Expected vs Actual
+5. Create issue with template
+6. Confirm: "Created [YSF-5] Video encoding fails on 4K"
 ```
 
-**Example 2: View project status**
+**Example 3: View project status**
 ```
 User: "What's the status of our web redesign project?"
 
