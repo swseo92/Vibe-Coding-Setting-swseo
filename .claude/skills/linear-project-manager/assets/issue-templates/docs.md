@@ -1,40 +1,58 @@
-# Documentation Template
+# 문서화 템플릿
 
-## What to Document
-[Describe what documentation needs to be created or updated]
+## 무엇을 문서화할까요
+[생성하거나 업데이트할 문서 설명]
 
-**Example**: Write API documentation for the new authentication endpoints.
+**예시**: 새로운 인증 엔드포인트에 대한 API 문서를 작성합니다.
 
-## Target Audience
-[Who will read this documentation?]
+## 대상 독자
+[누가 이 문서를 읽을까요?]
 
-**Example**: Backend developers integrating with our API.
+**예시**: 우리 API를 통합하는 백엔드 개발자들.
 
-## Checklist
-- [ ] [Documentation task 1]
-- [ ] [Documentation task 2]
-- [ ] [Documentation task 3]
+## 체크리스트
+- [ ] [문서화 작업 1]
+- [ ] [문서화 작업 2]
+- [ ] [문서화 작업 3]
 
-**Example**:
-- [ ] Document all authentication endpoints
-- [ ] Add code examples in Python and JavaScript
-- [ ] Include error response formats
-- [ ] Add troubleshooting section
-- [ ] Review for clarity and completeness
+**예시**:
+- [ ] 모든 인증 엔드포인트 문서화
+- [ ] Python과 JavaScript 코드 예시 추가
+- [ ] 에러 응답 형식 포함
+- [ ] 트러블슈팅 섹션 추가
+- [ ] 명확성과 완성도 검토
 
-## Notes
-[Optional: Content outline, examples to include, related docs, etc.]
+## 참고사항
+[선택사항: 내용 개요, 포함할 예시, 관련 문서 등]
 
-**Sections to include** (example):
-- Overview
-- Getting Started
-- API Reference
-- Examples
-- Troubleshooting
+**포함할 섹션** (예시):
+- 개요
+- 시작하기
+- API 레퍼런스
+- 예시
+- 트러블슈팅
+
+**코드 예시** (포함할 내용):
+```python
+# Python 예시
+from auth import login
+
+response = login(username="user", password="pass")
+```
+
+```javascript
+// JavaScript 예시
+const response = await login({ username: "user", password: "pass" });
+```
+
+**관련 문서**:
+- API 전체 개요 문서
+- 인증 흐름 다이어그램
+- 에러 코드 레퍼런스
 
 ---
 
-**Tips**:
-- Think about what readers need to know
-- Include practical examples
-- Keep language clear and concise
+**팁**:
+- 독자가 필요한 정보 생각하기
+- 실용적인 예시 포함
+- 언어는 명확하고 간결하게

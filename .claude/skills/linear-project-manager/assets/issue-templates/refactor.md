@@ -1,37 +1,52 @@
-# Refactor Template
+# 리팩토링 템플릿
 
-## Why Refactor
-[Current code issues or technical debt]
+## 왜 리팩토링하나요
+[현재 코드의 문제점이나 기술 부채]
 
-**Example**: API client uses callbacks instead of async/await, making code hard to read and maintain.
+**예시**: API 클라이언트가 콜백 방식을 사용하고 있어서 코드 가독성이 떨어지고 유지보수가 어렵습니다.
 
-## What to Improve
-[Describe the refactoring goal]
+## 무엇을 개선할까요
+[리팩토링 목표 설명]
 
-**Example**: Convert all API client methods from callback-based to async/await.
+**예시**: 모든 API 클라이언트 메소드를 콜백 기반에서 async/await 방식으로 변경합니다.
 
-## Success Criteria
-- [ ] [Criterion 1: What should be better after refactoring?]
-- [ ] [Criterion 2]
-- [ ] [Criterion 3]
+## 성공 기준
+- [ ] [기준 1: 리팩토링 후 무엇이 나아질까요?]
+- [ ] [기준 2]
+- [ ] [기준 3]
 
-**Example**:
-- [ ] All API methods use async/await syntax
-- [ ] No breaking changes to public API
-- [ ] All existing tests still pass
-- [ ] Code is more readable and maintainable
+**예시**:
+- [ ] 모든 API 메소드가 async/await 문법 사용
+- [ ] 공개 API에 Breaking change 없음
+- [ ] 기존 테스트가 모두 통과
+- [ ] 코드 가독성과 유지보수성 향상
 
-## Notes
-[Optional: Performance considerations, breaking changes, migration strategy, etc.]
+## 참고사항
+[선택사항: 성능 고려사항, Breaking change, 마이그레이션 전략 등]
 
-**Things to check**:
-- Does this introduce breaking changes?
-- Are there performance implications?
-- Do we need to update documentation?
+**확인할 사항**:
+- Breaking change가 있나요?
+- 성능 영향은 없나요?
+- 문서 업데이트가 필요한가요?
+
+**마이그레이션 계획** (Breaking change가 있는 경우):
+1. 새 async 메소드 추가 (기존 메소드 유지)
+2. Deprecation 경고 추가
+3. 문서에 마이그레이션 가이드 작성
+4. 2주 후 구버전 메소드 제거
+
+**성능 고려사항**:
+- 메모리 사용량 변화 예상: 없음
+- 실행 속도 변화: 약간 개선 예상 (Promise 체이닝 감소)
+
+**테스트 전략**:
+- 기존 테스트 전부 통과 확인
+- 새로운 async 패턴 테스트 추가
+- 성능 벤치마크 실행
 
 ---
 
-**Tips**:
-- Keep functionality unchanged (no new features)
-- Ensure tests pass before and after
-- Document any API changes
+**팁**:
+- 기능 변경 없이 유지 (새 기능은 별도 Issue)
+- 리팩토링 전후로 테스트가 통과하는지 확인
+- API 변경사항은 문서화

@@ -1,41 +1,55 @@
-# Bug Report Template
+# 버그 리포트 템플릿
 
-## What's Broken
-[Clear description of what's not working]
+## 무엇이 깨졌나요
+[작동하지 않는 것에 대한 명확한 설명]
 
-**Example**: Login button doesn't respond when clicked on mobile Safari.
+**예시**: 모바일 Safari에서 로그인 버튼을 클릭해도 반응이 없습니다.
 
-## Steps to Reproduce
-1. [First step]
-2. [Second step]
-3. [Third step]
-4. See error
+## 재현 방법
+1. [첫 번째 단계]
+2. [두 번째 단계]
+3. [세 번째 단계]
+4. 에러 확인
 
-**Example**:
-1. Open app on iPhone (Safari)
-2. Tap "Login" button
-3. Nothing happens
+**예시**:
+1. iPhone에서 앱 열기 (Safari)
+2. "로그인" 버튼 탭하기
+3. 아무 일도 일어나지 않음
 
-## Expected vs Actual
+## 예상 동작 vs 실제 동작
 
-**Expected**: [What should happen]
-**Actual**: [What actually happens]
+**예상**: [일어나야 하는 일]
+**실제**: [실제로 일어나는 일]
 
-**Example**:
-- **Expected**: Login modal should appear
-- **Actual**: Button click has no effect
+**예시**:
+- **예상**: 로그인 모달이 나타나야 함
+- **실제**: 버튼 클릭이 아무 효과 없음
 
-## Notes
-[Optional: Environment details, screenshots, error messages, workarounds, etc.]
+## 참고사항
+[선택사항: 환경 정보, 스크린샷, 에러 메시지, 임시 해결책 등]
 
-**Environment** (if relevant):
-- Device: [e.g., iPhone 12]
-- OS: [e.g., iOS 15]
-- Browser: [e.g., Safari 17]
+**환경** (해당되는 경우):
+- 기기: [예: iPhone 12]
+- OS: [예: iOS 15]
+- 브라우저: [예: Safari 17]
+- 앱 버전: [예: v2.3.1]
+
+**에러 메시지** (있는 경우):
+```
+TypeError: Cannot read property 'onClick' of undefined
+  at LoginButton.render (LoginButton.js:42)
+```
+
+**스크린샷/비디오**:
+[이미지를 첨부하거나 설명 추가]
+
+**임시 해결책**:
+- Chrome 브라우저에서는 정상 작동함
+- 데스크톱에서는 문제 없음
 
 ---
 
-**Tips**:
-- Include screenshots if helpful
-- Add error logs/messages in Notes section
-- Mark severity if critical
+**팁**:
+- 스크린샷이 있으면 도움이 됨
+- 에러 로그/메시지는 참고사항 섹션에 추가
+- 치명적인 버그는 Priority 표시

@@ -1,48 +1,60 @@
-# Learning Template
+# 학습 템플릿
 
-## Learning Goal
-[What do you want to learn?]
+## 학습 목표
+[무엇을 배우고 싶나요?]
 
-**Example**: Learn LangGraph workflow patterns for building multi-agent systems.
+**예시**: 멀티 에이전트 시스템 구축을 위한 LangGraph 워크플로우 패턴을 배웁니다.
 
-## Why This Matters
-[Why is this learning important right now?]
+## 왜 중요한가요
+[지금 이 학습이 왜 중요한가요?]
 
-**Example**: Need to build complex agent workflows for the YouTube Shorts Factory project.
+**예시**: YouTube Shorts Factory 프로젝트에서 복잡한 에이전트 워크플로우를 만들어야 합니다.
 
-## Completion Criteria
-- [ ] [Criterion 1: How will you know you've learned this?]
-- [ ] [Criterion 2]
-- [ ] [Criterion 3]
+## 완료 조건
+- [ ] [조건 1: 어떻게 배웠다는 것을 알 수 있나요?]
+- [ ] [조건 2]
+- [ ] [조건 3]
 
-**Example**:
-- [ ] Can explain LangGraph state management
-- [ ] Built a simple multi-step workflow prototype
-- [ ] Understand when to use LangGraph vs simple chains
-- [ ] Documented learnings in this issue
+**예시**:
+- [ ] LangGraph 상태 관리를 설명할 수 있음
+- [ ] 간단한 다단계 워크플로우 프로토타입 제작
+- [ ] LangGraph vs 단순 체인 사용 시기를 이해함
+- [ ] 이 Issue에 학습 내용 문서화 완료
 
-## Notes
-[Optional: Resources, learning plan, experiments, learnings summary, etc.]
+## 참고사항
+[선택사항: 자료, 학습 계획, 실험, 배운 내용 요약 등]
 
-**Resources** (if known):
-- [Link to tutorial]
-- [Link to documentation]
-- [Example project]
+**학습 자료** (알고 있다면):
+- [튜토리얼 링크]
+- [공식 문서]
+- [예제 프로젝트]
 
-**Learning Plan**:
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
+**학습 계획**:
+1. [단계 1: 공식 문서 읽기]
+2. [단계 2: 튜토리얼 따라하기]
+3. [단계 3: 간단한 프로젝트 만들기]
 
-**What I Learned** (fill in as you go):
-- [Key takeaway 1]
-- [Key takeaway 2]
-- [Key takeaway 3]
+**배운 내용** (학습하면서 채워넣기):
+- [핵심 포인트 1]
+- [핵심 포인트 2]
+- [핵심 포인트 3]
+
+**실험 노트**:
+```python
+# 테스트한 코드나 실험 내용
+from langgraph import StateGraph
+
+# 여기에 실험 코드 추가
+```
+
+**참고 링크**:
+- LangGraph 공식 문서: https://...
+- 관련 블로그 포스트: https://...
 
 ---
 
-**Tips**:
-- Set specific, achievable learning goals
-- Document what you learn in this issue
-- Share learnings with the team
-- Use Personal Development project for these issues
+**팁**:
+- 구체적이고 달성 가능한 학습 목표 설정
+- 배운 내용을 이 Issue에 문서화
+- 팀과 학습 내용 공유
+- Personal Development 프로젝트에서 학습 Issue 관리

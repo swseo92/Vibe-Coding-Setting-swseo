@@ -85,59 +85,59 @@ For creating, viewing, or updating issues within a specific project context:
 3. **Use MCP tool** to create issue
 4. **Confirm creation** with issue identifier and URL
 
-**B. Interactive Mode** (human-in-the-loop, recommended for beginners)
+**B. Interactive Mode** (대화형 모드, 초보자에게 권장)
 
-Use when user says "create issue", "new issue", or similar without providing details.
+사용자가 세부 정보 없이 "issue 만들어줘", "새 issue", 등으로 요청할 때 사용.
 
-**Step 1: Select Project**
+**Step 1: 프로젝트 선택**
 ```
-Ask: "Which project should this issue belong to?"
-Options:
+질문: "어느 프로젝트에 Issue를 만들까요?"
+옵션:
   1. Agent Native Workflow
   2. YouTube Shorts Factory
   3. Personal Development
 
-User selects → Store project selection
+사용자 선택 → 프로젝트 저장
 ```
 
-**Step 2: Select Label Type**
+**Step 2: 라벨 타입 선택**
 ```
-Ask: "What type of issue is this?"
-Options:
-  1. type:feature - New functionality
-  2. type:bug - Something broken
-  3. type:refactor - Code improvement
-  4. type:docs - Documentation work
-  5. type:learning - Learning/Research
+질문: "Issue 타입을 선택해주세요"
+옵션:
+  1. type:feature (새로운 기능)
+  2. type:bug (버그 수정)
+  3. type:refactor (코드 개선)
+  4. type:docs (문서 작업)
+  5. type:learning (학습/연구)
 
-User selects → Store label, determine template
-```
-
-**Step 3: Enter Title**
-```
-Ask: "What's the issue title?"
-User provides → Store title
+사용자 선택 → 라벨 저장, 템플릿 결정
 ```
 
-**Step 4: Use Template**
+**Step 3: 제목 입력**
 ```
-Ask: "Would you like to use a template for the description?"
-Options:
-  1. Yes - Use {label-type}.md template
-  2. No - Enter description directly
-  3. Skip - Create issue without description
-
-If Yes:
-  - Load assets/issue-templates/{label-type}.md
-  - Ask for each template section
-  - Fill in template with user's answers
+질문: "Issue 제목을 입력해주세요"
+사용자 입력 → 제목 저장
 ```
 
-**Step 5: Create Issue**
+**Step 4: 템플릿 사용**
 ```
-- Use mcp__linear_server__create_issue()
-- Include: project, title, labels, description
-- Confirm: "Created [PROJECT-123] Issue Title"
+질문: "설명에 템플릿을 사용할까요?"
+옵션:
+  1. 예 - {label-type}.md 템플릿 사용
+  2. 아니오 - 직접 설명 입력
+  3. 건너뛰기 - 설명 없이 Issue 생성
+
+"예" 선택 시:
+  - assets/issue-templates/{label-type}.md 로드
+  - 각 템플릿 섹션에 대해 질문
+  - 사용자 답변으로 템플릿 채우기
+```
+
+**Step 5: Issue 생성**
+```
+- mcp__linear_server__create_issue() 사용
+- 포함: 프로젝트, 제목, 라벨, 설명
+- 확인 메시지: "[PROJECT-123] Issue 제목 생성 완료"
 ```
 
 **Template mapping:**
@@ -453,29 +453,29 @@ Claude: (Create issue with MCP)
 "Created [AGNW-1] Add OAuth authentication in Agent Native Workflow project"
 ```
 
-**Example 2: Quick Mode Issue Creation**
+**Example 2: Quick Mode Issue 생성**
 ```
-User: "Create a bug in YouTube Shorts Factory: video encoding fails on 4K"
+User: "YouTube Shorts Factory에 버그 하나 만들어줘: 4K 영상 인코딩이 실패해"
 
-Steps:
-1. Identify project: YouTube Shorts Factory
-2. Identify type: bug (from "bug" keyword)
-3. Load assets/issue-templates/bug.md
-4. Ask for Steps to Reproduce, Expected vs Actual
-5. Create issue with template
-6. Confirm: "Created [YSF-5] Video encoding fails on 4K"
+처리 과정:
+1. 프로젝트 식별: YouTube Shorts Factory
+2. 타입 식별: bug ("버그" 키워드로부터)
+3. assets/issue-templates/bug.md 로드
+4. 재현 방법, 예상 동작 vs 실제 동작 질문
+5. 템플릿으로 Issue 생성
+6. 확인: "[YSF-5] 4K 영상 인코딩 실패 생성 완료"
 ```
 
-**Example 3: View project status**
+**Example 3: 프로젝트 상태 확인**
 ```
-User: "What's the status of our web redesign project?"
+User: "웹 리디자인 프로젝트 상태가 어때?"
 
-Steps:
-1. Find "web redesign" project
-2. Fetch all project issues
-3. Group by state (Todo: 12, In Progress: 5, Done: 23)
-4. Highlight blockers or high-priority items
-5. Suggest next actions
+처리 과정:
+1. "웹 리디자인" 프로젝트 찾기
+2. 프로젝트의 모든 Issue 조회
+3. 상태별 그룹화 (Todo: 12, In Progress: 5, Done: 23)
+4. 블로커나 높은 우선순위 항목 강조
+5. 다음 액션 제안
 ```
 
 **Example 3: Linear beginner help**
