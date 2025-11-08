@@ -163,14 +163,31 @@ fi
 
 **IMPORTANT**: After file sync completes, you MUST:
 
-1. Read `templates/common/.mcp.json`
-2. Look for `_transform` metadata in mcpServers entries
-3. For each server with `_transform: "home-relative-path"`:
-   - Extract `_targetPath` (e.g., ".playwright-persistent")
-   - Extract `_pathOption` (e.g., "--user-data-dir")
-   - Generate `node --eval` code using Codex's recommendation
-4. Update `~/.claude.json` mcpServers section with transformed config
-5. Remove `_transform`, `_targetPath`, `_pathOption` metadata from final config
+1. **Extract current project's Local MCP settings**:
+   - Read `~/.claude.json`
+   - Find current project path in `projects` section
+   - Extract `mcpServers` from current project (if exists)
+
+2. **Read template MCP configuration**:
+   - Read `templates/common/.mcp.json`
+   - Extract all `mcpServers` entries
+
+3. **Merge MCP configurations**:
+   - Combine current project's Local MCP + template MCP
+   - Project MCP takes precedence if same server name exists
+
+4. **Apply to global ~/.claude.json**:
+   - Add/update root-level `"mcpServers": {}` section (User scope)
+   - Merge all collected MCP servers
+   - Convert `type: "stdio"` format to proper structure if needed
+
+5. **Handle transformations** (if metadata exists):
+   - Look for `_transform` metadata in mcpServers entries
+   - For each server with `_transform: "home-relative-path"`:
+     - Extract `_targetPath` (e.g., ".playwright-persistent")
+     - Extract `_pathOption` (e.g., "--user-data-dir")
+     - Generate `node --eval` code using Codex's recommendation
+   - Remove `_transform`, `_targetPath`, `_pathOption` metadata from final config
 
 **Transformation template**:
 ```javascript
@@ -189,4 +206,8 @@ Provide a summary including:
 - Whether settings were synced (settings.local.json → settings.json)
 - Whether speckit templates and scripts were synced
 - Path to global configuration directory (~/.claude/ and ~/.specify/)
-- **MCP configurations transformed** (list which servers were transformed)
+- **MCP servers propagated to global scope**:
+  - List servers from current project's Local MCP (if any)
+  - List servers from templates/common/.mcp.json (if any)
+  - Total number of global MCP servers configured
+  - Note if any transformations were applied

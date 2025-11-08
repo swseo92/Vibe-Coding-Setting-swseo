@@ -173,6 +173,35 @@ switch ($Language) {
     }
 }
 
+# Install Git hooks if .githooks exists
+if ((Test-Path ".githooks") -and (Test-Path ".git")) {
+    Write-Host ""
+    Write-Host "Installing Git hooks..." -ForegroundColor Cyan
+
+    # Check if install-hooks.ps1 exists
+    if (Test-Path ".claude\scripts\install-hooks.ps1") {
+        & ".\.claude\scripts\install-hooks.ps1"
+    } else {
+        # Fallback: manual installation
+        $hooksDir = ".git\hooks"
+        if (-not (Test-Path $hooksDir)) {
+            New-Item -ItemType Directory -Path $hooksDir | Out-Null
+        }
+
+        Get-ChildItem ".githooks" -File | ForEach-Object {
+            $target = Join-Path $hooksDir $_.Name
+            Copy-Item $_.FullName $target -Force
+            Write-Host "  Installed: $($_.Name)"
+        }
+    }
+    Write-Host ""
+} elseif (Test-Path ".githooks") {
+    Write-Host ""
+    Write-Host "Note: Git hooks available in .githooks\" -ForegroundColor Yellow
+    Write-Host "      Initialize git first, then run: .\.claude\scripts\install-hooks.ps1"
+    Write-Host ""
+}
+
 Write-Host ""
 Write-Host "Next Steps:" -ForegroundColor Yellow
 Write-Host ""

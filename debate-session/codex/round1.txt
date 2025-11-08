@@ -1,1 +1,0 @@
-3. Schedule a load test dry run mid-week to confirm the 500 ms target is realistic.

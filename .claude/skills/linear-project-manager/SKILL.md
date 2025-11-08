@@ -1,19 +1,22 @@
 ---
 name: linear-project-manager
-description: Manage Linear projects and issues using MCP integration. Use this skill when users request project-based task management in Linear, including creating/viewing/updating issues within specific projects. Provides comprehensive Linear usage guidance for beginners, including workflow best practices and MCP tool references.
+description: Manage Linear projects and issues using MCP integration and Linear API. Use this skill when users request project-based task management in Linear, including creating/viewing/updating issues within specific projects, or advanced operations like archiving, cycle management, and webhooks. Provides comprehensive Linear usage guidance for beginners, including workflow best practices, MCP tool references, and API integration patterns. Includes 8-week implementation roadmap for progressive automation (commit linking, metrics, retrospectives).
 ---
 
 # Linear Project Manager
 
 ## Overview
 
-This skill enables project-centric Linear workflow management through MCP (Model Context Protocol) integration. It orchestrates multi-step Linear operations while providing contextual guidance for users unfamiliar with Linear's project management system.
+This skill enables project-centric Linear workflow management through MCP (Model Context Protocol) integration and Linear GraphQL API. It orchestrates multi-step Linear operations while providing contextual guidance for users unfamiliar with Linear's project management system.
 
 **Key capabilities:**
 - Project-based issue management (create, view, update)
+- Advanced operations via API (archive, delete, cycle management, webhooks)
 - Structured workflows for common Linear operations
 - Beginner-friendly Linear usage guidance
-- MCP tool reference and examples
+- MCP tool reference and API integration examples
+- Hybrid workflows combining MCP + API strengths
+- 8-week implementation roadmap for progressive automation
 
 ## When to Use This Skill
 
@@ -24,8 +27,11 @@ Activate this skill when users request:
 - **Issue updates**: "Change issue SWS-123 status to In Progress"
 - **Linear guidance**: "How do I use Linear?" / "What's the difference between projects and issues?"
 - **Workflow assistance**: "Walk me through creating a feature request"
+- **Advanced operations**: "Archive completed issues" / "Delete issue SWS-456" / "Create a new sprint cycle"
+- **API setup**: "How do I use Linear API?" / "Set up LINEAR_API_KEY"
+- **Hybrid workflows**: "Archive all done issues and create next sprint"
 
-**Trigger keywords**: Linear, project, issue, bug, task, feature request, sprint, milestone
+**Trigger keywords**: Linear, project, issue, bug, task, feature request, sprint, milestone, archive, cycle, webhook, API
 
 ## Core Workflows
 
@@ -66,6 +72,9 @@ For creating, viewing, or updating issues within a specific project context:
 
 #### 2.3 Create Issue in Project
 
+**Two modes available:**
+
+**A. Quick Mode** (user provides all details upfront)
 1. **Identify project** - Ask user or infer from context
 2. **Gather issue details**:
    - Title (required)
@@ -76,12 +85,69 @@ For creating, viewing, or updating issues within a specific project context:
 3. **Use MCP tool** to create issue
 4. **Confirm creation** with issue identifier and URL
 
-**Template usage:**
-- For bug reports: Use `assets/issue-templates/bug-report.md`
-- For features: Use `assets/issue-templates/feature-request.md`
-- For tasks: Use `assets/issue-templates/task.md`
+**B. Interactive Mode** (대화형 모드, 초보자에게 권장)
 
-Load templates into context when creating issues of those types to ensure consistent, well-structured descriptions.
+사용자가 세부 정보 없이 "issue 만들어줘", "새 issue", 등으로 요청할 때 사용.
+
+**Step 1: 프로젝트 선택**
+```
+질문: "어느 프로젝트에 Issue를 만들까요?"
+옵션:
+  1. Agent Native Workflow
+  2. YouTube Shorts Factory
+  3. Personal Development
+
+사용자 선택 → 프로젝트 저장
+```
+
+**Step 2: 라벨 타입 선택**
+```
+질문: "Issue 타입을 선택해주세요"
+옵션:
+  1. type:feature (새로운 기능)
+  2. type:bug (버그 수정)
+  3. type:refactor (코드 개선)
+  4. type:docs (문서 작업)
+  5. type:learning (학습/연구)
+
+사용자 선택 → 라벨 저장, 템플릿 결정
+```
+
+**Step 3: 제목 입력**
+```
+질문: "Issue 제목을 입력해주세요"
+사용자 입력 → 제목 저장
+```
+
+**Step 4: 템플릿 사용**
+```
+질문: "설명에 템플릿을 사용할까요?"
+옵션:
+  1. 예 - {label-type}.md 템플릿 사용
+  2. 아니오 - 직접 설명 입력
+  3. 건너뛰기 - 설명 없이 Issue 생성
+
+"예" 선택 시:
+  - assets/issue-templates/{label-type}.md 로드
+  - 각 템플릿 섹션에 대해 질문
+  - 사용자 답변으로 템플릿 채우기
+```
+
+**Step 5: Issue 생성**
+```
+- mcp__linear_server__create_issue() 사용
+- 포함: 프로젝트, 제목, 라벨, 설명
+- 확인 메시지: "[PROJECT-123] Issue 제목 생성 완료"
+```
+
+**Template mapping:**
+- type:feature → `assets/issue-templates/feature.md`
+- type:bug → `assets/issue-templates/bug.md`
+- type:refactor → `assets/issue-templates/refactor.md`
+- type:docs → `assets/issue-templates/docs.md`
+- type:learning → `assets/issue-templates/learning.md`
+
+Load templates into context when creating issues to ensure consistent, well-structured descriptions.
 
 #### 2.4 Update Issue
 
@@ -118,6 +184,60 @@ For users asking "how should I do X in Linear?":
 2. **Identify** matching workflow pattern
 3. **Guide user** through step-by-step process
 4. **Execute** Linear operations as needed
+
+### Workflow 5: Linear API Operations
+
+When users need operations not supported by MCP (archive, delete, cycles, webhooks):
+
+1. **Determine operation type** - Consult `references/linear-api-guide.md` for MCP vs API decision
+2. **Check LINEAR_API_KEY** - Validate environment variable is set
+3. **Execute via linear-api-client.py**:
+   - CLI: `python .claude/scripts/linear-api-client.py <resource> <action> --options`
+   - Python: Import LinearAPIClient and call methods directly
+
+**Common API-only operations:**
+
+**Archive/Delete Issues:**
+```bash
+# Archive completed issue
+python .claude/scripts/linear-api-client.py issue archive --id ISSUE-ID
+
+# Delete issue permanently (30-day grace period)
+python .claude/scripts/linear-api-client.py issue delete --id ISSUE-ID
+```
+
+**Cycle Management:**
+```bash
+# Create sprint cycle
+python .claude/scripts/linear-api-client.py cycle create \
+  --team TEAM-ID \
+  --name "Sprint 42" \
+  --starts-at "2025-11-09T00:00:00Z" \
+  --ends-at "2025-11-23T00:00:00Z"
+
+# Archive completed cycle
+python .claude/scripts/linear-api-client.py cycle archive --id CYCLE-ID
+```
+
+**Webhook Integration:**
+```bash
+# Create webhook for Slack notifications
+python .claude/scripts/linear-api-client.py webhook create \
+  --url "https://hooks.slack.com/..." \
+  --types Issue Comment \
+  --label "Slack Alerts"
+```
+
+**Hybrid Workflow Example (MCP + API):**
+1. Use MCP to find completed issues: `mcp__linear_server__list_issues(state="Done")`
+2. Use API to archive them: `linear-api-client.py issue archive --id <each-id>`
+3. Use MCP to create comment: `mcp__linear_server__create_comment(...)`
+
+**When to use which:**
+- **MCP**: Read operations, basic CRUD (create, update), comments
+- **API**: Delete, archive, cycles, webhooks, attachments
+
+Load `references/linear-api-guide.md` for comprehensive decision matrix and setup instructions.
 
 ## Reference Files
 
@@ -160,31 +280,114 @@ Contains:
 - Team collaboration patterns
 - Sprint/milestone planning guides
 
+### `references/linear-api-guide.md`
+
+Load when:
+- User needs operations beyond MCP capabilities (archive, delete, cycles, webhooks)
+- Setting up LINEAR_API_KEY environment variable
+- Deciding between MCP vs API for a specific operation
+- Need hybrid workflow examples combining MCP + API
+
+Contains:
+- Complete MCP vs API comparison table
+- LINEAR_API_KEY setup guide (manual + Playwright automation)
+- Linear API client usage (CLI and Python)
+- 13 resource types with 50+ API methods
+- Hybrid workflow patterns (4 detailed examples)
+- Troubleshooting guide (API keys, workspaces, GraphQL errors)
+- Best practices for API integration
+
+**Key sections:**
+- "When to Use MCP vs API" - Decision matrix for choosing the right tool
+- "Setup: LINEAR_API_KEY Environment Variable" - Complete setup instructions
+- "Using Linear API Client" - CLI and Python code examples
+- "Hybrid Workflows (MCP + API)" - Real-world patterns combining both approaches
+- "Troubleshooting" - Common issues and solutions
+
+### `references/label-guide.md`
+
+Load when:
+- User asks "어떤 라벨을 써야 하나?" or "What labels should I use?"
+- Creating issues and uncertain which label to apply
+- Need to understand when to use feature vs bug vs refactor
+- Weekly label review (Week 1 Friday)
+
+Contains:
+- 5 core label types (type:feature, bug, refactor, docs, learning)
+- When to use each label (scenarios and examples)
+- Label combination guide (which combinations make sense)
+- Best practices and anti-patterns
+- Filtering techniques using labels
+- Label evolution strategy (when to add new labels)
+- Weekly label usage review template
+
+**Key sections:**
+- Each label type with detailed use cases
+- "Label Combination Guide" - When to use multiple labels
+- "Filtering with MCP" - Query patterns for label-based searches
+- "Label Evolution Strategy" - When to add priority/status labels (Week 3+)
+- "Weekly Label Review" - Analyze label usage patterns
+
 ## Assets (Templates)
 
 ### `assets/issue-templates/`
 
-Use when creating issues to ensure well-structured, complete descriptions:
+Use when creating issues to ensure well-structured, complete descriptions.
 
-- **`bug-report.md`**: Template for bug issues
-  - Steps to reproduce
-  - Expected vs actual behavior
-  - Environment details
+**Minimal templates (Week 1-2 baseline):**
 
-- **`feature-request.md`**: Template for feature issues
-  - User story format
-  - Acceptance criteria
-  - Design considerations
+- **`feature.md`** (type:feature): New functionality
+  - User Story
+  - What to Build
+  - Acceptance Criteria
+  - Notes
 
-- **`task.md`**: Template for task issues
-  - Objective
+- **`bug.md`** (type:bug): Something broken
+  - What's Broken
+  - Steps to Reproduce
+  - Expected vs Actual
+  - Notes
+
+- **`refactor.md`** (type:refactor): Code improvement
+  - Why Refactor
+  - What to Improve
+  - Success Criteria
+  - Notes
+
+- **`docs.md`** (type:docs): Documentation work
+  - What to Document
+  - Target Audience
   - Checklist
-  - Dependencies
+  - Notes
 
-**Usage pattern:**
+- **`learning.md`** (type:learning): Learning/Research
+  - Learning Goal
+  - Why This Matters
+  - Completion Criteria
+  - Notes (Resources, Learning Plan, What I Learned)
+
+**Template evolution:**
+- Start minimal (3-5 sections per template)
+- Add sections based on Week 1 retrospective feedback
+- Keep what's useful, remove what's not
+
+**Usage pattern (Interactive Mode):**
+```
+User: "Create a new issue"
+
+Claude: "Which project?" → User selects "Agent Native Workflow"
+Claude: "What type?" → User selects "type:feature"
+Claude: "Title?" → User: "Add OAuth authentication"
+Claude: "Use template?" → User: "Yes"
+→ Load assets/issue-templates/feature.md
+→ Ask for User Story, What to Build, Acceptance Criteria
+→ Create issue with filled template
+```
+
+**Usage pattern (Quick Mode):**
 ```
 User: "Create a bug report for login issue"
-→ Read assets/issue-templates/bug-report.md
+→ Read assets/issue-templates/bug.md
 → Fill template with user-provided details
 → Create issue with structured description
 ```
@@ -200,28 +403,79 @@ User: "Create a bug report for login issue"
 
 ## Example Interactions
 
-**Example 1: Create bug in project**
+**Example 1: Interactive Issue Creation (Human-in-the-loop)**
 ```
-User: "Create a bug in the mobile app project: login button doesn't work"
+User: "새 Issue 만들어줘"
 
-Steps:
-1. List projects to find "mobile app" project ID
-2. Load assets/issue-templates/bug-report.md
-3. Ask user for reproduction steps
-4. Create issue with template-based description
-5. Confirm: "Created issue MOB-45: Login button doesn't work"
+Claude: "어느 프로젝트에 Issue를 만들까요?"
+  1. Agent Native Workflow
+  2. YouTube Shorts Factory
+  3. Personal Development
+
+User: "1번"
+
+Claude: "Issue 타입을 선택해주세요"
+  1. type:feature (새로운 기능)
+  2. type:bug (버그 수정)
+  3. type:refactor (리팩토링)
+  4. type:docs (문서 작업)
+  5. type:learning (학습/연구)
+
+User: "1"
+
+Claude: "Issue 제목을 입력해주세요"
+
+User: "Add OAuth authentication"
+
+Claude: "템플릿을 사용하시겠습니까?"
+  1. Yes - feature.md 템플릿 사용
+  2. No - 직접 설명 작성
+  3. Skip - 나중에 추가
+
+User: "1"
+
+Claude: (Load assets/issue-templates/feature.md)
+"User Story를 입력해주세요 (As a [user], I want [goal] so that [benefit])"
+
+User: "As a developer, I want OAuth so users can log in securely"
+
+Claude: "What to Build를 간단히 설명해주세요"
+
+User: "Google and GitHub OAuth integration"
+
+Claude: "Acceptance Criteria를 입력해주세요 (하나씩)"
+
+User: "Users can log in with Google"
+User: "Users can log in with GitHub"
+User: "OAuth tokens are stored securely"
+
+Claude: (Create issue with MCP)
+"Created [AGNW-1] Add OAuth authentication in Agent Native Workflow project"
 ```
 
-**Example 2: View project status**
+**Example 2: Quick Mode Issue 생성**
 ```
-User: "What's the status of our web redesign project?"
+User: "YouTube Shorts Factory에 버그 하나 만들어줘: 4K 영상 인코딩이 실패해"
 
-Steps:
-1. Find "web redesign" project
-2. Fetch all project issues
-3. Group by state (Todo: 12, In Progress: 5, Done: 23)
-4. Highlight blockers or high-priority items
-5. Suggest next actions
+처리 과정:
+1. 프로젝트 식별: YouTube Shorts Factory
+2. 타입 식별: bug ("버그" 키워드로부터)
+3. assets/issue-templates/bug.md 로드
+4. 재현 방법, 예상 동작 vs 실제 동작 질문
+5. 템플릿으로 Issue 생성
+6. 확인: "[YSF-5] 4K 영상 인코딩 실패 생성 완료"
+```
+
+**Example 3: 프로젝트 상태 확인**
+```
+User: "웹 리디자인 프로젝트 상태가 어때?"
+
+처리 과정:
+1. "웹 리디자인" 프로젝트 찾기
+2. 프로젝트의 모든 Issue 조회
+3. 상태별 그룹화 (Todo: 12, In Progress: 5, Done: 23)
+4. 블로커나 높은 우선순위 항목 강조
+5. 다음 액션 제안
 ```
 
 **Example 3: Linear beginner help**
@@ -236,11 +490,107 @@ Steps:
 5. Reference references/workflows.md for next steps
 ```
 
+**Example 4: Archive completed issues (Hybrid MCP + API)**
+```
+User: "Archive all completed issues from last sprint"
+
+Steps:
+1. Read references/linear-api-guide.md for hybrid workflow pattern
+2. Validate LINEAR_API_KEY is set (check .env)
+3. Use MCP to find completed issues:
+   - mcp__linear_server__list_issues(state="Done", cycle="Sprint 41")
+4. Use API to archive each issue:
+   - python .claude/scripts/linear-api-client.py issue archive --id <issue-id>
+5. Confirm: "Archived 23 issues from Sprint 41"
+```
+
+**Example 5: Create next sprint cycle**
+```
+User: "Create Sprint 42 starting next Monday for 2 weeks"
+
+Steps:
+1. Calculate dates (next Monday + 14 days)
+2. Get team ID using MCP: mcp__linear_server__get_team(query="Backend Team")
+3. Use API to create cycle:
+   - python .claude/scripts/linear-api-client.py cycle create \
+     --team TEAM-ID \
+     --name "Sprint 42" \
+     --starts-at "2025-11-11T00:00:00Z" \
+     --ends-at "2025-11-25T00:00:00Z"
+4. Confirm cycle creation with ID and dates
+```
+
 ## Limitations
 
-- Cannot create new projects (admin operation, outside MCP scope)
-- Cannot modify team permissions
-- Cannot access archived projects by default
-- MCP tools require valid Linear API authentication
+**MCP-only limitations (can be overcome with Linear API):**
+- Cannot archive/delete issues (use API: `linear-api-client.py issue archive/delete`)
+- Cannot create/manage cycles (use API: `linear-api-client.py cycle create/update/archive`)
+- Cannot manage webhooks (use API: `linear-api-client.py webhook create/update/delete`)
+- Cannot add/remove attachments (use API: `linear-api-client.py attachment create/delete`)
+- Cannot update/delete comments (use API: `linear-api-client.py comment update/delete`)
 
-For operations outside this skill's scope, guide users to Linear's web interface with specific instructions.
+**Persistent limitations (API also cannot do):**
+- Cannot create new projects (requires admin permissions via web interface)
+- Cannot modify team permissions (admin-only operation)
+- Cannot customize workflow states (admin-only operation)
+
+**Requirements:**
+- MCP tools require valid Linear MCP authentication
+- API operations require LINEAR_API_KEY environment variable
+
+For admin operations, guide users to Linear's web interface with specific instructions. For operations beyond MCP, use the Linear API via Workflow 5.
+
+## Implementation Roadmap
+
+**This skill supports progressive automation through an 8-week implementation roadmap.**
+
+Current workflows (1-5) focus on **manual Linear usage**. Future workflows will add **automated background processes** as you implement them.
+
+### Roadmap Overview
+
+**Week 1-2: Baseline (Current)**
+- Establish CLI-centric workflow
+- Daily reflection and pain point identification
+- Baseline metrics: 55 min/day manual overhead
+
+**Week 3-4: Commit Automation**
+- Post-commit hook + background worker
+- Auto-update Linear issues from commits
+- Workflow 6 will be added after implementation
+
+**Week 5-6: Metrics and Retrospectives**
+- Daily metrics auto-collection
+- Weekly retrospective automation
+- Workflow 7 will be added after implementation
+
+**Week 7-8: Refinement**
+- AI matching tuning
+- Metrics rotation
+- Best practices documentation
+
+### Roadmap Documents
+
+Complete implementation guides are in the `roadmap/` folder:
+- `roadmap/00-overview.md` - Full 8-week plan and architecture decisions
+- `roadmap/01-week1-2-baseline.md` - Current week detailed guide
+- `roadmap/02-week3-4-automation.md` - To be created after Week 2
+- `roadmap/03-week5-6-metrics.md` - To be created after Week 4
+
+### How This Skill Evolves
+
+**Now (Manual workflows):**
+- Workflow 1-5: Help users interact with Linear manually via MCP/API
+
+**Week 3-4 (After commit automation):**
+- Add Workflow 6: Guide background processes for commit linking
+- Update examples with automation scenarios
+
+**Week 5-6 (After metrics automation):**
+- Add Workflow 7: Guide metrics collection and retrospectives
+- Update references with automation patterns
+
+**Week 7-8 (After refinement):**
+- Document best practices learned from 6 weeks of usage
+- Finalize automation tuning guidelines
+
+This progressive approach ensures the skill stays synchronized with your actual implementation progress.

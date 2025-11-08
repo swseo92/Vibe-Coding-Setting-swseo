@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "strategy": "hybrid",
+  "targets": [
+    "src/",
+    "src/models/",
+    "src/services/",
+    "src/api/"
+  ],
+  "exclude": [
+    "node_modules/",
+    ".git/",
+    "tmp/",
+    "__pycache__/",
+    ".pytest_cache/",
+    "tests/",
+    "src/utils/",
+    "src/helpers/"
+  ],
+  "rules": {
+    "min_files": 5,
+    "min_subfolders": 2,
+    "max_depth": 3,
+    "require_code_files": true
+  },
+  "validation": {
+    "rounds": 2,
+    "adaptive_rounds": true,
+    "critical_folders": [
+      "src/models/",
+      "src/services/"
+    ]
+  },
+  "metadata": {
+    "include_generation_info": true,
+    "include_confidence_score": true,
+    "last_human_review": null
+  }
+}
